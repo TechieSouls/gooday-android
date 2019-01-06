@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
 
+
     <application
         android:name="com.deploy.application.CenesApplication"
         android:allowBackup="true"

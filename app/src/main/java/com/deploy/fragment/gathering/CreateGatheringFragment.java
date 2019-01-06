@@ -17,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
@@ -69,6 +70,7 @@ import com.deploy.materialcalendarview.decorators.BackgroundDecorator;
 import com.deploy.materialcalendarview.decorators.EventDecorator;
 import com.deploy.materialcalendarview.decorators.OneDayDecorator;
 import com.deploy.service.GatheringService;
+import com.deploy.util.CenesConstants;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedImageView;
@@ -94,7 +96,7 @@ import java.util.Set;
 
 public class CreateGatheringFragment extends CenesFragment implements View.OnFocusChangeListener {
 
-    private int SEACRH_LOCATION_RESULT_CODE = 1001, SEARCH_FRIEND_RESULT_CODE = 1002, GATHERING_SUMMARY_RESULT_CODE = 1003;
+    private int SEACRH_LOCATION_RESULT_CODE = 1001, SEARCH_FRIEND_RESULT_CODE = 1002, GATHERING_SUMMARY_RESULT_CODE = 1003, SMS_COMPOSE_RESULT_CODE = 1004;
 
     private View fragmentView;
 
@@ -102,6 +104,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     private FragmentManager fragmentManager;
 
     private Set<Map<String, String>> inviteFriendsImageList;
+    private List<JSONObject> nonCenesMemberList;
     private Calendar predictedDateStartCal, predictedDateEndCal;
     private boolean isPredictiveOn;
     private Boolean requestForGatheringSummary = false;
@@ -147,7 +150,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 
         initializeComponents();
         addClickListnersToComponents();
-
+        nonCenesMemberList = new ArrayList<>();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(mMessageReceiver, new IntentFilter("month_changed_intent"));
 
         loggedInUser = userManager.getUser();
@@ -483,8 +486,10 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             Log.e("End Date : ", predictedDateEndCal.getTime().toString());
 
             if (predictedDateEndCal.getTimeInMillis() <= predictedDateStartCal.getTimeInMillis()) {
-                Toast.makeText(cenesApplication, "End Time should be greater than Start Time", Toast.LENGTH_SHORT).show();
-                return;
+                //Toast.makeText(cenesApplication, "End Time should be greater than Start Time", Toast.LENGTH_SHORT).show();
+                //return;
+                predictedDateEndCal.add(Calendar.DAY_OF_MONTH, 1);
+                Log.e("End Date After Adding: ",predictedDateEndCal.getTime().toString());
             }
             endTimePickerLabel.setText(CenesUtils.hhmmaa.format(predictedDateEndCal.getTime()));
             Log.e("End Date : ", predictedDateEndCal.getTime().toString());
@@ -528,14 +533,58 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 e.printStackTrace();
             }
         } else if (requestCode == SEACRH_LOCATION_RESULT_CODE && resultCode == Activity.RESULT_OK) {
+
             String requiredValue = data.getStringExtra("title");
             gathSearchLocationButton.setText(requiredValue.toString());
-            new FetchLatLngTask().execute(data.getStringExtra("placeId"));
+
+            if (data.hasExtra("selection")) {
+                if (data.getStringExtra("selection").equals("list")) {
+                    new FetchLatLngTask().execute(data.getStringExtra("placeId"));
+                }
+
+                if (data.getStringExtra("selection").equals("scroll")) {
+                    String photo = data.getStringExtra("photo");
+                    Glide.with(context).load(photo).apply(RequestOptions.placeholderOf(R.drawable.party_image)).into(gathEventImage);
+                }
+            }
+
         } else if (requestCode == SEACRH_LOCATION_RESULT_CODE && resultCode == Activity.RESULT_CANCELED) {
             Log.e("Cancelled", "Location Cancelled");
         } else if (requestCode == SEARCH_FRIEND_RESULT_CODE && resultCode == Activity.RESULT_OK) {
 
-            String requiredValue = data.getExtras().getString("photo");
+            nonCenesMemberList = new ArrayList<>();
+            String selectedFriendsJsonArrayStr = data.getExtras().getString("selectedFriendJsonArray");
+            try {
+                JSONArray selectedFriendsJsonArray = new JSONArray(selectedFriendsJsonArrayStr);
+                for (int i=0; i< selectedFriendsJsonArray.length(); i++) {
+                    JSONObject selectedFriend = selectedFriendsJsonArray.getJSONObject(i);
+
+                    String requiredValue = "";
+                    if (selectedFriend.getString("user") != "null")  {
+                        JSONObject userObj = selectedFriend.getJSONObject("user");
+                        if (userObj.has("photo") && !CenesUtils.isEmpty(userObj.getString("photo"))) {
+                            requiredValue = userObj.getString("photo");
+                        }
+                    }
+
+                    String name = selectedFriend.getString("name");
+
+                    Map<String, String> invFrnMap = new HashMap<>();
+                    invFrnMap.put("userContactId", selectedFriend.getInt("userContactId")+"");
+                    invFrnMap.put("name", name);
+                    invFrnMap.put("photo", requiredValue);
+                    if (selectedFriend.getString("cenesMember").equals("yes")) {
+                        invFrnMap.put("userId", String.valueOf(selectedFriend.getLong("friendId")));
+                    } else {
+                        nonCenesMemberList.add(selectedFriend);
+                    }
+                    inviteFriendsImageList.add(invFrnMap);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            /*String requiredValue = data.getExtras().getString("photo");
             String name = data.getExtras().getString("name");
             Map<String, String> invFrnMap = new HashMap<>();
             invFrnMap.put("name", name);
@@ -552,13 +601,13 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         break;
                     }
                 }
-            }
-            if (!isFriendExist) {
-                inviteFriendsImageList.add(invFrnMap);
+            } */
+            //if (!isFriendExist) {
+            //    inviteFriendsImageList.add(invFrnMap);
                 if (isPredictiveOn) {
                     showPredictions();
                 }
-            }
+           // }
 
             if (inviteFriendsImageList.size() > 0) {
                 recyclerView = (RecyclerView) fragmentView.findViewById(R.id.recycler_view);
@@ -575,6 +624,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         } else if (requestCode == GATHERING_SUMMARY_RESULT_CODE && resultCode == Activity.RESULT_OK) {
             getActivity().setResult(Activity.RESULT_OK);
             isPredictiveOn = false;
+            getActivity().finish();
+        } else if (requestCode == SMS_COMPOSE_RESULT_CODE) {//We will not check
+                                                                // if user canceled or send the sms
             getActivity().finish();
         }
     }
@@ -636,6 +688,21 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 holder.ibDelete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        int index = -1;
+                        for (int i=0; i<nonCenesMemberList.size(); i++) {
+                            JSONObject nonCenesMemberObj = nonCenesMemberList.get(i);
+                            try {
+                                if (nonCenesMemberObj.getString("userContactId").equals(invFrn.get("userContactId"))) {
+                                    index = i;
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (index > -1) {
+                            nonCenesMemberList.remove(index);
+                        }
                         inviteFriendsImageList.remove(invFrn);
                         jsonObjectArrayList.remove(position);
                         recyclerView.removeViewAt(position);
@@ -799,6 +866,11 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         materialCalendarView.addDecorator(mOneDayDecorator);
                     }
 
+                    boolean isMidnightEvent = false;
+                    if (predictedDateEndCal.get(Calendar.DAY_OF_MONTH) > predictedDateStartCal.get(Calendar.DAY_OF_MONTH)) {
+                        isMidnightEvent = true;
+                    }
+
                     predictedDateStartCal.set(Calendar.YEAR, date.getYear());
                     predictedDateStartCal.set(Calendar.MONTH, date.getMonth());
                     predictedDateStartCal.set(Calendar.DAY_OF_MONTH, date.getDay());
@@ -807,7 +879,12 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 
                     predictedDateEndCal.set(Calendar.YEAR, date.getYear());
                     predictedDateEndCal.set(Calendar.MONTH, date.getMonth());
-                    predictedDateEndCal.set(Calendar.DAY_OF_MONTH, date.getDay());
+
+                    if (isMidnightEvent) {
+                        predictedDateEndCal.set(Calendar.DAY_OF_MONTH, date.getDay() + 1);
+                    } else {
+                        predictedDateEndCal.set(Calendar.DAY_OF_MONTH, date.getDay());
+                    }
                     predictedDateEndCal.set(Calendar.SECOND, 0);
                     predictedDateEndCal.set(Calendar.MILLISECOND, 0);
 
@@ -1060,8 +1137,67 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             try {
                 if (obj.getBoolean("success")) {
                     Toast.makeText(context, "Gathering Created", Toast.LENGTH_SHORT).show();
-                    getActivity().setResult(Activity.RESULT_OK);
-                    getActivity().onBackPressed();
+                    JSONObject eventData = obj.getJSONObject("data");
+                    if (nonCenesMemberList.size() > 0) {
+                        String phoneNumbers = "";
+                        String separator = "; ";
+                        if(android.os.Build.MANUFACTURER.equalsIgnoreCase("samsung")){
+                            separator = ", ";
+                        }
+
+                        for (JSONObject jsonObject: nonCenesMemberList) {
+                            phoneNumbers += jsonObject.getString("phone")+separator;
+                        }
+                        //Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                        //sendIntent.addCategory(Intent.CATEGORY_APP_MESSAGING);
+                        //sendIntent.setData(Uri.parse("smsto:"+phoneNumbers.substring(0, phoneNumbers.length()-1)));
+                        //sendIntent.putExtra("sms_body", CenesConstants.webDomainEventUrl+eventData.getLong("eventId"));
+                        //getActivity().setResult(Activity.RESULT_OK, sendIntent);
+                        //getActivity().finish();
+                        //getActivity().startActivity(sendIntent);
+                        //startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // Greater than Nugget
+                        {
+                            try {
+                                Intent sendIntent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:"+ phoneNumbers.substring(0, phoneNumbers.length()-1)));
+                                sendIntent.putExtra("sms_body", CenesConstants.webDomainEventUrl+eventData.getLong("eventId"));
+                                startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) // At least KitKat And Upto MarshMallow
+                        {
+                            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getActivity()); // Need to change the build to API 19
+
+                            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                            sendIntent.setType("text/plain");
+
+                            if (defaultSmsPackageName != null)// Can be null in case that there is no default, then the user would be able to choose
+                            // any app that support this intent.
+                            {
+                                sendIntent.setPackage(defaultSmsPackageName);
+                            }
+                            //sendIntent.setData(Uri.parse("sms:"+phoneNumbers.substring(0, phoneNumbers.length()-1)));
+                            sendIntent.putExtra("address",phoneNumbers.substring(0, phoneNumbers.length()-1));
+                            sendIntent.putExtra(Intent.EXTRA_TEXT, CenesConstants.webDomainEventUrl+eventData.getLong("eventId"));
+                            startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+
+                        }
+                        else // For early versions, do what worked for you before.
+                        {
+                            Intent smsIntent = new Intent(android.content.Intent.ACTION_VIEW);
+                            smsIntent.setType("vnd.android-dir/mms-sms");
+                            smsIntent.putExtra("address",phoneNumbers.substring(0, phoneNumbers.length()-1));
+                            smsIntent.putExtra("sms_body",CenesConstants.webDomainEventUrl+eventData.getLong("eventId"));
+                            startActivityForResult(smsIntent, SMS_COMPOSE_RESULT_CODE);
+                        }
+
+                    } else {
+                        getActivity().setResult(Activity.RESULT_OK);
+                        getActivity().onBackPressed();
+                    }
+
                     /*JSONObject data = obj.getJSONObject("data");
                     eventId = data.getLong("eventId");
                     getActivity().onBackPressed();
@@ -1491,6 +1627,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             if (inviteFriendsImageList.size() > 0) {
                 for (Map<String, String> friend : inviteFriendsImageList) {
 
+                    if (!friend.containsKey("userId")) {
+                        continue;
+                    }
                     JSONObject frindObj = new JSONObject();
                     frindObj.put("name", friend.get("name"));
                     frindObj.put("picture", friend.get("photo"));

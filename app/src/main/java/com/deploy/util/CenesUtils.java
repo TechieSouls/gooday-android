@@ -3,15 +3,24 @@ package com.deploy.util;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Build;
+import android.support.v4.os.ConfigurationCompat;
+import android.telephony.TelephonyManager;
 
 import com.deploy.R;
 import com.deploy.bo.User;
 import com.deploy.materialcalendarview.CalendarDay;
 import com.logentries.logger.AndroidLogger;
 
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -110,5 +119,65 @@ public class CenesUtils {
         } else {
             return false;
         }
+    }
+
+    public static String getDeviceCountryCode() {
+        //Locale locale = Locale.getDefault();
+        Locale locale = ConfigurationCompat.getLocales(Resources.getSystem().getConfiguration()).get(0);
+        return locale.getCountry();
+    }
+
+    public static String getDeviceCountryCode(Context context) {
+        String countryCode;
+
+        // try to get country code from TelephonyManager service
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        if(tm != null) {
+            // query first getSimCountryIso()
+            countryCode = tm.getSimCountryIso();
+            if (countryCode != null && countryCode.length() == 2)
+                return countryCode;
+
+            /*if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+                // special case for CDMA Devices
+                countryCode = getCDMACountryIso();
+            } else {*/
+                // for 3G devices (with SIM) query getNetworkCountryIso()
+                countryCode = tm.getNetworkCountryIso();
+            //}
+
+            if (countryCode != null && countryCode.length() == 2)
+                return countryCode;
+        }
+
+        // if network country not available (tablets maybe), get country code from Locale class
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            countryCode = context.getResources().getConfiguration().getLocales().get(0).getCountry();
+        } else {
+            countryCode = context.getResources().getConfiguration().locale.getCountry();
+        }
+
+        if (countryCode != null && countryCode.length() == 2)
+            return  countryCode;
+
+        // general fallback to "us"
+        return "US";
+    }
+
+
+    public static Map<String, String> getMapFromJson(JSONObject jsonObject) {
+
+        Map<String, String> response = new HashMap<>();
+
+        try {
+            Iterator<String> jsonKeys = jsonObject.keys();
+            while (jsonKeys.hasNext()) {
+                String key = jsonKeys.next();
+                response.put(key, jsonObject.getString(key)) ;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return  response;
     }
 }

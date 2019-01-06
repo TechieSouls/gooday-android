@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.deploy.R;
 import com.deploy.activity.GatheringScreenActivity;
+import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.leolin.shortcurtbadger.ShortcutBadger;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -70,10 +71,10 @@ public class CenesFirebaseMessagingService extends FirebaseMessagingService {
 
         try {
             PendingIntent pendingIntent = null;
+            Intent intent = null;
             if (notification.containsKey("payload")) {
                 Log.d(TAG, "Payload : " + notification.get("payload"));
                 JSONObject payloadObj = new JSONObject(notification.get("payload"));
-                Intent intent = null;
                 if (payloadObj.getString("type").equals("Gathering")) {
 
                     if (payloadObj.has("status") && payloadObj.getString("status").equals("AcceptAndDecline")) {
@@ -88,28 +89,29 @@ public class CenesFirebaseMessagingService extends FirebaseMessagingService {
                         intent = new Intent(this, GatheringScreenActivity.class);
                         intent.putExtra("dataFrom", "gathering_push");
                         intent.putExtra("eventId", payloadObj.getLong("id"));
+                    } else {
+                        intent = new Intent(this, HomeScreenActivity.class);
                     }
-
-
                 } else if (payloadObj.getString("type").equals("Reminder")) {
                     intent = new Intent(this, ReminderActivity.class);
                     /* intent.putExtra("dataFrom","push");
                     intent.putExtra("reminderId",payloadObj.getLong("notificationTypeId"));*/
                 }
-                if (intent != null) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                }
-
+            } else {
+                intent = new Intent(this, HomeScreenActivity.class);
             }
-
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
             //Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                     //.setLargeIcon(R.drawable.ic_ceneslogos_push)
                     .setSmallIcon(R.drawable.ic_ceneslogos)
                     .setContentTitle(notification.get("title"))
                     .setContentText(notification.get("body"))
-                    .setAutoCancel(false)
+                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
                     .setSound(Uri.parse("android.resource://"
                             + getApplicationContext().getPackageName() + "/" + R.raw.cenes_notification_ringtone))
                     .setContentIntent(pendingIntent);

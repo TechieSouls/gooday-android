@@ -1,44 +1,71 @@
 package com.deploy.activity;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.deploy.AsyncTasks.LocationAsyncTask;
 import com.deploy.Manager.ApiManager;
 import com.deploy.R;
+import com.deploy.adapter.RecentLocationAdapter;
 import com.deploy.adapter.SearchLocationAdapter;
 import com.deploy.application.CenesApplication;
+import com.deploy.backendManager.LocationApiManager;
 import com.deploy.coremanager.CoreManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Timer;
 
 /**
  * Created by mandeep on 6/9/17.
  */
 
-public class SearchLocationActivity extends CenesActivity {
+public class SearchLocationActivity extends CenesActivity implements LocationListener {
 
     private ImageView closeSearchLocationBtn;
     private ListView gathSearchLocationListView;
     private EditText locationSearchEditText;
+    private Button btnCustomLocation;
+    private RecyclerView recyclerView;
+    private RecyclerView recyclerViewRecentLocations;
 
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
     private ApiManager apiManager;
 
-    private SearchLocationAdapter searchLocationAdapter;
 
+    private SearchLocationAdapter searchLocationAdapter;
+    private String customLocation;
+    private LocationManager locationManager;
+    private String mprovider;
+    private LocationAsyncTask locationAsyncTask;
+    private Boolean previousSearchesExists = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,7 +105,21 @@ public class SearchLocationActivity extends CenesActivity {
                             @Override
                             public void run() {
                                 Log.e("Keyword ",editable.toString());*/
-                                new SearchLocationTask().execute(editable.toString());
+
+                customLocation = editable.toString();
+                if (editable.toString() == "" || editable.toString().length() == 0) {
+                    //recyclerViewRecentLocations.setVisibility(View.VISIBLE);
+                    if (previousSearchesExists) {
+                        findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
+                        gathSearchLocationListView.setVisibility(View.GONE);
+                    }
+                } else {
+                    //recyclerViewRecentLocations.setVisibility(View.GONE);
+                    findViewById(R.id.ll_recent_recycler_view).setVisibility(View.GONE);
+                    gathSearchLocationListView.setVisibility(View.VISIBLE);
+                    new SearchLocationTask().execute(editable.toString());
+                }
+
                             /*}
                         },
                         DELAY
@@ -96,6 +137,13 @@ public class SearchLocationActivity extends CenesActivity {
                     break;
                 case R.id.ll_loc_title_add:
                     break;
+                case R.id.btn_custom_location:
+                    Intent intent = new Intent();
+                    intent.putExtra("title",customLocation);
+                    intent.putExtra("selection","done");
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                    break;
             }
         }
     };
@@ -104,15 +152,42 @@ public class SearchLocationActivity extends CenesActivity {
         closeSearchLocationBtn = (ImageView) findViewById(R.id.close_search_location_btn);
         gathSearchLocationListView = (ListView) findViewById(R.id.gath_search_location_list_view);
         locationSearchEditText = (EditText) findViewById(R.id.search_location_edit_text);
+        btnCustomLocation = (Button) findViewById(R.id.btn_custom_location);
 
+        recyclerViewRecentLocations = (RecyclerView) findViewById(R.id.rv_recent_places);
         cenesApplication = getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
         apiManager = coreManager.getApiManager();
+
+        customLocation = "";
+
+
+        locationAsyncTask = new LocationAsyncTask(cenesApplication);
+        new LocationAsyncTask.RecentLocationTask(new LocationAsyncTask.RecentLocationTask.AsyncResponse() {
+            @Override
+            public void processFinish(List<com.deploy.bo.Location> locations) {
+
+                if (locations != null && locations.size() > 0) {
+                    previousSearchesExists = true;
+
+                    findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
+                    RecentLocationAdapter rla = new RecentLocationAdapter(SearchLocationActivity.this, locations);
+
+                    RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+                    recyclerViewRecentLocations.setLayoutManager(mLayoutManager);
+                    recyclerViewRecentLocations.setItemAnimator(new DefaultItemAnimator());
+                    recyclerViewRecentLocations.setAdapter(rla);
+                }
+            }
+        }).execute();
+
+        checkUserLocationServiceOn();
 
     }
 
     public void addClickListeners() {
         closeSearchLocationBtn.setOnClickListener(onClickListener);
+        btnCustomLocation.setOnClickListener(onClickListener);
     }
 
     class SearchLocationTask extends AsyncTask<String,String,String> {
@@ -149,4 +224,49 @@ public class SearchLocationActivity extends CenesActivity {
         }
     }
 
+    public void checkUserLocationServiceOn() {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setCostAllowed(false);
+
+        mprovider = locationManager.getBestProvider(criteria, false);
+
+        if (mprovider != null && !mprovider.equals("")) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            Location location = locationManager.getLastKnownLocation(mprovider);
+            locationManager.requestLocationUpdates(mprovider, 15000, 1, this);
+
+            if (location != null)
+                onLocationChanged(location);
+            else
+                Toast.makeText(getBaseContext(), "No Location Provider Found Check Your Code", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+        Log.e("Current Longitude:" , location.getLongitude()+"");
+        Log.e("Current Latitude:" , location.getLatitude()+"");
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
 }

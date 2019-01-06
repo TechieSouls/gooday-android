@@ -23,7 +23,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 19
-        versionName "1.1.6"
+        versionName "1.1.8"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     lintOptions {
@@ -61,6 +61,7 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.0.0'
     compile 'com.github.LogentriesCommunity:le_android:logentries-android-4.4.1'
     compile "com.daimajia.swipelayout:library:1.2.0@aar"
+    compile 'com.google.code.gson:gson:2.8.5'
 
     //Action Sheet for image upload
     compile 'com.baoyz.actionsheet:library:1.1.7'

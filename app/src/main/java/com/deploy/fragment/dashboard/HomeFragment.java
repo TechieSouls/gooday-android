@@ -18,6 +18,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,7 @@ import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
+import com.deploy.adapter.EventCardExpandableAdapter;
 import com.deploy.adapter.HomeScreenAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.HomeScreenApiManager;
@@ -66,6 +68,7 @@ import com.google.android.gms.analytics.Tracker;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -90,6 +93,7 @@ public class HomeFragment extends CenesFragment {
     // Array of strings...
     ExpandableListView homeScreenEventsList;
     RoundedImageView homePageProfilePic;
+    TextView tvSelectedDate;
     TextView gatheringBtn, homeNoEvents, tvCalendarSwitcher,tvNotificationCount;
     ImageView homeCalenderSearchViewIcon, notificationIcon;
     MaterialCalendarView homeCalSearchView;
@@ -184,6 +188,7 @@ public class HomeFragment extends CenesFragment {
 
         notificationIcon = (ImageView) v.findViewById(R.id.notification_icon);
         tvNotificationCount = (TextView) v.findViewById(R.id.tv_notification_count_pic);
+        tvSelectedDate = (TextView) v.findViewById(R.id.tv_selected_date);
         //footerHomeIcon.setCompoundDrawables(getResources().getDrawable(R.drawable.home_icon),null,null,null);
         fab = (FloatingActionButton) v.findViewById(R.id.fab);
         closeFabMenuBtn = (FloatingActionButton) v.findViewById(R.id.close_fab_menu_btn);
@@ -216,6 +221,11 @@ public class HomeFragment extends CenesFragment {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
             Glide.with(getActivity()).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homePageProfilePic);
         }
+
+        SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
+        SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
+        tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
+
 
         initialSync();
 
@@ -597,8 +607,8 @@ public class HomeFragment extends CenesFragment {
                            try {
                                Event event = new Event();
                                JSONObject eventObj = (JSONObject) jsonArray.getJSONObject(i);
-
-                               SimpleDateFormat calCategory = new SimpleDateFormat("EEEE, MMM d");
+                               SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
+                               SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
                                SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
 
                                if (eventObj.has("id")) {
@@ -654,16 +664,19 @@ public class HomeFragment extends CenesFragment {
                                    Date startDate = new Date(eventObj.getLong("startTime"));
                                    event.setStartTime(timeFormat.format(startDate));
                                    event.setStartTimeMillis(eventObj.getLong("startTime"));
-                                   String dateKey = calCategory.format(startDate) + CenesUtils.getDateSuffix(startDate.getDate());
-                                   if (sdf.format(startDate).equals(sdf.format(new Date()))) {
+                                   String dateKey = calCategory.format(startDate).toUpperCase() + "<b>"+weekCategory.format(startDate).toUpperCase()+"</b>";
+
+
+                                  // String dateKey = calCategory.format(startDate) + CenesUtils.getDateSuffix(startDate.getDate());
+                                   /*if (sdf.format(startDate).equals(sdf.format(new Date()))) {
                                        dateKey = "TODAY " + dateKey;
-                                   }
+                                   }*/
                                    Calendar cal = Calendar.getInstance();
                                    cal.setTime(new Date());
                                    cal.add(Calendar.DATE, 1);
-                                   if (sdf.format(startDate).equals(sdf.format(cal.getTime()))) {
+                                   /*if (sdf.format(startDate).equals(sdf.format(cal.getTime()))) {
                                        dateKey = "TOMORROW " + dateKey;
-                                   }
+                                   }*/
                                    if (!headers.contains(dateKey)) {
                                        headers.add(dateKey);
                                    }

@@ -1,19 +1,26 @@
 package com.deploy.activity;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 
 import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
+import com.deploy.adapter.FriendsAdapter;
 import com.deploy.adapter.SearchFriendAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
@@ -22,6 +29,11 @@ import com.deploy.database.manager.UserManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mandeep on 6/9/17.
@@ -32,6 +44,7 @@ public class SearchFriendActivity extends CenesActivity {
     private ImageView closeSearchFriendsBtn;
     private EditText searchFriendEditText;
     private ListView gathSearchFriendListView;
+    private Button btnDoneInviteFriend;
 
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
@@ -42,6 +55,10 @@ public class SearchFriendActivity extends CenesActivity {
     private SearchFriendAdapter searchFriendAdapter;
     private JSONArray allfriends;
     private JSONArray searchedFriends;
+    public static Map<Integer, CheckBox> checkboxButtonHolder;
+    public static Map<Integer, Boolean> checkboxStateHolder;
+    public static Map<Integer, JSONObject> checkboxObjectHolder;
+    public static RecyclerView recyclerView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,7 +67,9 @@ public class SearchFriendActivity extends CenesActivity {
         initializeComponents();
         addClickListeners();
         new SearchLocationTask().execute();
-
+        checkboxStateHolder = new HashMap<>();
+        checkboxObjectHolder = new HashMap<>();
+        checkboxButtonHolder = new HashMap<>();
         searchFriendEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -91,6 +110,24 @@ public class SearchFriendActivity extends CenesActivity {
                 case R.id.close_search_friends_btn:
                    onBackPressed();
                     break;
+                case R.id.btn_done_invite_friend:
+                    Intent intent = new Intent();
+                    try {
+                        JSONArray selectedFriends = new JSONArray();
+                        if (checkboxObjectHolder.size() > 0) {
+                            for (Map.Entry selectedFriendsEntryMap: checkboxObjectHolder.entrySet()) {
+                                selectedFriends.put(selectedFriendsEntryMap.getValue());
+                            }
+                        }
+
+                        String friendsArrayStr = selectedFriends.toString();
+                        intent.putExtra("selectedFriendJsonArray", friendsArrayStr);
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
             }
         }
     };
@@ -99,6 +136,7 @@ public class SearchFriendActivity extends CenesActivity {
         closeSearchFriendsBtn = (ImageView) findViewById(R.id.close_search_friends_btn);
         searchFriendEditText = (EditText) findViewById(R.id.invite_friend_edit_text);
         gathSearchFriendListView = (ListView) findViewById(R.id.gath_search_friend_list_view);
+        btnDoneInviteFriend = (Button) findViewById(R.id.btn_done_invite_friend);
 
         cenesApplication = getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
@@ -110,6 +148,11 @@ public class SearchFriendActivity extends CenesActivity {
     public void addClickListeners() {
         closeSearchFriendsBtn.setOnClickListener(onClickListener);
         searchFriendEditText.setOnClickListener(onClickListener);
+        btnDoneInviteFriend.setOnClickListener(onClickListener);
+    }
+
+    public SearchFriendAdapter getSearchFriendAdapter() {
+        return searchFriendAdapter;
     }
 
     class SearchLocationTask extends AsyncTask<String,String,String> {

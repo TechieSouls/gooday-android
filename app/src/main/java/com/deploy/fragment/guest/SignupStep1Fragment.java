@@ -25,8 +25,12 @@ import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.UserApiManager;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.fragment.CenesFragment;
+import com.deploy.service.AuthenticateService;
+import com.deploy.util.CenesUtils;
 
 import org.json.JSONObject;
+
+import java.util.Locale;
 
 /**
  * Created by mandeep on 18/9/18.
@@ -46,9 +50,10 @@ public class SignupStep1Fragment extends CenesFragment {
     private CoreManager coreManager;
     private UserApiManager userApiManager;
     private AlertManager alertManager;
-
+    private AuthenticateService authenticateService;
     private String etPhoneNumberStr;
     private String countryCode = "0";
+    private Boolean isCountrySelected = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -71,6 +76,13 @@ public class SignupStep1Fragment extends CenesFragment {
 
         initializeVariables();
 
+        //Setting country code based on the country selected in mobile.
+       // String androidCountryCode = CenesUtils.getDeviceCountryCode();
+        if (isCountrySelected == false) {
+            String androidCountryCode = CenesUtils.getDeviceCountryCode(getContext());
+            countryCode = "+"+authenticateService.getPhoneCodeByCountryCode(androidCountryCode.toUpperCase());
+            tvDropdownCountryCode.setText(countryCode);
+        }
         return v;
     }
 
@@ -80,6 +92,8 @@ public class SignupStep1Fragment extends CenesFragment {
         coreManager = cenesApplication.getCoreManager();
         userApiManager = coreManager.getUserAppiManager();
         alertManager = coreManager.getAlertManager();
+
+        authenticateService = new AuthenticateService();
     }
 
 
@@ -143,6 +157,7 @@ public class SignupStep1Fragment extends CenesFragment {
                 @Override
                 public void run() {
                     tvDropdownCountryCode.setText(cc+"");
+                    isCountrySelected = true;
                 }
             }, 500);
 
