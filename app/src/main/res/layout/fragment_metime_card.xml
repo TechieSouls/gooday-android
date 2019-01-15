@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#99D8D8D8"
+    >
+
+    <View
+        android:id="@+id/opacityFilter"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent"
+        android:layout_above="@+id/swipe_card"/>
+    <RelativeLayout
+        android:id="@+id/swipe_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/xml_partial_round_rect_blue"
+        android:layout_alignParentBottom="true"
+        >
+
+        <LinearLayout
+            android:id="@+id/ll_body_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.deploy.util.RoundedImageView
+                    android:layout_width="100dp"
+                    android:layout_height="100dp" />
+
+                <EditText
+                    android:id="@+id/et_metime_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Title"
+                    android:textSize="50dp"
+                    android:textColorHint="@color/white"
+                    android:textColor="@color/white"/>
+            </LinearLayout>
+
+            <View
+                android:id="@+id/divider"
+                android:layout_height="2dp"
+                android:layout_width="match_parent"
+                android:background="@color/white"
+                />
+
+
+            <!-- UnSelected Circles -->
+            <LinearLayout
+                android:id="@+id/me_time_days"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="10dp"
+                android:padding="10dp">
+
+                <Button
+                    android:id="@+id/metime_sun_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="S"
+                    android:textColor="@color/white"
+                    android:layout_margin="1dp"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_mon_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="M"
+                    android:textColor="@color/white"
+                    android:layout_margin="1dp"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_tue_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="T"
+                    android:textColor="@color/white" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_wed_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="W"
+                    android:textColor="@color/white" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_thu_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="T"
+                    android:textColor="@color/white" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_fri_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="F"
+                    android:textColor="@color/white" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/metime_sat_text"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/xml_circle_trans_white_border"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:text="S"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+
+            <!-- Start Button -->
+            <LinearLayout
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/xml_round_rect_trans_white_border"
+                android:padding="5dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp">
+
+                <LinearLayout
+                    android:id="@+id/metime_start_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="START"
+                        android:textSize="24dp"
+                        android:textColor="@color/white"
+                        android:layout_margin="5dp"/>
+
+
+                    <TextView
+                        android:id="@+id/startTimeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="00:00"
+                        android:textSize="24dp"
+                        android:textColor="@color/white"
+                        android:layout_margin="5dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- END Button -->
+            <LinearLayout
+                android:id="@+id/metime_end_time"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/xml_round_rect_trans_white_border"
+                android:padding="5dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="35dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="END"
+                        android:textSize="24dp"
+                        android:textColor="@color/white"
+                        android:layout_margin="5dp"/>
+
+
+                    <TextView
+                        android:id="@+id/endTimeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="00:00"
+                        android:textSize="24dp"
+                        android:textColor="@color/white"
+                        android:layout_margin="5dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+
+
+        </LinearLayout>
+
+        <!-- Footer -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/ll_body_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="40dp">
+
+            <Button
+                android:id="@+id/btn_delete_meTime"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="DELETE"
+                android:textColor="@color/white"
+                android:background="@drawable/xml_rect_trans_white_border"/>
+
+
+            <Button
+                android:id="@+id/btn_save_metime"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="SAVE"
+                android:textColor="@color/white"
+                android:background="@drawable/xml_rect_trans_white_border"/>
+
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

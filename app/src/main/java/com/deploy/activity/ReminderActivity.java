@@ -51,7 +51,7 @@ public class ReminderActivity extends CenesActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.base_home);
 
         cenesApplication = getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
@@ -90,7 +90,7 @@ public class ReminderActivity extends CenesActivity {
         footerDiaryIcon.setOnClickListener(onClickListener);
         footerAlarmIcon.setOnClickListener(onClickListener);
 
-        footerHomeIcon.setImageResource(R.drawable.home_icon_grey);
+        footerHomeIcon.setImageResource(R.drawable.home_icon_unselected);
         footerReminderIcon.setImageResource(R.drawable.reminder_icon_selected);
     }
 

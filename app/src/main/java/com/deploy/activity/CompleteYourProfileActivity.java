@@ -15,7 +15,6 @@ import android.widget.RelativeLayout;
 import com.deploy.R;
 import com.deploy.fragment.CalenderSyncFragment;
 import com.deploy.fragment.HolidaySyncFragment;
-import com.deploy.fragment.MeTimeFragment;
 import com.deploy.fragment.PictureFragment;
 
 import java.util.ArrayList;
@@ -64,9 +63,9 @@ public class CompleteYourProfileActivity extends CenesActivity {
                     ((PictureFragment) adapter.getItem(viewPager.getCurrentItem())).nextClickListener();
                 } else if (adapter.getItem(viewPager.getCurrentItem()) instanceof HolidaySyncFragment) {
                     ((HolidaySyncFragment) adapter.getItem(viewPager.getCurrentItem())).nextClickListener();
-                } else if (adapter.getItem(viewPager.getCurrentItem()) instanceof MeTimeFragment) {
+                }/* else if (adapter.getItem(viewPager.getCurrentItem()) instanceof MeTimeFragment) {
                     ((MeTimeFragment) adapter.getItem(viewPager.getCurrentItem())).nextClickListener();
-                } else if (adapter.getItem(viewPager.getCurrentItem()) instanceof CalenderSyncFragment) {
+                } */else if (adapter.getItem(viewPager.getCurrentItem()) instanceof CalenderSyncFragment) {
                     ((CalenderSyncFragment) adapter.getItem(viewPager.getCurrentItem())).nextClickListener();
                 }
                 viewPager.setCurrentItem(viewPager.getCurrentItem() + 1, true);
@@ -85,7 +84,7 @@ public class CompleteYourProfileActivity extends CenesActivity {
         adapter = new ViewPagerAdapter(getSupportFragmentManager());
         //adapter.addFragment(new PictureFragment());
         adapter.addFragment(new HolidaySyncFragment());
-        adapter.addFragment(new MeTimeFragment());
+        //adapter.addFragment(new MeTimeFragment());
         adapter.addFragment(new CalenderSyncFragment());
         viewPager.setAdapter(adapter);
     }

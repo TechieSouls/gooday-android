@@ -3,7 +3,6 @@ package com.deploy.fragment.dashboard;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -11,7 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -19,7 +17,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,8 +37,8 @@ import com.deploy.activity.CreateReminderActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.HomeScreenActivity;
+import com.deploy.activity.MeTimeActivity;
 import com.deploy.activity.ReminderActivity;
-import com.deploy.adapter.EventCardExpandableAdapter;
 import com.deploy.adapter.HomeScreenAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.HomeScreenApiManager;
@@ -68,7 +65,6 @@ import com.google.android.gms.analytics.Tracker;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -97,7 +93,7 @@ public class HomeFragment extends CenesFragment {
     TextView gatheringBtn, homeNoEvents, tvCalendarSwitcher,tvNotificationCount;
     ImageView homeCalenderSearchViewIcon, notificationIcon;
     MaterialCalendarView homeCalSearchView;
-    private ImageView footerHomeIcon, footerGatheringIcon, footerReminderIcon, footerAlarmIcon, footerDiaryIcon;
+    private ImageView footerHomeIcon, footerGatheringIcon, footerReminderIcon, footerAlarmIcon, footerDiaryIcon, footerMeTimeIcon;
     private FloatingActionButton fab, closeFabMenuBtn, gatheringFabMenuBtn, reminderFabMenuBtn, alarmFabMenuBtn;
     HomeScreenAdapter listAdapter;
     RelativeLayout rlFabMenu;
@@ -131,7 +127,7 @@ public class HomeFragment extends CenesFragment {
         CenesApplication application = (CenesApplication) getActivity().getApplication();
         mTracker = application.getDefaultTracker();
 
-        View v = inflater.inflate(R.layout.home_fragment, container, false);
+        View v = inflater.inflate(R.layout.fragment_home, container, false);
 
         if (((HomeScreenActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true)) {
             ((HomeScreenActivity) getActivity()).sharedPrefs.edit().putBoolean("isFirstLogin", false).commit();
@@ -185,6 +181,7 @@ public class HomeFragment extends CenesFragment {
         footerGatheringIcon = ((HomeScreenActivity) getActivity()).footerGatheringIcon;
         footerAlarmIcon = ((HomeScreenActivity) getActivity()).footerAlarmIcon;
         footerDiaryIcon = ((HomeScreenActivity) getActivity()).footerDiaryIcon;
+        footerMeTimeIcon = ((HomeScreenActivity) getActivity()).footerMeTimeIcon;
 
         notificationIcon = (ImageView) v.findViewById(R.id.notification_icon);
         tvNotificationCount = (TextView) v.findViewById(R.id.tv_notification_count_pic);
@@ -209,7 +206,7 @@ public class HomeFragment extends CenesFragment {
         homeCalSearchView = (MaterialCalendarView) v.findViewById(R.id.home_cal_search_view);
         homeCalSearchView.addDecorator(new CurrentDateDecorator((HomeScreenActivity) getActivity(), R.drawable.calendar_selector_orange));
         homeCalSearchView.setCurrentDate(new Date(System.currentTimeMillis()));
-        homeCalSearchView.newState().setCalendarDisplayMode(CalendarMode.values()[CalendarMode.WEEKS.ordinal()]).commit();
+        //homeCalSearchView.newState().setCalendarDisplayMode(CalendarMode.values()[CalendarMode.WEEKS.ordinal()]).commit();
 
         homeCalSearchView.setVisibility(View.GONE);
         tvCalendarSwitcher.setVisibility(View.GONE);
@@ -243,6 +240,7 @@ public class HomeFragment extends CenesFragment {
         notificationIcon.setOnClickListener(onClickListener);
         footerAlarmIcon.setOnClickListener(onClickListener);
         footerDiaryIcon.setOnClickListener(onClickListener);
+        footerMeTimeIcon.setOnClickListener(onClickListener);
         homePageProfilePic.setOnClickListener(onClickListener);
 
         /*try {
@@ -333,6 +331,10 @@ public class HomeFragment extends CenesFragment {
                 cal.set(Calendar.SECOND,0);
                 cal.set(Calendar.MILLISECOND,0);
 
+                SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
+                SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
+                tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
+
                 String queryStr = "&date=" + cal.getTimeInMillis();
                 if (internetManager.isInternetConnection((HomeScreenActivity) getActivity())) {
                     eventsTask = new EventsTask();
@@ -422,11 +424,11 @@ public class HomeFragment extends CenesFragment {
                     if (homeCalSearchView.getVisibility() == View.GONE) {
                         homeCalSearchView.setCurrentDate(new Date(System.currentTimeMillis()));
                         homeCalSearchView.setVisibility(View.VISIBLE);
-                        tvCalendarSwitcher.setVisibility(View.VISIBLE);
+                        //tvCalendarSwitcher.setVisibility(View.VISIBLE);
                         homeCalenderSearchViewIcon.setImageResource(R.drawable.calendar_open);
                     } else {
                         homeCalSearchView.setVisibility(View.GONE);
-                        tvCalendarSwitcher.setVisibility(View.GONE);
+                        //tvCalendarSwitcher.setVisibility(View.GONE);
                         homeCalenderSearchViewIcon.setImageResource(R.drawable.calendar_close);
                     }
                     break;
@@ -478,6 +480,10 @@ public class HomeFragment extends CenesFragment {
                     break;
                 case R.id.footer_alarm_icon:
                     startActivity(new Intent((HomeScreenActivity) getActivity(), AlarmActivity.class));
+                    getActivity().finish();
+                    break;
+                case R.id.footer_metime_icon:
+                    startActivity(new Intent((HomeScreenActivity) getActivity(), MeTimeActivity.class));
                     getActivity().finish();
                     break;
             }

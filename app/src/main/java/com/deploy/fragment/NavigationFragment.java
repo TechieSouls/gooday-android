@@ -34,6 +34,7 @@ import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.AlarmManager;
 import com.deploy.database.manager.UserManager;
+import com.deploy.fragment.metime.MeTimeFragment;
 import com.deploy.service.AlarmReceiver;
 import com.deploy.util.CenesTextView;
 import com.facebook.login.LoginManager;
@@ -184,7 +185,7 @@ public class NavigationFragment extends CenesFragment {
                     checkFragmentBeforeOpening(new ProfileFragment(), ProfileFragment.TAG);
                     break;
                 case R.id.tvMeTime:
-                    checkFragmentBeforeOpening(new MeTimeFragment(), MeTimeFragment.TAG);
+                    //checkFragmentBeforeOpening(new MeTimeFragment(), MeTimeFragment.TAG);
                     break;
                 case R.id.tvCalendarSync:
                     checkFragmentBeforeOpening(new CalenderSyncFragment(), CalenderSyncFragment.TAG);

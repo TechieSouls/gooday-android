@@ -149,6 +149,37 @@ public class JsonParsing {
     }
 
 
+    public JSONObject httpPutJsonObject(String url,String authToken) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            //add request header
+            con.setRequestMethod("PUT");
+            con.setConnectTimeout(TIMEOUT_MILLIS);
+            if (authToken != null) {
+                con.setRequestProperty("token", authToken);
+            }
+
+            int responseCode = con.getResponseCode();
+            System.out.println("Response Code : " + responseCode);
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line);
+                line = br.readLine();
+            }
+            System.out.println(sb.toString());
+            JSONObject jsonObject = new JSONObject(sb.toString());
+            return jsonObject;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+
     class MultipartUtility {
         private String boundary ;
         private static final String LINE_FEED = "\r\n";

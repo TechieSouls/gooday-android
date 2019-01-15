@@ -21,7 +21,6 @@ public interface ApiManager {
     public JSONArray syncFacebookEvents(User user, AppCompatActivity appCompatActivity);
     public JSONArray googleEvents(User user, String queryStr, AppCompatActivity activity);
     public JSONObject getUserEvents(User user, String queryStr,AppCompatActivity appCompatActivity);
-    public JSONObject meTime(User user,JSONObject postDataJson,AppCompatActivity appCompatActivity);
     public JSONObject locationSearch(String queryString);
     public JSONObject locationLatLng(String queryString);
     public JSONArray predictiveCalendar(User user,String queryString,AppCompatActivity appCompatActivity);
@@ -49,7 +48,6 @@ public interface ApiManager {
     public JSONObject deleteDiaryById(User user,String queryStr,AppCompatActivity appCompatActivity);
     public JSONObject updateUserInfo(User user,JSONObject postDataJson,AppCompatActivity appCompatActivity);
     public JSONObject getUserCalendarSyncStatus(User user,int userId,AppCompatActivity appCompatActivity);
-    public JSONObject getUserMeTimeData(User user,String queryStr,AppCompatActivity appCompatActivity);
     public JSONObject logout(User user,String queryStr,AppCompatActivity appCompatActivity);
     public JSONObject forgotPassword(String api,String queryStr,AppCompatActivity appCompatActivity);
     public JSONObject getNotificationCounts(User user,String queryStr,AppCompatActivity appCompatActivity);

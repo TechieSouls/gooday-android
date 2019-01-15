@@ -59,7 +59,7 @@
                         android:textColorHint="#992C80D8"
                         android:inputType="phone"
                         android:paddingLeft="10dp"
-                        android:textColor="@color/white"
+                        android:textColor="#FF4A4A4A"
                         android:background="@drawable/signup_step1_et_border_radius"
                         />
                 </LinearLayout>
@@ -68,7 +68,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/signupStep1Text"
                     android:textAlignment="center"
-                    android:textColor="#FF9B9B9B"
+                    android:textColor="#FF4A4A4A"
                     android:textSize="14sp"
                     android:layout_marginTop="20dp"
                     />
@@ -95,9 +95,9 @@
             android:id="@+id/bt_signup_step1_continue"
             android:layout_width="330dp"
             android:layout_height="60dp"
-            android:background="@drawable/signup_step1_btn_border"
+            android:background="@drawable/bg_trans_border_radius"
             android:text="Continue"
-            android:textColor="@color/white"
+            android:textColor="@color/cenes_new_orange"
             android:layout_marginTop="50dp"
             android:layout_centerHorizontal="true"
             />

@@ -109,6 +109,11 @@
         <activity
             android:name="com.deploy.activity.DiaryActivity"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name="com.deploy.activity.MeTimeActivity"
+            android:screenOrientation="portrait" />
+
         <activity
             tools:replace="android:theme"
             android:name="com.facebook.FacebookActivity"

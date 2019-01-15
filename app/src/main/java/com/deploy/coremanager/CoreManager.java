@@ -17,6 +17,7 @@ import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.GatheringApiManager;
 import com.deploy.backendManager.HomeScreenApiManager;
 import com.deploy.backendManager.LocationApiManager;
+import com.deploy.backendManager.MeTimeApiManager;
 import com.deploy.backendManager.NotificationAPiManager;
 import com.deploy.backendManager.UserApiManager;
 import com.deploy.database.impl.AlarmManagerImpl;
@@ -44,6 +45,7 @@ public class CoreManager {
     public LocationApiManager locationApiManager = null;
     public GatheringApiManager gatheringApiManager = null;
     public NotificationAPiManager notificationAPiManager = null;
+    public MeTimeApiManager meTimeApiManager = null;
 
     public CoreManager(CenesApplication cenesApplication){
         this.cenesApplication = cenesApplication;
@@ -60,7 +62,7 @@ public class CoreManager {
         this.locationApiManager = new LocationApiManager(cenesApplication);
         this.gatheringApiManager = new GatheringApiManager(cenesApplication);
         this.notificationAPiManager = new NotificationAPiManager(cenesApplication);
-
+        this.meTimeApiManager = new MeTimeApiManager(cenesApplication);
     }
 
     public UserManager getUserManager(){
@@ -112,5 +114,9 @@ public class CoreManager {
 
     public NotificationAPiManager getNotificationAPiManager() {
         return this.notificationAPiManager;
+    }
+
+    public MeTimeApiManager getMeTimeApiManager() {
+        return this.meTimeApiManager;
     }
 }

@@ -31,7 +31,6 @@ public class ApiManagerImpl implements ApiManager {
     public String FACEBOOK_EVENTS_URL = "/api/facebook/events";
     public String OUTLOOK_EVENTS_URL = "/api/outlook/events";
     public String USER_EVENTS_URL = "/api/getEvents";
-    public String USER_METIME_URL = "/api/user/metime";
     public String USER_PREDICTIVE_URL = "/api/predictive/calendar";
     public String GOOGLE_LOCATION_API = "https://maps.googleapis.com/maps/api/place/autocomplete/json?key=AIzaSyAg8FTMwwY2LwneObVbjcjj-9DYZkrTR58";
     public String GOOGLE_PLACE_DETAILS_API = "https://maps.googleapis.com/maps/api/place/details/json?key=AIzaSyAg8FTMwwY2LwneObVbjcjj-9DYZkrTR58";
@@ -56,7 +55,6 @@ public class ApiManagerImpl implements ApiManager {
     public String DELETE_DIARY_API = "/api/diary/delete";
     public String USER_UPADTE_API = "/api/user/update/";
     public String USER_SYNC_STATUS_API = "/api/user/calendarsyncstatus/";
-    public String USER_METIME_DATA_API = "/api/user/getmetimes";
     public String USER_LOGOUT_API = "/api/user/logout";
     public String FORGOT_PASSWORD_API = "/auth/forgetPassword";
     public String NOTIFICATION_COUNTS_API = "/api/notification/unreadbyuser";
@@ -161,18 +159,6 @@ public class ApiManagerImpl implements ApiManager {
             JsonParsing jsonParsing = new JsonParsing();
             String apiUrl = user.getApiUrl()+USER_EVENTS_URL+"?user_id="+user.getUserId()+queryString;
             return jsonParsing.httpGetJsonObject(apiUrl,user.getAuthToken());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public JSONObject meTime(User user,JSONObject postDataJson,AppCompatActivity appCompatActivity) {
-        try {
-            JsonParsing jsonParsing = new JsonParsing();
-            String apiUrl = user.getApiUrl()+USER_METIME_URL;
-            return jsonParsing.httpPost(apiUrl,postDataJson,user.getAuthToken());
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -475,18 +461,6 @@ public class ApiManagerImpl implements ApiManager {
     public JSONObject getUserCalendarSyncStatus(User user,int userId,AppCompatActivity appCompatActivity) {
         try {
             String apiUrl = user.getApiUrl()+USER_SYNC_STATUS_API+userId;
-            JsonParsing jsonParsing = new JsonParsing();
-            return jsonParsing.httpGetJsonObject(apiUrl,user.getAuthToken());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public JSONObject getUserMeTimeData(User user,String queryStr,AppCompatActivity appCompatActivity) {
-        try {
-            String apiUrl = user.getApiUrl()+USER_METIME_DATA_API+queryStr;
             JsonParsing jsonParsing = new JsonParsing();
             return jsonParsing.httpGetJsonObject(apiUrl,user.getAuthToken());
         } catch(Exception e) {

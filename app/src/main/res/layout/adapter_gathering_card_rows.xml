@@ -34,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:background="@drawable/rounded_white_background"
+        android:background="@drawable/rounded_white_background_with_shadow"
         android:divider="@color/transparent"
         android:orientation="vertical">
 
@@ -66,8 +66,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:background="@drawable/xml_gradient_border_transparentbg"
-                    android:padding="3dp">
+                    android:background="@drawable/host_gradient_circle"
+                    android:padding="2.8dp">
 
                     <com.deploy.util.RoundedImageView
                         android:id="@+id/iv_owner"

@@ -51,7 +51,7 @@ public class GatheringScreenActivity extends CenesActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.base_home);
 
         cenesApplication = getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
@@ -142,7 +142,7 @@ public class GatheringScreenActivity extends CenesActivity {
         footerAlarmIcon.setOnClickListener(onClickListener);
         footerDiaryIcon.setOnClickListener(onClickListener);
 
-        footerHomeIcon.setImageResource(R.drawable.home_icon_grey);
+        footerHomeIcon.setImageResource(R.drawable.home_icon_unselected);
         footerGatheringIcon.setImageResource(R.drawable.gathering_icon_selected);
     }
 

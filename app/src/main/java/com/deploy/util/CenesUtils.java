@@ -180,4 +180,11 @@ public class CenesUtils {
         }
         return  response;
     }
+
+    public static boolean isValidLength(String field, int length) {
+        if (field.length() >= length) {
+            return true;
+        }
+        return false;
+    }
 }

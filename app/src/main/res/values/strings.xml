@@ -91,6 +91,8 @@ time for everyone to meet.\n\n\nNo more back and forth messaging.\nNo more time 
     <string name="font_lato_light">lato_light.ttf</string>
     <string name="alarm">Alarm</string>
 
+    <string name="metimeDesc">Set aside time to yourself\n(others won\'t see this)</string>
+
     <string-array name="gender">
 <!--
         <item>Select</item>

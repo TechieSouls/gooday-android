@@ -33,6 +33,7 @@ import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,16 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             viewHolder.divider = (View) convertView.findViewById(R.id.view_divider);
             viewHolder.startTime = (TextView) convertView.findViewById(R.id.tv_start_time);
             viewHolder.ivOwnerImage = (RoundedImageView) convertView.findViewById(R.id.iv_owner);
+
+            viewHolder.llCenesEvents = (LinearLayout) convertView.findViewById(R.id.ll_cenes_events);
+
+            viewHolder.llTpEvents = (LinearLayout) convertView.findViewById(R.id.ll_tp_events);
+            viewHolder.tvTpEventTitle = (TextView) convertView.findViewById(R.id.tv_holiday_title);
+            viewHolder.tvTpSource = (TextView) convertView.findViewById(R.id.tv_tp_source);
+
+            viewHolder.llHolidayEvents = (LinearLayout) convertView.findViewById(R.id.ll_holiday);
+            viewHolder.tvHolidayTitle = (TextView) convertView.findViewById(R.id.tv_holiday_title);
+
             //viewHolder.homeEventMemberImages = (LinearLayout) convertView.findViewById(R.id.home_adapter_event_member_images);
             ////viewHolder.memberImagesContainer = (LinearLayout) convertView.findViewById(R.id.ll_member_images_container);
             //viewHolder.homeEventMemberImagesCount = (TextView) convertView.findViewById(R.id.tv_event_member_images_count);
@@ -118,7 +129,39 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             viewHolder.llReminderRowItem.setVisibility(View.GONE);
             viewHolder.scheduleAs = child.getScheduleAs();
             viewHolder.eventId = child.getEventId();
-            viewHolder.eventTitle.setText(child.getTitle());
+
+            if (child.getScheduleAs().equals("Gathering")) { //cenes events
+
+                viewHolder.llCenesEvents.setVisibility(View.VISIBLE);
+                viewHolder.llTpEvents.setVisibility(View.GONE);
+                viewHolder.llHolidayEvents.setVisibility(View.GONE);
+
+                viewHolder.eventTitle.setText(child.getTitle());
+                if (child.getLocation() == null || child.getLocation().length() == 0) {
+                    viewHolder.eventLocation.setVisibility(View.GONE);
+                } else {
+                    viewHolder.eventLocation.setVisibility(View.VISIBLE);
+                    viewHolder.eventLocation.setText(child.getLocation());
+                }
+                EventMember owner = child.getEventMembers().get(0);
+                Glide.with(context).load(owner.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(viewHolder.ivOwnerImage);
+
+            } else if (child.getScheduleAs().equals("Holiday")) { //holidays
+
+                viewHolder.llCenesEvents.setVisibility(View.GONE);
+                viewHolder.llTpEvents.setVisibility(View.GONE);
+                viewHolder.llHolidayEvents.setVisibility(View.VISIBLE);
+
+                viewHolder.tvHolidayTitle.setText(child.getTitle());
+            } else { //third party events
+
+                viewHolder.llCenesEvents.setVisibility(View.GONE);
+                viewHolder.llTpEvents.setVisibility(View.VISIBLE);
+                viewHolder.llHolidayEvents.setVisibility(View.GONE);
+
+                viewHolder.tvTpEventTitle.setText(child.getTitle());
+                viewHolder.tvTpSource.setText(child.getSource());
+            }
 
 
             if (child.getIsFullDay() != null && child.getIsFullDay()) {
@@ -127,7 +170,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                 viewHolder.startTime.setText(child.getStartTime());
             }
 
-            String eventType = child.getSource();
+            /*String eventType = child.getSource();
 
             if(eventType.equalsIgnoreCase("cenes")) {
                 viewHolder.eventBar.setBackgroundColor(context.getResources().getColor(R.color.cenes_new_orange));
@@ -143,17 +186,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                 viewHolder.eventBar.setBackgroundColor(context.getResources().getColor(R.color.outlook_blue));
             } else if(eventType.equalsIgnoreCase("apple")) {
                 viewHolder.eventBar.setBackgroundColor(context.getResources().getColor(R.color.apple_gray));
-            }
-
-            if (child.getLocation() == null || child.getLocation().length() == 0) {
-                viewHolder.eventLocation.setVisibility(View.GONE);
-            } else {
-                viewHolder.eventLocation.setVisibility(View.VISIBLE);
-                viewHolder.eventLocation.setText(child.getLocation());
-            }
-
-            EventMember owner = child.getEventMembers().get(0);
-            Glide.with(context).load(owner.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(viewHolder.ivOwnerImage);
+            }*/
 
             /*if (child.getIsFullDay()) {
                 viewHolder.eventTime.setText("00:00 AM");
@@ -327,6 +360,15 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
         private View divider;
         private TextView startTime;
         private RoundedImageView ivOwnerImage;
+
+        private LinearLayout llCenesEvents;
+
+        private LinearLayout llTpEvents;
+        private TextView tvTpEventTitle;
+        private TextView tvTpSource;
+
+        private LinearLayout llHolidayEvents;
+        private TextView tvHolidayTitle;
         //private LinearLayout homeEventMemberImages;
         //private LinearLayout memberImagesContainer;
         //private TextView homeEventMemberImagesCount;

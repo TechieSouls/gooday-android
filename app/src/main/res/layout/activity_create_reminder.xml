@@ -244,7 +244,7 @@
                 android:layout_weight="1"
                 android:drawablePadding="5dp"
                 android:gravity="center"
-                android:src="@drawable/home_icon_grey"
+                android:src="@drawable/home_icon_unselected"
                 android:text="Home" />
 
             <ImageView
@@ -263,7 +263,7 @@
                 android:layout_weight="1"
                 android:drawablePadding="5dp"
                 android:gravity="center"
-                android:src="@drawable/gathering_icon" />
+                android:src="@drawable/gathering_icon_unselected" />
 
             <ImageView
                 android:layout_width="0dp"
