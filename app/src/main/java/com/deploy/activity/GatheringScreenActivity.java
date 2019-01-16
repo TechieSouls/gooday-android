@@ -45,7 +45,7 @@ public class GatheringScreenActivity extends CenesActivity {
     private FragmentTransaction fragmentTransaction;
     public FragmentManager fragmentManager;
 
-    private ImageView footerHomeIcon, footerReminderIcon, footerAlarmIcon, footerGatheringIcon, footerDiaryIcon;
+    private ImageView footerHomeIcon, footerReminderIcon, footerAlarmIcon, footerGatheringIcon, footerDiaryIcon, footerMetimeIcon;
     public LinearLayout footerLayout;
 
     @Override
@@ -136,11 +136,13 @@ public class GatheringScreenActivity extends CenesActivity {
         footerAlarmIcon = (ImageView) findViewById(R.id.footer_alarm_icon);
         footerGatheringIcon = (ImageView) findViewById(R.id.footer_gathering_icon);
         footerDiaryIcon = (ImageView) findViewById(R.id.footer_diary_icon);
+        footerMetimeIcon = (ImageView) findViewById(R.id.footer_metime_icon);
 
         footerHomeIcon.setOnClickListener(onClickListener);
         footerReminderIcon.setOnClickListener(onClickListener);
         footerAlarmIcon.setOnClickListener(onClickListener);
         footerDiaryIcon.setOnClickListener(onClickListener);
+        footerMetimeIcon.setOnClickListener(onClickListener);
 
         footerHomeIcon.setImageResource(R.drawable.home_icon_unselected);
         footerGatheringIcon.setImageResource(R.drawable.gathering_icon_selected);
@@ -164,6 +166,10 @@ public class GatheringScreenActivity extends CenesActivity {
                     break;
                 case R.id.footer_diary_icon:
                     startActivity(new Intent(GatheringScreenActivity.this, DiaryActivity.class));
+                    finish();
+                    break;
+                case R.id.footer_metime_icon:
+                    startActivity(new Intent(GatheringScreenActivity.this, MeTimeActivity.class));
                     finish();
                     break;
             }

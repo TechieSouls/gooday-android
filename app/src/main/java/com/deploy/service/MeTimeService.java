@@ -167,14 +167,38 @@ public class MeTimeService {
         metimeTile.setBackgroundResource(R.drawable.xml_round_rect_whitebg);
 
         //MeTimeImage
-        RoundedImageView meTimeImage = new RoundedImageView(activity);
-        LinearLayout.LayoutParams imageViewParams = new LinearLayout.LayoutParams(CenesUtils.dpToPx(50), CenesUtils.dpToPx(50));
-        imageViewParams.gravity = Gravity.CENTER;
-        imageViewParams.setMargins(CenesUtils.dpToPx(20),0,0,0);
-        meTimeImage.setLayoutParams(imageViewParams);
-        meTimeImage.setImageDrawable(activity.getResources().getDrawable(R.drawable.profile_icon));
+        if (meTime.getPhoto() != null) {
+            RoundedImageView meTimeImage = new RoundedImageView(activity);
+            LinearLayout.LayoutParams imageViewParams = new LinearLayout.LayoutParams(CenesUtils.dpToPx(50), CenesUtils.dpToPx(50));
+            imageViewParams.gravity = Gravity.CENTER;
+            imageViewParams.setMargins(CenesUtils.dpToPx(20),0,0,0);
+            meTimeImage.setLayoutParams(imageViewParams);
+            meTimeImage.setImageDrawable(activity.getResources().getDrawable(R.drawable.profile_icon));
 
-        metimeTile.addView(meTimeImage);
+            metimeTile.addView(meTimeImage);
+        } else {
+
+            String imageName = "";
+            String[] titleArr = meTime.getTitle().split(" ");
+            int i=0;
+            for (String str: titleArr) {
+                if (i > 1) {
+                    break;
+                }
+                imageName += str.substring(0,1).toUpperCase();
+                i++;
+            }
+            TextView circleText = new TextView(activity);
+            LinearLayout.LayoutParams imageViewParams = new LinearLayout.LayoutParams(CenesUtils.dpToPx(50), CenesUtils.dpToPx(50));
+            imageViewParams.setMargins(CenesUtils.dpToPx(20),0,0,0);
+            circleText.setLayoutParams(imageViewParams);
+            circleText.setText(imageName);
+            circleText.setGravity(Gravity.CENTER);
+            circleText.setTextColor(activity.getResources().getColor(R.color.cenes_blue));
+            circleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+            circleText.setBackground(activity.getResources().getDrawable(R.drawable.xml_circle_trans_blue_border));
+            metimeTile.addView(circleText);
+        }
 
         //MeTimeDetails
         LinearLayout detailsLayout = new LinearLayout(activity);
@@ -186,7 +210,7 @@ public class MeTimeService {
         try {
             TextView metimeTitle = new TextView(activity);
             metimeTitle.setText(meTime.getTitle());
-            metimeTitle.setTextColor(Color.parseColor("#FF4A90E2"));
+            metimeTitle.setTextColor(activity.getResources().getColor(R.color.cenes_blue));
             metimeTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
             detailsLayout.addView(metimeTitle);
         } catch (Exception e) {

@@ -139,6 +139,9 @@ public class MeTimeFragment extends CenesFragment {
         }
 
         //Fetching MeTimeData
+        if (defaultMetimesArr == null) {
+            defaultMetimesArr = new JSONArray();
+        }
         final JSONArray finalDefaultMetimesArr = defaultMetimesArr;
         new MeTimeAsyncTask.GetMeTimeDataTask(new MeTimeAsyncTask.GetMeTimeDataTask.AsyncResponse() {
             @Override
@@ -170,14 +173,14 @@ public class MeTimeFragment extends CenesFragment {
 
                                 if (meTimeJSON.has("recurringPatterns")) {
                                     JSONArray recurringPatterns = meTimeJSON.getJSONArray("recurringPatterns");
-
-                                    String daysStr = "";
-                                    for(int j=0; j < recurringPatterns.length(); j++) {
-                                        JSONObject recJson = recurringPatterns.getJSONObject(j);
-                                        daysStr += meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek")).substring(0,3).toUpperCase() +",";
+                                    if (recurringPatterns.length() > 0) {
+                                        String daysStr = "";
+                                        for(int j=0; j < recurringPatterns.length(); j++) {
+                                            JSONObject recJson = recurringPatterns.getJSONObject(j);
+                                            daysStr += meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek")).substring(0,3).toUpperCase() +",";
+                                        }
+                                        meTime.setDays(daysStr.substring(0, daysStr.length() - 1));
                                     }
-                                    meTime.setDays(daysStr.substring(0, daysStr.length() - 1));
-
                                 }
 
                                 //MeTimeDetails
@@ -202,10 +205,10 @@ public class MeTimeFragment extends CenesFragment {
                             }
 
                         } else {
-                            showDefaultMeData();
+                            //showDefaultMeData();
                         }
                     } else {
-                        showDefaultMeData();
+                        //showDefaultMeData();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
