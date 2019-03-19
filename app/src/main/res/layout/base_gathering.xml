@@ -24,7 +24,8 @@
         android:layout_alignParentBottom="true"
         android:background="@color/white"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/footer_home_icon"
@@ -49,7 +50,7 @@
             android:layout_height="30dp"
             android:layout_weight="1"
             android:drawablePadding="5dp"
-            android:src="@drawable/gathering_icon_selected" />
+            android:src="@drawable/gathering_icon_selected"/>
 
         <ImageView
             android:id="@+id/footer_diary_icon"

@@ -57,6 +57,9 @@
             android:name="com.deploy.activity.WalkthroughActivity"
             android:screenOrientation="portrait" />
         <activity
+            android:name="com.deploy.activity.CenesBaseActivity"
+            android:screenOrientation="portrait" />
+        <activity
             android:name="com.deploy.activity.WelcomeActivity"
             android:screenOrientation="portrait" />
         <activity

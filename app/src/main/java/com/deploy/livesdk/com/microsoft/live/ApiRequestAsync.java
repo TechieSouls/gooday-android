@@ -116,7 +116,7 @@ class ApiRequestAsync<ResponseType> extends AsyncTask<Void, Long, Runnable>
      * Constructs a new ApiRequestAsync object and initializes its member variables.
      *
      * This method attaches a progress observer to the EntityEnclosingApiRequest, and call
-     * publicProgress when ever there is an on progress event.
+     * publicProgress when ever there is an on progress parentEvent.
      *
      * @param request
      */

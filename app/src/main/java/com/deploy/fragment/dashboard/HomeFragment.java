@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -15,6 +16,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -28,39 +30,43 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.deploy.AsyncTasks.CenesCommonAsyncTask;
 import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
 import com.deploy.activity.AlarmActivity;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.CreateReminderActivity;
-import com.deploy.activity.DiaryActivity;
-import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
-import com.deploy.activity.MeTimeActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.adapter.HomeScreenAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.HomeScreenApiManager;
 import com.deploy.backendManager.UserApiManager;
 import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
+import com.deploy.bo.Notification;
+import com.deploy.bo.NotificationCountData;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
+import com.deploy.fragment.NavigationFragment;
+import com.deploy.fragment.gathering.CreateGatheringFragment;
 import com.deploy.leolin.shortcurtbadger.ShortcutBadger;
 import com.deploy.materialcalendarview.CalendarDay;
+import com.deploy.materialcalendarview.CalendarFilter;
 import com.deploy.materialcalendarview.CalendarMode;
 import com.deploy.materialcalendarview.MaterialCalendarView;
 import com.deploy.materialcalendarview.OnDateSelectedListener;
 import com.deploy.materialcalendarview.decorators.CurrentDateDecorator;
 import com.deploy.materialcalendarview.decorators.EventDecorator;
+import com.deploy.materialcalendarview.decorators.MultipleEventDecorator;
 import com.deploy.materialcalendarview.decorators.OneDayDecorator;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -69,6 +75,8 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,10 +98,10 @@ public class HomeFragment extends CenesFragment {
     ExpandableListView homeScreenEventsList;
     RoundedImageView homePageProfilePic;
     TextView tvSelectedDate;
-    TextView gatheringBtn, homeNoEvents, tvCalendarSwitcher,tvNotificationCount;
-    ImageView homeCalenderSearchViewIcon, notificationIcon;
+    TextView gatheringBtn, homeNoEvents, tvCalendarSwitcher;
+    ImageView homeCalenderSearchViewIcon;
     MaterialCalendarView homeCalSearchView;
-    private ImageView footerHomeIcon, footerGatheringIcon, footerReminderIcon, footerAlarmIcon, footerDiaryIcon, footerMeTimeIcon;
+    //private ImageView footerHomeIcon, footerGatheringIcon, footerReminderIcon, footerAlarmIcon, footerDiaryIcon, footerMeTimeIcon;
     private FloatingActionButton fab, closeFabMenuBtn, gatheringFabMenuBtn, reminderFabMenuBtn, alarmFabMenuBtn;
     HomeScreenAdapter listAdapter;
     RelativeLayout rlFabMenu;
@@ -118,7 +126,7 @@ public class HomeFragment extends CenesFragment {
     private ProgressDialog mProgressDialog;
     private EventsTask eventsTask;
     private HolidayCalendarTask holidayCalendarTask;
-    private NotificationCountTask notificationCountTask;
+    private CurrentDateDecorator currentDateDecorator;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -129,17 +137,17 @@ public class HomeFragment extends CenesFragment {
 
         View v = inflater.inflate(R.layout.fragment_home, container, false);
 
-        if (((HomeScreenActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true)) {
-            ((HomeScreenActivity) getActivity()).sharedPrefs.edit().putBoolean("isFirstLogin", false).commit();
+        if (((CenesBaseActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true)) {
+            ((CenesBaseActivity) getActivity()).sharedPrefs.edit().putBoolean("isFirstLogin", false).commit();
         }
 
         init(v);
-
+        ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
         return v;
     }
 
     public void init(View v) {
-        cenesApplication = ((HomeScreenActivity) getActivity()).getCenesApplication();
+        cenesApplication = ((CenesBaseActivity) getActivity()).getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
         userManager = coreManager.getUserManager();
         apiManager = coreManager.getApiManager();
@@ -176,15 +184,13 @@ public class HomeFragment extends CenesFragment {
         homePageProfilePic = (RoundedImageView) v.findViewById(R.id.home_profile_pic);
 
         homeNoEvents = (TextView) v.findViewById(R.id.home_no_events);
-        footerHomeIcon = ((HomeScreenActivity) getActivity()).footerHomeIcon;
-        footerReminderIcon = ((HomeScreenActivity) getActivity()).footerReminderIcon;
-        footerGatheringIcon = ((HomeScreenActivity) getActivity()).footerGatheringIcon;
-        footerAlarmIcon = ((HomeScreenActivity) getActivity()).footerAlarmIcon;
-        footerDiaryIcon = ((HomeScreenActivity) getActivity()).footerDiaryIcon;
-        footerMeTimeIcon = ((HomeScreenActivity) getActivity()).footerMeTimeIcon;
+        //footerHomeIcon = ((CenesBaseActivity) getActivity()).footerHomeIcon;
+        //footerReminderIcon = ((CenesBaseActivity) getActivity()).footerReminderIcon;
+        //footerGatheringIcon = ((CenesBaseActivity) getActivity()).footerGatheringIcon;
+        //footerAlarmIcon = ((CenesBaseActivity) getActivity()).footerAlarmIcon;
+        //footerDiaryIcon = ((CenesBaseActivity) getActivity()).footerDiaryIcon;
+        //footerMeTimeIcon = ((CenesBaseActivity) getActivity()).footerMeTimeIcon;
 
-        notificationIcon = (ImageView) v.findViewById(R.id.notification_icon);
-        tvNotificationCount = (TextView) v.findViewById(R.id.tv_notification_count_pic);
         tvSelectedDate = (TextView) v.findViewById(R.id.tv_selected_date);
         //footerHomeIcon.setCompoundDrawables(getResources().getDrawable(R.drawable.home_icon),null,null,null);
         fab = (FloatingActionButton) v.findViewById(R.id.fab);
@@ -204,7 +210,9 @@ public class HomeFragment extends CenesFragment {
         homeCalenderSearchViewIcon = (ImageView) v.findViewById(R.id.home_cal_search_view_icon);
 
         homeCalSearchView = (MaterialCalendarView) v.findViewById(R.id.home_cal_search_view);
-        homeCalSearchView.addDecorator(new CurrentDateDecorator((HomeScreenActivity) getActivity(), R.drawable.calendar_selector_orange));
+
+        currentDateDecorator = new CurrentDateDecorator((CenesBaseActivity) getActivity(), R.drawable.calendar_selector_orange);
+        homeCalSearchView.addDecorator(currentDateDecorator);
         homeCalSearchView.setCurrentDate(new Date(System.currentTimeMillis()));
         //homeCalSearchView.newState().setCalendarDisplayMode(CalendarMode.values()[CalendarMode.WEEKS.ordinal()]).commit();
 
@@ -230,37 +238,19 @@ public class HomeFragment extends CenesFragment {
 
         tvCalendarSwitcher.setOnClickListener(onClickListener);
         homeCalenderSearchViewIcon.setOnClickListener(onClickListener);
-        footerGatheringIcon.setOnClickListener(onClickListener);
-        footerReminderIcon.setOnClickListener(onClickListener);
         fab.setOnClickListener(onClickListener);
         closeFabMenuBtn.setOnClickListener(onClickListener);
         gatheringFabMenuBtn.setOnClickListener(onClickListener);
         reminderFabMenuBtn.setOnClickListener(onClickListener);
         alarmFabMenuBtn.setOnClickListener(onClickListener);
-        notificationIcon.setOnClickListener(onClickListener);
-        footerAlarmIcon.setOnClickListener(onClickListener);
-        footerDiaryIcon.setOnClickListener(onClickListener);
-        footerMeTimeIcon.setOnClickListener(onClickListener);
         homePageProfilePic.setOnClickListener(onClickListener);
-
-        /*try {
-            calendarHighlights =  new HolidayCalendarTask().execute().get();
-            if (calendarHighlights.containsKey("MeTime")) {
-                homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_light_gray),calendarHighlights.get("MeTime")));
-            }
-            if (calendarHighlights.containsKey("Holiday")) {
-                homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_blue),calendarHighlights.get("Holiday")));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-
 
         homeCalSearchView.setOnDateChangedListener(new OnDateSelectedListener() {
             @Override
             public void onDateSelected(@NonNull MaterialCalendarView widget, @NonNull CalendarDay date, boolean selected) {
                 // TODO Auto-generated method stub
 
+                homeCalSearchView.removeDecorator(currentDateDecorator);
                 homeCalSearchView.removeDecorator(mOneDayDecorator);
 
                 Boolean isDefault = true;
@@ -270,7 +260,8 @@ public class HomeFragment extends CenesFragment {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
                         }
                     }
 
@@ -278,48 +269,60 @@ public class HomeFragment extends CenesFragment {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_teal);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_teal);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
                     if (calendarHighlights.containsKey("Google")) {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Google");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_red);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_red);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
                     if (calendarHighlights.containsKey("Outlook")) {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Outlook");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_outlook_blue);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_outlook_blue);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
                     if (calendarHighlights.containsKey("Facebook")) {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Facebook");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
                     if (calendarHighlights.containsKey("Apple")) {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Apple");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_gray);
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_gray);
+                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
                     if (calendarHighlights.containsKey("Cenes")) {
                         Set<CalendarDay> calendarDays = calendarHighlights.get("Cenes");
                         if (calendarDays.contains(date)) {
                             isDefault = false;
+                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
                             mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
                         }
                     }
 
                 }
                 if (isDefault) {
-                    mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_red);
+                    mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
                 }
 
                 homeCalSearchView.addDecorator(mOneDayDecorator);
@@ -336,15 +339,20 @@ public class HomeFragment extends CenesFragment {
                 tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
 
                 String queryStr = "&date=" + cal.getTimeInMillis();
-                if (internetManager.isInternetConnection((HomeScreenActivity) getActivity())) {
-                    eventsTask = new EventsTask();
-                    eventsTask.execute(queryStr);
+                if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
+                    try {
+                        eventsTask = new EventsTask();
+                        eventsTask.execute(queryStr);
+                    } catch (Exception e) {
+                        Toast.makeText((CenesBaseActivity) getActivity(), "Bad Request", Toast.LENGTH_LONG).show();
+                    }
                 } else {
-                    Toast.makeText((HomeScreenActivity) getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
+                    Toast.makeText((CenesBaseActivity) getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
                 }
             }
         });
-     }
+
+    }
 
     public void initialSync() {
         Calendar cal = Calendar.getInstance();
@@ -355,7 +363,7 @@ public class HomeFragment extends CenesFragment {
         cal.set(Calendar.MILLISECOND, 0);
 
         final String queryStr = "&date=" + cal.getTimeInMillis();
-        if (internetManager.isInternetConnection((HomeScreenActivity) getActivity())) {
+        if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
 
             AsyncTask.execute(new Runnable() {
                 @Override
@@ -370,17 +378,13 @@ public class HomeFragment extends CenesFragment {
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-                    //TODO your background code
-                    holidayCalendarTask = new HolidayCalendarTask();
-                    holidayCalendarTask.execute();
-                }
-            });
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    //TODO your background code
-                    notificationCountTask = new NotificationCountTask();
-                    notificationCountTask.execute();
+                    try {
+                        //TODO your background code
+                        holidayCalendarTask = new HolidayCalendarTask();
+                        holidayCalendarTask.execute();
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), "Bad Request", Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         } else {
@@ -403,8 +407,8 @@ public class HomeFragment extends CenesFragment {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.home_profile_pic:
-                    HomeScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                    
+                    ((CenesBaseActivity)getActivity()).fragmentManager.beginTransaction().add(R.id.settings_container, new NavigationFragment(), null).commit();
+                    ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
                     break;
                 case R.id.tvCalendarSwitcher:
                     if (calModeMonth) {
@@ -415,10 +419,6 @@ public class HomeFragment extends CenesFragment {
                         tvCalendarSwitcher.setText(getString(R.string.switch_to_weekly_view));
                     }
                     calModeMonth = !calModeMonth;
-                    break;
-                case R.id.footer_gathering_icon:
-                    startActivity(new Intent((HomeScreenActivity) getActivity(), GatheringScreenActivity.class));
-                    getActivity().finish();
                     break;
                 case R.id.home_cal_search_view_icon:
                     if (homeCalSearchView.getVisibility() == View.GONE) {
@@ -432,17 +432,6 @@ public class HomeFragment extends CenesFragment {
                         homeCalenderSearchViewIcon.setImageResource(R.drawable.calendar_close);
                     }
                     break;
-                case R.id.footer_home_icon:
-                    startActivity(getActivity().getIntent());
-                    break;
-                case R.id.footer_reminder_icon:
-                    startActivity(new Intent((HomeScreenActivity) getActivity(), ReminderActivity.class));
-                    getActivity().finish();
-                    break;
-                case R.id.footer_diary_icon:
-                    startActivity(new Intent((HomeScreenActivity) getActivity(), DiaryActivity.class));
-                    getActivity().finish();
-                    break;
                 case R.id.fab:
                     rlFabMenu.setVisibility(View.VISIBLE);
                     fab.setVisibility(View.GONE);
@@ -454,37 +443,31 @@ public class HomeFragment extends CenesFragment {
                 case R.id.gathering_fab_menu_btn:
                     rlFabMenu.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
-                    //startActivityForResult(new Intent(HomeScreenActivity.this, CreateGatheringActivity.class), CREATE_GATHERING_RESULT_CODE);
-                    Intent data = new Intent(getActivity().getApplicationContext(), GatheringScreenActivity.class);
-                    data.putExtra("dataFrom", "fabButton");
+                    //startActivityForResult(new Intent(CenesBaseActivity.this, CreateGatheringActivity.class), CREATE_GATHERING_RESULT_CODE);
+                    //Intent data = new Intent(getActivity().getApplicationContext(), GatheringScreenActivity.class);
+                    //data.putExtra("dataFrom", "fabButton");
                     //context.startActivityForResult(data, GATHERING_SUMMARY_RESULT_CODE);
-                    startActivityForResult(data, GATHERING_SUMMARY_RESULT_CODE);
+                    //startActivityForResult(data, GATHERING_SUMMARY_RESULT_CODE);
+                    CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
+                    ((CenesBaseActivity)getActivity()).replaceFragment(createGatheringFragment, CreateGatheringFragment.TAG);
                     break;
                 case R.id.reminder_fab_menu_btn:
                     /*rlFabMenu.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
-                    startActivityForResult(new Intent((HomeScreenActivity) getActivity(), CreateReminderActivity.class), CREATE_REMINDER_RESULT_CODE);
+                    startActivityForResult(new Intent((CenesBaseActivity) getActivity(), CreateReminderActivity.class), CREATE_REMINDER_RESULT_CODE);
                     //finish();*/
                     rlFabMenu.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
-                    data = new Intent(new Intent((HomeScreenActivity) getActivity(), CreateReminderActivity.class));
+                    Intent data = new Intent(new Intent((CenesBaseActivity) getActivity(), CreateReminderActivity.class));
                     data.putExtra("dataFrom", "fabButton");
                     startActivityForResult(data,CREATE_REMINDER_RESULT_CODE);
                     break;
                 case R.id.alarm_fab_menu_btn:
                     rlFabMenu.setVisibility(View.GONE);
                     fab.setVisibility(View.VISIBLE);
-                    data = new Intent(new Intent((HomeScreenActivity) getActivity(), AlarmActivity.class));
+                    data = new Intent(new Intent((CenesBaseActivity) getActivity(), AlarmActivity.class));
                     data.putExtra("dataFrom", "fabButton");
                     startActivityForResult(data,0001);
-                    break;
-                case R.id.footer_alarm_icon:
-                    startActivity(new Intent((HomeScreenActivity) getActivity(), AlarmActivity.class));
-                    getActivity().finish();
-                    break;
-                case R.id.footer_metime_icon:
-                    startActivity(new Intent((HomeScreenActivity) getActivity(), MeTimeActivity.class));
-                    getActivity().finish();
                     break;
             }
         }
@@ -514,7 +497,7 @@ public class HomeFragment extends CenesFragment {
 
          ShortcutBadger.applyCount(getActivity().getApplicationContext(),0);
 
-        SharedPreferences.Editor editor = ((HomeScreenActivity) getActivity()).sharedPrefs.edit();
+        SharedPreferences.Editor editor = ((CenesBaseActivity) getActivity()).sharedPrefs.edit();
         editor.putInt("badgeCounts", 0);
         editor.apply();
 
@@ -526,7 +509,8 @@ public class HomeFragment extends CenesFragment {
                 .setLabel(loggedInUser.getEmail()+" android")
                 .build());
 
-        ((HomeScreenActivity) getActivity()).showFooter();
+        ((CenesBaseActivity) getActivity()).showFooter();
+        ((CenesBaseActivity)  getActivity()).activateFooterIcon(HomeFragment.TAG);
     }
 
     @Override
@@ -538,9 +522,6 @@ public class HomeFragment extends CenesFragment {
         }
         if (holidayCalendarTask != null) {
             holidayCalendarTask.cancel(true);
-        }
-        if (notificationCountTask != null) {
-            notificationCountTask.cancel(true);
         }
 
     }
@@ -579,7 +560,7 @@ public class HomeFragment extends CenesFragment {
 
                 User user = userManager.getUser();
                 user.setApiUrl(urlManager.getApiUrl("dev"));
-                return apiManager.getUserEvents(user, queryStr, (HomeScreenActivity) getActivity());
+                return apiManager.getUserEvents(user, queryStr, (CenesBaseActivity) getActivity());
             } else {
                 return null;
             }
@@ -611,11 +592,16 @@ public class HomeFragment extends CenesFragment {
                        eventsExists = true;
                        for (int i = 0; i < jsonArray.length(); i++) {
                            try {
+
                                Event event = new Event();
                                JSONObject eventObj = (JSONObject) jsonArray.getJSONObject(i);
                                SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
                                SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
-                               SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
+                               SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a");
+
+                               if (eventObj.has("type") && eventObj.getString("type").equals("Reminder")) {
+                                   continue;
+                               }
 
                                if (eventObj.has("id")) {
                                    event.setEventId(eventObj.getLong("id"));
@@ -626,18 +612,21 @@ public class HomeFragment extends CenesFragment {
                                if (eventObj.has("type")) {
                                    event.setType(eventObj.getString("type"));
                                }
+                               if (eventObj.has("createdById")) {
+                                   event.setCreatedById(eventObj.getLong("createdById"));
+                               }
                                if (eventObj.has("eventPicture")) {
                                    event.setEventPicture(eventObj.getString("eventPicture"));
                                }
                                if (eventObj.has("location") && eventObj.getString("location") != "null") {
                                    event.setLocation(eventObj.getString("location"));
                                }
-                               if (eventObj.has("isFullDay")) {
+                               if (eventObj.has("isFullDay") && !eventObj.isNull("isFullDay")) {
                                    event.setIsFullDay(eventObj.getBoolean("isFullDay"));
                                }
                         /*if (eventObj.has("startTime")) {
                             Date startDate = new Date(eventObj.getLong("startTime"));
-                            event.setStartTime(timeFormat.format(startDate));
+                            parentEvent.setStartTime(timeFormat.format(startDate));
                         }*/
                                if (eventObj.has("source") && eventObj.getString("source") != null) {
                                    event.setSource(eventObj.getString("source"));
@@ -649,40 +638,61 @@ public class HomeFragment extends CenesFragment {
                                if (eventObj.has("members")) {
                                    JSONArray membersArray = eventObj.getJSONArray("members");
                                    List<EventMember> members = new ArrayList<>();
+                                   EventMember owner = null;
+                                   EventMember loggedInUserEventMemberData = null;
+
                                    for (int idx = 0; idx < membersArray.length(); idx++) {
                                        JSONObject memberObj = (JSONObject) membersArray.get(idx);
                                        EventMember eventMember = new EventMember();
-                                       if (memberObj.has("picture")) {
-                                           eventMember.setPicture(memberObj.getString("picture"));
+
+                                       Gson gson = new Gson();
+                                       eventMember = gson.fromJson(memberObj.toString(), EventMember.class);
+
+                                       if (eventMember.getUserId() != null && event.getCreatedById().equals(eventMember.getUserId())) {
+                                           owner = eventMember;
                                        }
-                                       if (memberObj.has("name")) {
-                                           eventMember.setName(memberObj.getString("name"));
+                                       if (eventMember.getUserId() != null && loggedInUser.getUserId() == eventMember.getUserId()) {
+                                           System.out.println("Inside Logegd IN User");
+                                           loggedInUserEventMemberData = eventMember;
+                                           System.out.println("Event Member Id : "+loggedInUserEventMemberData.toString());
                                        }
-                                       if (memberObj.has("owner")) {
-                                           eventMember.setOwner(memberObj.getBoolean("owner"));
-                                       }
+
                                        members.add(eventMember);
                                    }
                                    event.setEventMembers(members);
+
+                                   //This is needed to show owner image next to gathering
+                                   event.setOwner(owner);
+
+                                   System.out.println("Logged IN User member id : "+loggedInUserEventMemberData.getEventMemberId());
+                                   event.setUserEventMemberData(loggedInUserEventMemberData);
+                               }
+
+                               if (loggedInUser.getUserId() == event.getCreatedById()) {
+                                   event.setIsOwner(true);
+                               }
+
+
+                               if (eventObj.has("fullDayStartTime") && eventObj.getString("fullDayStartTime") != "null") {
+                                   eventObj.put("startTime", CenesUtils.yyyyMMdd.parse(eventObj.getString("fullDayStartTime")).getTime());
                                }
 
                                if (eventObj.has("startTime") && eventObj.getString("startTime") != "null") {
                                    Date startDate = new Date(eventObj.getLong("startTime"));
                                    event.setStartTime(timeFormat.format(startDate));
-                                   event.setStartTimeMillis(eventObj.getLong("startTime"));
+                                     event.setStartTimeMillis(eventObj.getLong("startTime"));
                                    String dateKey = calCategory.format(startDate).toUpperCase() + "<b>"+weekCategory.format(startDate).toUpperCase()+"</b>";
 
-
-                                  // String dateKey = calCategory.format(startDate) + CenesUtils.getDateSuffix(startDate.getDate());
-                                   /*if (sdf.format(startDate).equals(sdf.format(new Date()))) {
-                                       dateKey = "TODAY " + dateKey;
-                                   }*/
+                                  //String dateKey = calCategory.format(startDate) + CenesUtils.getDateSuffix(startDate.getDate());
+                                   if (sdf.format(startDate).equals(sdf.format(new Date()))) {
+                                       dateKey = "TODAY ";
+                                   }
                                    Calendar cal = Calendar.getInstance();
                                    cal.setTime(new Date());
                                    cal.add(Calendar.DATE, 1);
-                                   /*if (sdf.format(startDate).equals(sdf.format(cal.getTime()))) {
-                                       dateKey = "TOMORROW " + dateKey;
-                                   }*/
+                                   if (sdf.format(startDate).equals(sdf.format(cal.getTime()))) {
+                                       dateKey = "TOMORROW";
+                                   }
                                    if (!headers.contains(dateKey)) {
                                        headers.add(dateKey);
                                    }
@@ -693,12 +703,6 @@ public class HomeFragment extends CenesFragment {
                                    }
                                    events.add(event);
                                    eventMap.put(dateKey, events);
-                               } else {
-                                   if (!headers.contains("Reminders")) {
-                                       headers.add("Reminders");
-                                   }
-                                   events.add(event);
-                                   eventMap.put("Reminders", events);
                                }
                            } catch (Exception e) {
                                e.printStackTrace();
@@ -706,6 +710,17 @@ public class HomeFragment extends CenesFragment {
                        }
 
                        if (eventMap != null) {
+
+
+                           for (Map.Entry<String, List<Event>> eventMapEntrySet : eventMap.entrySet()) {
+
+                               Collections.sort(eventMapEntrySet.getValue(), new Comparator<Event>() {
+                                   public int compare(Event o1, Event o2) {
+                                       return o1.getIsFullDay().compareTo(true) > o2.getIsFullDay().compareTo(true) ? -1 : o1.getIsFullDay().compareTo(true) == o2.getFullDay().compareTo(true) ? 0 : 1;
+                                   }
+                               });
+                           }
+
                            Iterator iterator = eventMap.entrySet().iterator();
                            while (iterator.hasNext()) {
                                Map.Entry<String, List<Event>> entry = (Map.Entry<String, List<Event>>) iterator.next();
@@ -730,7 +745,7 @@ public class HomeFragment extends CenesFragment {
                            }
                        }
 
-                       listAdapter = new HomeScreenAdapter((HomeScreenActivity) getActivity(), headers, eventMap);
+                       listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
                    }
 
                    if (!eventsExists) {
@@ -766,7 +781,7 @@ public class HomeFragment extends CenesFragment {
             User user = userManager.getUser();
             user.setApiUrl(urlManager.getApiUrl("dev"));
             String queryStr = "?user_id=" + user.getUserId();
-            JSONObject response = apiManager.getUserHolidays(user, queryStr, (HomeScreenActivity) getActivity());
+            JSONObject response = apiManager.getUserHolidays(user, queryStr, (CenesBaseActivity) getActivity());
 
             return response;
         }
@@ -780,6 +795,33 @@ public class HomeFragment extends CenesFragment {
             if (!getActivity().isFinishing()) {
                 calendarHighlights = new HashMap<>();
                 try {
+
+                   /* Calendar cal1 = Calendar.getInstance();
+                    cal1.add(Calendar.DAY_OF_MONTH, 1);
+                    int year1 = cal1.get(Calendar.YEAR);
+                    int month1 = cal1.get(Calendar.MONTH);
+                    int dayOfMonth1 = cal1.get(Calendar.DAY_OF_MONTH);
+                    CalendarDay calendarDay1 = new CalendarDay(year1, month1, dayOfMonth1);
+
+                    Set<CalendarDay> todaySet1 = new HashSet<>();
+                    todaySet1.add(calendarDay1);
+
+                    //homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_teal), calendarHighlights.get("Holiday")));
+
+                    List<CalendarFilter> calendarFilters
+
+                    new MultipleEventDecorator()
+                    homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), todaySet1));
+
+                    Set<CalendarDay> todaySet2 = new HashSet<>();
+                    todaySet2.add(calendarDay1);
+
+                    //homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_teal), calendarHighlights.get("Holiday")));
+                    homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_blue), todaySet2));
+
+*/
+
+
                     if (response.getBoolean("success") && response.getJSONArray("data").length() > 0) {
                         JSONArray holidaysArray = response.getJSONArray("data");
 
@@ -832,22 +874,32 @@ public class HomeFragment extends CenesFragment {
                         }
 
                         if (calendarHighlights.containsKey("Holiday")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_teal), calendarHighlights.get("Holiday")));
+                            //homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_teal), calendarHighlights.get("Holiday")));
+                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Holiday")));
+
                         }
                         if (calendarHighlights.containsKey("Google")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.google_plus_red), calendarHighlights.get("Google")));
+                            //homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.google_plus_red), calendarHighlights.get("Google")));
+                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Google")));
+
                         }
                         if (calendarHighlights.containsKey("Outlook")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.outlook_blue), calendarHighlights.get("Outlook")));
+                           // homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.outlook_blue), calendarHighlights.get("Outlook")));
+                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Outlook")));
+
                         }
                         if (calendarHighlights.containsKey("Facebook")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.facebook_blue), calendarHighlights.get("Facebook")));
+                           // homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.facebook_blue), calendarHighlights.get("Facebook")));
+                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Facebook")));
+
                         }
                         if (calendarHighlights.containsKey("Apple")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_light_gray), calendarHighlights.get("Apple")));
+                          //  homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_light_gray), calendarHighlights.get("Apple")))
+                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Apple")));
+
                         }
                         if (calendarHighlights.containsKey("Cenes")) {
-                            homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Cenes")));
+                           homeCalSearchView.addDecorator(new EventDecorator(getResources().getColor(R.color.cenes_new_orange), calendarHighlights.get("Cenes")));
                         }
 
                     }
@@ -861,53 +913,6 @@ public class HomeFragment extends CenesFragment {
         protected void onCancelled() {
             super.onCancelled();
             holidayCalendarTask.cancel(true);
-        }
-    }
-
-    class NotificationCountTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-//            progressDialog = new ProgressDialog(getActivity());
-            //           progressDialog.setCancelable(false);
-            //          progressDialog.setMessage("Loading...");
-            //progressDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(JSONObject... strings) {
-            User user = userManager.getUser();
-            user.setApiUrl(urlManager.getApiUrl("dev"));
-            String queryStr = "?userId="+user.getUserId();
-            return apiManager.getNotificationCounts(user,queryStr,getCenesActivity());
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject s) {
-            super.onPostExecute(s);
-            if (getActivity() == null) {
-                return;
-            }
-
-            if (!getActivity().isFinishing()) {
-                try {
-                    tvNotificationCount.setText(String.valueOf(s.getInt("data")));
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            //progressDialog.hide();
-            //progressDialog.dismiss();
-            //progressDialog = null;
-        }
-
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-            notificationCountTask.cancel(true);
         }
     }
 

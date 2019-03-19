@@ -107,7 +107,7 @@ public class LiveConnectClient {
 
     /**
      * Listens to an {@link ApiRequestAsync} for onComplete and onError events and calls the proper
-     * method on the given {@link LiveDownloadOperationListener} on a given event.
+     * method on the given {@link LiveDownloadOperationListener} on a given parentEvent.
      */
     private static class DownloadObserver implements ApiRequestAsync.Observer<InputStream> {
         private final LiveDownloadOperationListener listener;
@@ -136,7 +136,7 @@ public class LiveConnectClient {
 
     /**
      * Listens to an {@link ApiRequestAsync} for onComplete and onError events and calls the proper
-     * method on the given {@link LiveDownloadOperationListener} on a given event. When the download
+     * method on the given {@link LiveDownloadOperationListener} on a given parentEvent. When the download
      * is complete this writes the results to a file, and publishes progress updates.
      */
     private static class FileDownloadObserver extends AsyncTask<InputStream, Integer, Runnable>
@@ -243,7 +243,7 @@ public class LiveConnectClient {
 
     /**
      * Listens to an {@link ApiRequestAsync} for onComplete and onError events and calls the proper
-     * method on the given {@link LiveOperationListener} on a given event.
+     * method on the given {@link LiveOperationListener} on a given parentEvent.
      */
     private static class OperationObserver implements ApiRequestAsync.Observer<JSONObject> {
 

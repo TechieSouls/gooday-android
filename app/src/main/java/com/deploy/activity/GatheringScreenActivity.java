@@ -21,6 +21,7 @@ import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.gathering.CreateGatheringFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragment;
 import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.fragment.NavigationFragment;
 
@@ -72,13 +73,6 @@ public class GatheringScreenActivity extends CenesActivity {
         if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("push")) {
 
             final Long eventId = intent.getLongExtra("eventId", 0l);
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    //TODO your background code
-                    new MarkNotificationReadTask().execute(eventId);
-                }
-            });
 
 
             Bundle bundle = new Bundle();
@@ -97,31 +91,28 @@ public class GatheringScreenActivity extends CenesActivity {
 
         } else if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("gathering_push")) {
             final Long eventId = intent.getLongExtra("eventId", 0l);
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    //TODO your background code
-                    new MarkNotificationReadTask().execute(eventId);
-                }
-            });
 
             Bundle bundle = new Bundle();
             bundle.putString("dataFrom", "list");
             bundle.putLong("eventId", intent.getLongExtra("eventId", 0l));
 
-            GatheringsFragment gatheringsFragment = new GatheringsFragment();
-            gatheringsFragment.setArguments(bundle);
-
-            replaceFragment(gatheringsFragment, null);
+            /*GatheringsFragment gatheringsFragment = new GatheringsFragment();
+            gatheringsFragment.setArguments(bundle);*/
+            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+            gatheringPreviewFragment.setArguments(bundle);
+            replaceFragment(gatheringPreviewFragment, null);
         } else if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("list")) {
             Bundle bundle = new Bundle();
             bundle.putString("dataFrom", "list");
             bundle.putLong("eventId", intent.getLongExtra("eventId", 0l));
 
-            CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
+            /*CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
             createGatheringFragment.setArguments(bundle);
 
-            replaceFragment(createGatheringFragment, null);
+            replaceFragment(createGatheringFragment, null);*/
+            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+            gatheringPreviewFragment.setArguments(bundle);
+            replaceFragment(gatheringPreviewFragment, null);
         } else if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("fabButton")) {
             replaceFragment(new CreateGatheringFragment(), null);
         } else {
@@ -176,41 +167,6 @@ public class GatheringScreenActivity extends CenesActivity {
         }
     };
 
-    class MarkNotificationReadTask extends AsyncTask<Long, Long, JSONObject> {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //progressDialog = new ProgressDialog(GatheringScreenActivity.this);
-            ///progressDialog.setMessage("Loading...");
-            //progressDialog.setIndeterminate(false);
-            //progressDialog.setCanceledOnTouchOutside(false);
-            //progressDialog.setCancelable(false);
-            //progressDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(Long... longs) {
-
-            Long eventId = longs[0];
-
-            User user = userManager.getUser();
-            user.setApiUrl(urlManager.getApiUrl("dev"));
-            String queryStr = "?userId=" + user.getUserId()+"&notificationTypeId="+eventId;
-            JSONObject response = apiManager.markNotificationAsReadByUserIdAndNotificatonId(user, queryStr, GatheringScreenActivity.this);
-            return response;
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject response) {
-            super.onPostExecute(response);
-            //progressDialog.hide();
-            //progressDialog.dismiss();
-            //progressDialog = null;
-        }
-    }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -235,6 +191,16 @@ public class GatheringScreenActivity extends CenesActivity {
     public void clearFragmentsAndOpen(Fragment fragment) {
         getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         replaceFragment(fragment, null);
+    }
+
+    public void removeAllFragments(FragmentManager fragmentManager) {
+        while (fragmentManager.getBackStackEntryCount() > 0) {
+            fragmentManager.popBackStackImmediate();
+        }
+    }
+
+    public void clearBackStackInclusive(String tag) {
+        getSupportFragmentManager().popBackStack(tag, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
     @Override

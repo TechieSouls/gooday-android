@@ -9,6 +9,8 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,10 +18,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.deploy.R;
 import com.deploy.service.PrefManager;
+import com.deploy.util.CenesUtils;
+import com.deploy.util.RoundedImageView;
 
 /**
  * Created by mandeep on 15/8/18.
@@ -30,7 +35,7 @@ public class WelcomeActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private MyViewPagerAdapter myViewPagerAdapter;
     private LinearLayout dotsLayout;
-    private TextView[] dots;
+    private View[] dots;
     private int[] layouts;
     private Button btnSkip, btnNext, btnGetStarted;
     private PrefManager prefManager;
@@ -67,7 +72,7 @@ public class WelcomeActivity extends AppCompatActivity {
         layouts = new int[]{
                 R.layout.onboarding_step1,
                 R.layout.onboarding_step2,
-                R.layout.onboarding_step3,
+                //R.layout.onboarding_step3,
                 R.layout.onboarding_step4,
                 R.layout.onboarding_step5};
 
@@ -114,22 +119,26 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     private void addBottomDots(int currentPage) {
-        dots = new TextView[layouts.length];
+        dots = new View[layouts.length];
 
-        int[] colorsActive = getResources().getIntArray(R.array.array_dot_active);
+        /*int[] colorsActive = getResources().getIntArray(R.array.array_dot_active);
         int[] colorsInactive = getResources().getIntArray(R.array.array_dot_inactive);
+        int[] colorsInactive = getResources().getDrawable(R.drawable.xml_circle_white);*/
 
         dotsLayout.removeAllViews();
         for (int i = 0; i < dots.length; i++) {
-            dots[i] = new TextView(this);
-            dots[i].setText(Html.fromHtml("&#8226;"));
-            dots[i].setTextSize(25);
-            dots[i].setTextColor(colorsInactive[currentPage]);
+
+            LinearLayout.LayoutParams viewParams = new LinearLayout.LayoutParams(CenesUtils.dpToPx(10), CenesUtils.dpToPx(10));
+            viewParams.setMargins(CenesUtils.dpToPx(5), 0, CenesUtils.dpToPx(5), 0);
+            viewParams.gravity = Gravity.CENTER;
+            dots[i] = new View(this);
+            dots[i].setLayoutParams(viewParams);
+            dots[i].setBackground(getResources().getDrawable(R.drawable.xml_circle_white));
             dotsLayout.addView(dots[i]);
         }
 
         if (dots.length > 0)
-            dots[currentPage].setTextColor(colorsActive[currentPage]);
+            dots[currentPage].setBackground(getResources().getDrawable(R.drawable.xml_circle_orange));
     }
 
     private int getItem(int i) {

@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -21,14 +24,19 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.deploy.AsyncTasks.GatheringAsyncTask;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.HomeScreenActivity;
 import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
 import com.deploy.bo.User;
+import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
+import com.deploy.fragment.NavigationFragment;
 import com.deploy.fragment.dashboard.HomeFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
@@ -46,15 +54,20 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
 
     private int GATHERING_SUMMARY_RESULT_CODE = 1001, CREATE_GATHERING_RESULT_CODE = 1002;
 
-    HomeScreenActivity context;
+    CenesBaseActivity context;
     List<String> headers;
     Map<String, List<Event>> eventsMap;
     LayoutInflater inflter;
+    User loggedInUser;
 
-    public HomeScreenAdapter(HomeScreenActivity applicationContext, List<String> headers, Map<String, List<Event>> eventsMap) {
+    public HomeScreenAdapter(CenesBaseActivity applicationContext, List<String> headers, Map<String, List<Event>> eventsMap) {
         this.context = applicationContext;
         this.headers = headers;
         this.eventsMap = eventsMap;
+
+        CoreManager coreManager = context.getCenesApplication().getCoreManager();
+        loggedInUser = coreManager.getUserManager().getUser();
+
         inflter = (LayoutInflater.from(applicationContext));
     }
 
@@ -94,12 +107,16 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             viewHolder.llHolidayEvents = (LinearLayout) convertView.findViewById(R.id.ll_holiday);
             viewHolder.tvHolidayTitle = (TextView) convertView.findViewById(R.id.tv_holiday_title);
 
+            viewHolder.tvTpEventTitle = (TextView) convertView.findViewById(R.id.tv_tp_event_title);
+            viewHolder.tvTpSource = (TextView) convertView.findViewById(R.id.tv_tp_source);
+            viewHolder.tvTpStartTime = (TextView) convertView.findViewById(R.id.tv_tp_start_time);
             //viewHolder.homeEventMemberImages = (LinearLayout) convertView.findViewById(R.id.home_adapter_event_member_images);
             ////viewHolder.memberImagesContainer = (LinearLayout) convertView.findViewById(R.id.ll_member_images_container);
             //viewHolder.homeEventMemberImagesCount = (TextView) convertView.findViewById(R.id.tv_event_member_images_count);
             //viewHolder.homeAdapterHorizontalImageScrollView = (HorizontalScrollView) convertView.findViewById(R.id.home_adapter_horizontal_scroll_view);
             viewHolder.tvReminderTitle = (TextView) convertView.findViewById(R.id.tv_reminder_title);
             viewHolder.trash = (TextView) convertView.findViewById(R.id.trash);
+            viewHolder.tvDecline = (TextView) convertView.findViewById(R.id.tv_decline);
             viewHolder.eventId = null;
             viewHolder.scheduleAs = null;
             convertView.setTag(viewHolder);
@@ -130,6 +147,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             viewHolder.scheduleAs = child.getScheduleAs();
             viewHolder.eventId = child.getEventId();
 
+            viewHolder.loggedInUserEventMemberData = child.getUserEventMemberData();
             if (child.getScheduleAs().equals("Gathering")) { //cenes events
 
                 viewHolder.llCenesEvents.setVisibility(View.VISIBLE);
@@ -143,8 +161,11 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                     viewHolder.eventLocation.setVisibility(View.VISIBLE);
                     viewHolder.eventLocation.setText(child.getLocation());
                 }
-                EventMember owner = child.getEventMembers().get(0);
-                Glide.with(context).load(owner.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(viewHolder.ivOwnerImage);
+                viewHolder.startTime.setText(child.getStartTime());
+
+                if (child.getOwner() != null && child.getOwner().getUser() != null) {
+                    Glide.with(context).load(child.getOwner().getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(viewHolder.ivOwnerImage);
+                }
 
             } else if (child.getScheduleAs().equals("Holiday")) { //holidays
 
@@ -153,7 +174,9 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                 viewHolder.llHolidayEvents.setVisibility(View.VISIBLE);
 
                 viewHolder.tvHolidayTitle.setText(child.getTitle());
-            } else { //third party events
+                viewHolder.startTime.setText(child.getStartTime());
+
+            } else if (child.getScheduleAs().equals("Event")) { //third party events
 
                 viewHolder.llCenesEvents.setVisibility(View.GONE);
                 viewHolder.llTpEvents.setVisibility(View.VISIBLE);
@@ -161,14 +184,22 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
 
                 viewHolder.tvTpEventTitle.setText(child.getTitle());
                 viewHolder.tvTpSource.setText(child.getSource());
+                if (child.getIsFullDay() != null && child.getIsFullDay()) {
+                    viewHolder.tvTpStartTime.setText("00:00AM");
+                } else {
+                    viewHolder.tvTpStartTime.setText(child.getStartTime());
+                }
             }
 
-
-            if (child.getIsFullDay() != null && child.getIsFullDay()) {
-                viewHolder.startTime.setText("00:00AM");
+            if (child.getIsOwner()) {
+                viewHolder.tvDecline.setVisibility(View.GONE);
+                viewHolder.trash.setVisibility(View.VISIBLE);
             } else {
-                viewHolder.startTime.setText(child.getStartTime());
+                viewHolder.tvDecline.setVisibility(View.VISIBLE);
+                viewHolder.trash.setVisibility(View.GONE);
             }
+
+
 
             /*String eventType = child.getSource();
 
@@ -177,7 +208,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             } else if(eventType.equalsIgnoreCase("google")) {
                 if(child.getScheduleAs().equalsIgnoreCase("holiday")) {
                     viewHolder.eventBar.setBackgroundColor(context.getResources().getColor(R.color.cenes_teal));
-                } else if (child.getScheduleAs().equalsIgnoreCase("event")) {
+                } else if (child.getScheduleAs().equalsIgnoreCase("parentEvent")) {
                     viewHolder.eventBar.setBackgroundColor(context.getResources().getColor(R.color.google_plus_red));
                 }
             } else if(eventType.equalsIgnoreCase("facebook")) {
@@ -250,13 +281,21 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             viewHolder.llEventRowItem.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Intent data = new Intent(context, GatheringScreenActivity.class);
-                    data.putExtra("dataFrom", "list");
-                    data.putExtra("eventId", viewHolder.eventId);
-                    //context.startActivityForResult(data, GATHERING_SUMMARY_RESULT_CODE);
-                    context.startActivity(data);
+                    if (viewHolder.scheduleAs.equals("Gathering")) {
+                        /*Intent data = new Intent(context, GatheringScreenActivity.class);
+                        data.putExtra("dataFrom", "list");
+                        data.putExtra("eventId", viewHolder.eventId);
+                        //context.startActivityForResult(data, GATHERING_SUMMARY_RESULT_CODE);
+                        context.startActivity(data);*/
 
+                        Bundle bundle = new Bundle();
+                        bundle.putString("dataFrom", "list");
+                        bundle.putLong("eventId", viewHolder.eventId);
+                        GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                        gatheringPreviewFragment.setArguments(bundle);
+                        context.replaceFragment(gatheringPreviewFragment, GatheringPreviewFragment.TAG);
 
+                    }
                 }
             });
 
@@ -276,6 +315,29 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                 @Override
                 public void onClick(View view) {
                     new DeleteGatheringTask().execute(viewHolder.eventId);
+                }
+            });
+
+            viewHolder.tvDecline.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+
+
+                    String declineQueryStr = "eventId=" +viewHolder.eventId+ "&userId="+loggedInUser.getUserId() + "&status=NotGoing";
+                    new GatheringAsyncTask(context.getCenesApplication(), context);
+                    new GatheringAsyncTask.UpdateStatusActionTask(new GatheringAsyncTask.UpdateStatusActionTask.AsyncResponse() {
+                        @Override
+                        public void processFinish(Boolean response) {
+                            //((HomeFragment)context.getVisibleFragment()).initialSync();
+                            Fragment currentFragment = context.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+                            context.fragmentManager
+                                    .beginTransaction()
+                                    .detach(currentFragment)
+                                    .attach(currentFragment)
+                                    .commit();
+                        }
+                    }).execute(declineQueryStr);
                 }
             });
 
@@ -351,6 +413,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
 
     static class ViewHolder {
         private Long eventId;
+        private Long userId;
         private TextView eventTitle;
         private TextView eventLocation;
         private View eventBar;
@@ -366,6 +429,7 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
         private LinearLayout llTpEvents;
         private TextView tvTpEventTitle;
         private TextView tvTpSource;
+        private TextView tvTpStartTime;
 
         private LinearLayout llHolidayEvents;
         private TextView tvHolidayTitle;
@@ -376,6 +440,8 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
         private String scheduleAs;
         //private HorizontalScrollView homeAdapterHorizontalImageScrollView;
         private TextView trash;
+        private TextView tvDecline;
+        private EventMember loggedInUserEventMemberData;
     }
 
     static class HeaderViewHolder {
@@ -418,7 +484,13 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
             try {
                 if (response.getBoolean("success")) {
                     Toast.makeText(context, "Gathering Deleted", Toast.LENGTH_SHORT).show();
-                    ((HomeFragment)context.getVisibleFragment()).initialSync();
+                    //((HomeFragment)context.getVisibleFragment()).initialSync();
+                    Fragment currentFragment = context.getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+                    context.fragmentManager
+                            .beginTransaction()
+                            .detach(currentFragment)
+                            .attach(currentFragment)
+                            .commit();
 
                 } else {
                     Toast.makeText(context, "Gathering Not Deleted", Toast.LENGTH_SHORT).show();

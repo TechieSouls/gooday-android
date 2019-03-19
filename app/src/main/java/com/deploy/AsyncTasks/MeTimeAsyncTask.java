@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.MeTimeActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.MeTimeApiManager;
@@ -18,6 +19,7 @@ import com.deploy.service.MeTimeService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -30,9 +32,9 @@ import java.util.Map;
 public class MeTimeAsyncTask {
 
     private static CenesApplication cenesApplication;
-    private static MeTimeActivity activity;
+    private static CenesBaseActivity activity;
 
-    public MeTimeAsyncTask (CenesApplication cenesApplication, MeTimeActivity activity) {
+    public MeTimeAsyncTask (CenesApplication cenesApplication, CenesBaseActivity activity) {
 
         this.cenesApplication = cenesApplication;
         this.activity = activity;
@@ -43,7 +45,7 @@ public class MeTimeAsyncTask {
         private MeTimeService meTimeService;
         private CoreManager coreManager = cenesApplication.getCoreManager();
 
-        ProgressDialog processDialog;
+        //ProgressDialog processDialog;
 
         public interface AsyncResponse {
             void processFinish(JSONObject response);
@@ -59,12 +61,12 @@ public class MeTimeAsyncTask {
             super.onPreExecute();
 
             meTimeService = new MeTimeService();
-            processDialog = new ProgressDialog(activity);
+            /*processDialog = new ProgressDialog(activity);
             processDialog.setMessage("Processing..");
             processDialog.setIndeterminate(false);
             processDialog.setCanceledOnTouchOutside(false);
             processDialog.setCancelable(false);
-            processDialog.show();
+            processDialog.show();*/
 
         }
 
@@ -94,10 +96,10 @@ public class MeTimeAsyncTask {
         @Override
         protected void onPostExecute(JSONObject metimeResponse) {
             super.onPostExecute(metimeResponse);
-            if (processDialog.isShowing()) {
+            /*if (processDialog.isShowing()) {
                 processDialog.dismiss();
             }
-            processDialog = null;
+            processDialog = null;*/
             delegate.processFinish(metimeResponse);
         }
     }
@@ -127,6 +129,7 @@ public class MeTimeAsyncTask {
             String queryStr = "userId=" + user.getUserId();
             try {
                 JSONObject response = meTimeApiManager.getUserMeTimeData(queryStr, user.getAuthToken());
+                System.out.println(response.toString());
                 return response;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -154,18 +157,6 @@ public class MeTimeAsyncTask {
             this.delegate = delegate;
         }
 
-        ProgressDialog processDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            processDialog = new ProgressDialog(activity);
-            processDialog.setMessage("Deleting..");
-            processDialog.setIndeterminate(false);
-            processDialog.setCancelable(false);
-            processDialog.show();
-        }
-
         @Override
         protected JSONObject doInBackground(Long... longs) {
 
@@ -188,10 +179,45 @@ public class MeTimeAsyncTask {
         @Override
         protected void onPostExecute(JSONObject response) {
             super.onPostExecute(response);
-            processDialog.dismiss();
-            processDialog = null;
-
             delegate.processFinish(response);
+        }
+    }
+
+    public static class UploadPhotoTask extends AsyncTask<Map<String, Object>, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public UploadPhotoTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected JSONObject doInBackground(Map<String, Object>... mapObjects) {
+            UserManager userManager = coreManager.getUserManager();
+            MeTimeApiManager meTimeApiManager= coreManager.getMeTimeApiManager();
+
+            User user = userManager.getUser();
+            Map<String, Object> mapPostObject = mapObjects[0];
+            try {
+                String queryStr = "recurringEventId="+(Long)mapPostObject.get("recurringEventId");
+                File file = (File)mapPostObject.get("file");
+                JSONObject response = meTimeApiManager.uploadMeTimePhoto(queryStr, user.getAuthToken(), file);
+                return response;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            delegate.processFinish(jsonObject);
         }
     }
 }

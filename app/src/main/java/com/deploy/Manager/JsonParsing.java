@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -40,6 +41,8 @@ public class JsonParsing {
     public JSONObject httpPost(String url,JSONObject postData,String authToken) {
         String response = "";
         try {
+            System.out.println("API : "+url);
+            System.out.println("Post Data : "+postData.toString());
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             //add request header
@@ -60,6 +63,7 @@ public class JsonParsing {
             BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
             response = br.readLine();
 
+            System.out.println(response.toString());
             JSONObject jObj = new JSONObject(response.toString());
             return jObj;
         } catch (Exception e) {
@@ -77,6 +81,33 @@ public class JsonParsing {
             multipart.addFormField("userId", String.valueOf(user.getUserId()));
 
             multipart.addFilePart("mediaFile",file);
+
+            List<String> response = multipart.finish();
+
+            System.out.println("SERVER REPLIED:");
+            StringBuffer responseBuffer = new StringBuffer();
+            for (String line : response) {
+                //Log.e("File Output : ",line);
+                responseBuffer.append(line);
+            }
+            JSONObject jObj = new JSONObject(responseBuffer.toString());
+            return jObj;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject httpPostMultipartWithFormData(String url, Map<String, String> formFields, File file, String authToken) {
+        String charset = "UTF-8";
+        try {
+            MultipartUtility multipart = new MultipartUtility(url,charset,authToken);
+
+            for (Map.Entry<String, String> formFieldsMap : formFields.entrySet()) {
+                multipart.addFormField(formFieldsMap.getKey(), formFieldsMap.getValue());
+            }
+
+            multipart.addFilePart("uploadfile",file);
 
             List<String> response = multipart.finish();
 
@@ -122,6 +153,7 @@ public class JsonParsing {
     public JSONObject httpGetJsonObject(String url,String authToken) {
         StringBuilder sb = new StringBuilder();
         try {
+            System.out.println("API : "+url);
             URL obj = new URL(url);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             //add request header
@@ -133,15 +165,18 @@ public class JsonParsing {
 
             int responseCode = con.getResponseCode();
             System.out.println("Response Code : " + responseCode);
-            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line);
-                line = br.readLine();
+            if (responseCode == 200) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String line = br.readLine();
+                while (line != null) {
+                    sb.append(line);
+                    line = br.readLine();
+                }
+                System.out.println(sb.toString());
+                JSONObject jsonObject = new JSONObject(sb.toString());
+                return jsonObject;
             }
-            System.out.println(sb.toString());
-            JSONObject jsonObject = new JSONObject(sb.toString());
-            return jsonObject;
+
         } catch (Exception e) {
             e.printStackTrace();
         }

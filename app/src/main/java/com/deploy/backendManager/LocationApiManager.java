@@ -30,6 +30,7 @@ public class LocationApiManager {
 
     public List<Location> fetchRecentEvents(String params, String authToken) {
         String url = UrlManagerImpl.prodAPIUrl+ LocationAPI.get_recentLocations+"?"+params;
+        System.out.println("Loaction API : "+url);
         JsonParsing jsonParsing = new JsonParsing();
         JSONArray locationArray = jsonParsing.httpGet(url, authToken);
 

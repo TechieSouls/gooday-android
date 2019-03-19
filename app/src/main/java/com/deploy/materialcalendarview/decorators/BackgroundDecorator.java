@@ -1,7 +1,9 @@
 package com.deploy.materialcalendarview.decorators;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
@@ -23,13 +25,15 @@ public class BackgroundDecorator implements DayViewDecorator {
     private HashSet<CalendarDay> dates;
     private Drawable drawable;
     boolean highlight;
+    boolean imageBackground;
     Context context;
 
-    public BackgroundDecorator(Context context, int resId, Collection<CalendarDay> dates, boolean highlight) {
+    public BackgroundDecorator(Context context, int resId, Collection<CalendarDay> dates, boolean highlight, boolean imageBackground) {
         if (context == null) {
             return;
         }
-        drawable = ContextCompat.getDrawable(context, resId);
+        this.drawable = ContextCompat.getDrawable(context, resId);
+        this.imageBackground = imageBackground;
         this.dates = new HashSet<>(dates);
         this.context = context;
         this.highlight = highlight;
@@ -43,6 +47,9 @@ public class BackgroundDecorator implements DayViewDecorator {
     @Override
     public void decorate(DayViewFacade view) {
         view.setBackgroundDrawable(drawable);
+        if (imageBackground) {
+            System.out.println("hey..");
+        }
         view.setSelectionDrawable(new ColorDrawable(Color.TRANSPARENT));
         //view.setDaysDisabled(true);
         if (highlight)

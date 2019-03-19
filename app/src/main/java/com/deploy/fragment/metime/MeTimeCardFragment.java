@@ -1,30 +1,56 @@
 package com.deploy.fragment.metime;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.MeTimeAsyncTask;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.MeTimeActivity;
 import com.deploy.application.CenesApplication;
+import com.deploy.bo.MeTime;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.service.MeTimeService;
+import com.deploy.util.CenesConstants;
 import com.deploy.util.CenesUtils;
+import com.deploy.util.ImageUtils;
+import com.deploy.util.RoundedImageView;
+import com.soundcloud.android.crop.Crop;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,15 +71,16 @@ public class MeTimeCardFragment extends CenesFragment {
 
     public final static String TAG = "MeTimeCardFragment";
     private final static int TIME_PICKER_INTERVAL = 5;
+    private final static int UPLOAD_IMAGE_CODE = 100;
 
-    private LinearLayout rlFooter;
     private Button sunday, monday, tuesday, wednesday, thursday, friday, saturday;
     private Button saveMeTime, deleteMeTime;
     private TextView startTimeText, endTimeText;
     private LinearLayout metimeStartTime, metimeEndTime;
     private EditText etMetimeTitle;
-
-    View opacityFilter;
+    private RelativeLayout rlUploadMetimeImg, swipeCard;
+    private RoundedImageView rivMeTimeImg;
+    View viewOpaque;
 
     JSONObject meTimeJSONObj;
     private JSONObject meTimeData = new JSONObject();
@@ -62,6 +89,7 @@ public class MeTimeCardFragment extends CenesFragment {
     private MeTimeAsyncTask meTimeAsyncTask;
     private Long startTimeMillis;
     private Long endTimeMillis;
+    private File metimePhotoFile;
     JSONObject selectedDaysHolder;
 
     @Override
@@ -69,12 +97,13 @@ public class MeTimeCardFragment extends CenesFragment {
 
         View view = inflater.inflate(R.layout.fragment_metime_card, container, false);
 
-        rlFooter = ((MeTimeActivity) getActivity()).rlFooter;
-        rlFooter.setVisibility(View.GONE);
+        ((CenesBaseActivity) getActivity()).hideFooter();
 
-        opacityFilter = view.findViewById(R.id.opacityFilter);
-
+        rlUploadMetimeImg = (RelativeLayout) view.findViewById(R.id.rl_upload_metime_img);
+        swipeCard = (RelativeLayout) view.findViewById(R.id.swipe_card);
+        rivMeTimeImg = (RoundedImageView) view.findViewById(R.id.riv_meTime_img);
         etMetimeTitle = (EditText) view.findViewById(R.id.et_metime_title);
+        viewOpaque = view.findViewById(R.id.view_opaque);
 
         sunday = (Button) view.findViewById(R.id.metime_sun_text);
         monday = (Button) view.findViewById(R.id.metime_mon_text);
@@ -94,7 +123,10 @@ public class MeTimeCardFragment extends CenesFragment {
         saveMeTime = (Button) view.findViewById(R.id.btn_save_metime);
         deleteMeTime = (Button) view.findViewById(R.id.btn_delete_meTime);
 
-        opacityFilter.setOnClickListener(onClickListener);
+        rivMeTimeImg.setOnClickListener(onClickListener);
+        rivMeTimeImg.setOnClickListener(onClickListener);
+
+        slideToTop(swipeCard);
 
         sunday.setOnClickListener(onClickListener);
         monday.setOnClickListener(onClickListener);
@@ -107,13 +139,23 @@ public class MeTimeCardFragment extends CenesFragment {
         deleteMeTime.setOnClickListener(onClickListener);
         metimeStartTime.setOnClickListener(onClickListener);
         metimeEndTime.setOnClickListener(onClickListener);
+        rlUploadMetimeImg.setOnClickListener(onClickListener);
+        viewOpaque.setOnClickListener(onClickListener);
+
+        /*DisplayMetrics displayMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int width = displayMetrics.widthPixels;
+        RelativeLayout.LayoutParams viewParams = new RelativeLayout.LayoutParams(width, height);
+        viewOpaque.setLayoutParams(viewParams);*/
 
         cenesApplication = getCenesActivity().getCenesApplication();
         meTimeService = new MeTimeService();
-        meTimeAsyncTask = new MeTimeAsyncTask(cenesApplication, (MeTimeActivity)getActivity());
+        meTimeAsyncTask = new MeTimeAsyncTask(cenesApplication, (CenesBaseActivity)getActivity());
 
         meTimeJSONObj = new JSONObject();
         selectedDaysHolder = new JSONObject();
+        metimePhotoFile = null;
 
         startTimeText.setText("00:00");
         startTimeMillis = null;
@@ -127,21 +169,31 @@ public class MeTimeCardFragment extends CenesFragment {
             try {
                 meTimeJSONObj = new JSONObject(meTimeFragmentBundle.getString("meTimeCard"));
 
+                if (!CenesUtils.isEmpty(meTimeJSONObj.getString("photo"))) {
+                    rivMeTimeImg.setVisibility(View.VISIBLE);
+                    rlUploadMetimeImg.setVisibility(View.GONE);
+                    Glide.with(getActivity()).load(CenesConstants.imageDomain+meTimeJSONObj.getString("photo")).apply(RequestOptions.placeholderOf(R.drawable.metime_default)).into(rivMeTimeImg);
+                }
+
                 etMetimeTitle.setText(meTimeJSONObj.getString("title"));
 
                 if (meTimeJSONObj.has("startTime")) {
                     startTimeMillis = meTimeJSONObj.getLong("startTime");
                     endTimeMillis = meTimeJSONObj.getLong("endTime");
 
-                    startTimeText.setText(CenesUtils.hhmmaa.format(new Date(startTimeMillis)));
-                    endTimeText.setText(CenesUtils.hhmmaa.format(new Date(endTimeMillis)));
+                    startTimeText.setText(CenesUtils.hmmaa.format(new Date(startTimeMillis)));
+                    endTimeText.setText(CenesUtils.hmmaa.format(new Date(endTimeMillis)));
 
                     JSONArray recurringPatterns = meTimeJSONObj.getJSONArray("recurringPatterns");
 
                     for(int i=0; i < recurringPatterns.length(); i++) {
 
                         JSONObject recJson = recurringPatterns.getJSONObject(i);
-                        selectedDaysHolder.put(meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek")), true);
+                        //selectedDaysHolder.put(meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek")), true);
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTimeInMillis(recJson.getLong("dayOfWeekTimestamp"));
+                        //daysInStrList[j] = cal.get(Calendar.DAY_OF_WEEK);//recJson.getInt("dayOfWeek");
+                        selectedDaysHolder.put(meTimeService.IndexDayMap().get(cal.get(Calendar.DAY_OF_WEEK)), true);
                     }
 
                     Iterator<String> daysItr = selectedDaysHolder.keys();
@@ -186,10 +238,26 @@ public class MeTimeCardFragment extends CenesFragment {
 
             switch (v.getId()) {
 
-                case R.id.opacityFilter:
-                    getActivity().onBackPressed();
-                    break;
+                case R.id.rl_upload_metime_img:
+                    if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                    } else {
+                        Intent browseIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                        browseIntent.setType("image/*");
 
+                        startActivityForResult(browseIntent, UPLOAD_IMAGE_CODE);
+                    }
+                    break;
+                case R.id.riv_meTime_img:
+                    if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                    } else {
+                        Intent browseIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                        browseIntent.setType("image/*");
+
+                        startActivityForResult(browseIntent, UPLOAD_IMAGE_CODE);
+                    }
+                    break;
                 case R.id.metime_sun_text:
                     try {
                         if (!selectedDaysHolder.has("Sunday") || !selectedDaysHolder.getBoolean("Sunday")) {
@@ -318,19 +386,30 @@ public class MeTimeCardFragment extends CenesFragment {
                             Calendar mcurrentTime = Calendar.getInstance();
                             mcurrentTime.set(Calendar.HOUR_OF_DAY, selectedHour);
                             mcurrentTime.set(Calendar.MINUTE, selectedMinute);
+
+                            System.out.println("HOur"+mcurrentTime.get(Calendar.HOUR)+"  -- "+selectedHour);
+
                             String ampm = "AM";
                             if (selectedHour >= 12) {
                                 ampm = "PM";
                             }
-                            String singleDigitZero = "";
+                           /* String singleDigitZero = "";
                             if (mcurrentTime.get(Calendar.HOUR) < 10  && ampm.equals("AM")) {
                                 singleDigitZero = "0";
-                            }
+                            }*/
+
+                           int selectedHourTemp = 0;
+                           if (selectedHour == 0 || selectedHour == 12) {
+                               selectedHourTemp = 12;
+                           } else {
+                               selectedHourTemp = mcurrentTime.get(Calendar.HOUR);
+                           }
+
                             String singleDigitMinuteZero = "";
                             if (selectedMinute < 10) {
                                 singleDigitMinuteZero = "0";
                             }
-                            startTimeText.setText(singleDigitZero + mcurrentTime.get(Calendar.HOUR) + ":" + singleDigitMinuteZero + selectedMinute+ampm);
+                            startTimeText.setText( selectedHourTemp+ ":" + singleDigitMinuteZero + selectedMinute+ampm);
                             startTimeMillis = mcurrentTime.getTimeInMillis();
                         }
                     };
@@ -356,15 +435,22 @@ public class MeTimeCardFragment extends CenesFragment {
                             if (selectedHour >= 12) {
                                 ampm = "PM";
                             }
-                            String singleDigitZero = "";
+                            /*String singleDigitZero = "";
                             if (mcurrentTime.get(Calendar.HOUR) < 10 && ampm.equals("AM")) {
                                 singleDigitZero = "0";
+                            }*/
+
+                            int selectedHourTemp = 0;
+                            if (selectedHour == 0 || selectedHour == 12) {
+                                selectedHourTemp = 12;
+                            } else {
+                                selectedHourTemp = mcurrentTime.get(Calendar.HOUR);
                             }
                             String singleDigitMinuteZero = "";
                             if (selectedMinute < 10) {
                                 singleDigitMinuteZero = "0";
                             }
-                            endTimeText.setText(singleDigitZero + mcurrentTime.get(Calendar.HOUR) + ":" + singleDigitMinuteZero + selectedMinute+ampm);
+                            endTimeText.setText(selectedHourTemp + ":" + singleDigitMinuteZero + selectedMinute+ampm);
                             endTimeMillis = mcurrentTime.getTimeInMillis();
                         }
                     };
@@ -399,10 +485,21 @@ public class MeTimeCardFragment extends CenesFragment {
                      while(itr.hasNext()) {
                         JSONObject meTimeEvent = new JSONObject();
                         try {
+                            String dayOfWeek = itr.next();
+
                             meTimeEvent.put("title", etMetimeTitle.getText().toString());
-                            meTimeEvent.put("dayOfWeek", itr.next());
-                            meTimeEvent.put("startTime", startTimeMillis);
-                            meTimeEvent.put("endTime", endTimeMillis);
+                            meTimeEvent.put("dayOfWeek", dayOfWeek);
+
+                            Calendar startCal = Calendar.getInstance();
+                            startCal.setTimeInMillis(startTimeMillis);
+                            startCal.set(Calendar.DAY_OF_WEEK, new MeTimeService().dayIndexMap().get(dayOfWeek));
+
+                            meTimeEvent.put("startTime", startCal.getTimeInMillis());
+
+                            Calendar endCal = Calendar.getInstance();
+                            endCal.setTimeInMillis(endTimeMillis);
+                            endCal.set(Calendar.DAY_OF_WEEK, new MeTimeService().dayIndexMap().get(dayOfWeek));
+                            meTimeEvent.put("endTime", endCal.getTimeInMillis());
                             meTimeEvents.put(meTimeEvent);
                         } catch (Exception e){
                             e.printStackTrace();
@@ -411,83 +508,186 @@ public class MeTimeCardFragment extends CenesFragment {
 
                     try {
                         meTimeJSONObj.put("events", meTimeEvents);
+                        if (metimePhotoFile != null) {
+                            meTimeJSONObj.put("metimePhotoFilePath", metimePhotoFile.getPath());
+                        }
                     } catch (Exception e){
                         e.printStackTrace();
                     }
 
-                    new MeTimeAsyncTask.MeTimePosting(new MeTimeAsyncTask.MeTimePosting.AsyncResponse() {
-                        @Override
-                        public void processFinish(JSONObject response) {
-                            try {
-                                if(response != null) {
-                                    //Moving to Previous Fragment After Delete
-                                    Toast.makeText(getActivity(),"MyTime Saved",Toast.LENGTH_SHORT).show();
-                                    getActivity().onBackPressed();
-                                } else {
-                                    ((MeTimeActivity) getActivity()).showRequestTimeoutDialog();
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                    Intent intent = new Intent();
+                    try {
+                        intent.putExtra(MeTimeFragment.SAVE_METIME_REQUEST_STRING, meTimeJSONObj.toString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    ((CenesBaseActivity)getActivity()).fragmentManager.getFragments();
+                    for (Fragment fragment : ((CenesBaseActivity)getActivity()).fragmentManager.getFragments()) {
+                        if (fragment instanceof MeTimeFragment) {
+                            fragment.onActivityResult(MeTimeFragment.SAVE_METIME_REQUEST_CODE, Activity.RESULT_OK, intent);
                         }
-                    }).execute(meTimeJSONObj);
+                    }
+                    getFragmentManager().popBackStack();
                     break;
 
                 case R.id.btn_delete_meTime:
 
-                    try {
-                        if (meTimeJSONObj.has("recurringEventId")) {
-                            new MeTimeAsyncTask.DeleteMeTimeDataTask(new MeTimeAsyncTask.DeleteMeTimeDataTask.AsyncResponse() {
-                                @Override
-                                public void processFinish(JSONObject response) {
 
-                                    //Moving to Previous Fragment After Delete
-                                    getActivity().onBackPressed();
-                                }
-                            }).execute(meTimeJSONObj.getLong("recurringEventId"));
-                        } else {
-
-                            SharedPreferences prefs = getActivity().getSharedPreferences("DEFAULT_METIME", Context.MODE_PRIVATE);
-                            if (prefs != null ) {
-                                String meTimeJSONString = prefs.getString("defaultMeTimeJSON", null);
-                                if (meTimeJSONString != null) {
-                                    try {
-                                        JSONArray defaultMetimesArr = new JSONArray(meTimeJSONString);
-                                        for (int d=0; d < defaultMetimesArr.length(); d++) {
-                                            JSONObject defaultMeTime = defaultMetimesArr.getJSONObject(d);
-                                            if (defaultMeTime.getString("title").equals(meTimeJSONObj.getString("title"))) {
-                                                defaultMetimesArr.remove(d);
-                                            }
-                                        }
-                                        SharedPreferences.Editor editor = getActivity().getSharedPreferences("DEFAULT_METIME", Context.MODE_PRIVATE).edit();
-                                        editor.putString("defaultMeTimeJSON", defaultMetimesArr.toString());
-                                        editor.apply();
-
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-
-                            getActivity().onBackPressed();
+                    Intent deleteIntent = new Intent();
+                    if (meTimeJSONObj.has("recurringEventId")) {
+                        try {
+                            JSONObject responseJSON = new JSONObject();
+                            responseJSON.put("recurringEventId", meTimeJSONObj.getLong("recurringEventId"));
+                            deleteIntent.putExtra(MeTimeFragment.DELETE_METIME_REQUEST_STRING, responseJSON.toString());
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+                    ((CenesBaseActivity) getActivity()).fragmentManager.getFragments();
+                    for (Fragment fragment : ((CenesBaseActivity) getActivity()).fragmentManager.getFragments()) {
+                        if (fragment instanceof MeTimeFragment) {
+                            if (meTimeJSONObj.has("recurringEventId")) {
+                                fragment.onActivityResult(MeTimeFragment.DELETE_METIME_REQUEST_CODE, Activity.RESULT_OK, deleteIntent);
+                            } else {
+                                fragment.onActivityResult(MeTimeFragment.CANCEL_METIME_REQUEST_CODE, Activity.RESULT_OK, deleteIntent);
+                            }
+                        }
+                    }
+
+                    getFragmentManager().popBackStack();
                     break;
+                case R.id.view_opaque:
+                    ((CenesBaseActivity)getActivity()).onBackPressed();
+                    break;
+
             }
         }
     };
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        getActivity().overridePendingTransition(R.anim.exit_to_top, R.anim.enter_from_bottom);
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 0) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            } else {
+
+                Intent browseIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                browseIntent.setType("image/*");
+                startActivityForResult(browseIntent, UPLOAD_IMAGE_CODE);
+
+            }
+        }
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        getActivity().overridePendingTransition(R.anim.enter_from_bottom, R.anim.exit_to_top);
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == UPLOAD_IMAGE_CODE && resultCode == Activity.RESULT_OK) {
+            try {
+
+                String filePath = ImageUtils.getPath(getCenesActivity().getApplicationContext(), data.getData());
+
+                Uri imageUri = data.getData();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getCenesActivity().getContentResolver(), imageUri);
+                ExifInterface ei = new ExifInterface(filePath);
+                int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_UNDEFINED);
+
+                Bitmap rotatedBitmap = null;
+                switch(orientation) {
+
+                    case ExifInterface.ORIENTATION_ROTATE_90:
+                        rotatedBitmap = rotateImage(bitmap, 90);
+                        break;
+
+                    case ExifInterface.ORIENTATION_ROTATE_180:
+                        rotatedBitmap = rotateImage(bitmap, 180);
+                        break;
+
+                    case ExifInterface.ORIENTATION_ROTATE_270:
+                        rotatedBitmap = rotateImage(bitmap, 270);
+                        break;
+
+                    case ExifInterface.ORIENTATION_NORMAL:
+                    default:
+                        rotatedBitmap = bitmap;
+                }
+
+
+                ImageUtils.cropImageWithAspect(getImageUri(getContext().getApplicationContext(), rotatedBitmap), this, 200, 200);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (requestCode == Crop.REQUEST_CROP && resultCode == Activity.RESULT_OK) {
+            try {
+                String filePath = ImageUtils.getPath(getCenesActivity().getApplicationContext(), Crop.getOutput(data));
+                metimePhotoFile = new File(filePath);
+
+                Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(getCenesActivity().getContentResolver(), Crop.getOutput(data));
+
+                ExifInterface ei = new ExifInterface(filePath);
+                int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_UNDEFINED);
+
+                Bitmap rotatedBitmap = null;
+                switch(orientation) {
+
+                    case ExifInterface.ORIENTATION_ROTATE_90:
+                        rotatedBitmap = rotateImage(imageBitmap, 90);
+                        break;
+
+                    case ExifInterface.ORIENTATION_ROTATE_180:
+                        rotatedBitmap = rotateImage(imageBitmap, 180);
+                        break;
+
+                    case ExifInterface.ORIENTATION_ROTATE_270:
+                        rotatedBitmap = rotateImage(imageBitmap, 270);
+                        break;
+
+                    case ExifInterface.ORIENTATION_NORMAL:
+                    default:
+                        rotatedBitmap = imageBitmap;
+                }
+
+                rlUploadMetimeImg.setVisibility(View.GONE);
+                rivMeTimeImg.setVisibility(View.VISIBLE);
+                rivMeTimeImg.setImageBitmap(rotatedBitmap);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void slideToBottom(RelativeLayout view){
+        TranslateAnimation animate = new TranslateAnimation(0,0,0,1000);
+        animate.setDuration(500);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.GONE);
+    }
+
+    public static void slideToTop(RelativeLayout view){
+        System.out.println(view.getHeight());
+        TranslateAnimation animate = new TranslateAnimation(0,0,1000,0);
+        animate.setDuration(500);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.VISIBLE);
+    }
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
+    }
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
     }
 }

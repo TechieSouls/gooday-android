@@ -9,6 +9,10 @@ public class MeTimeAPI {
     //POST
     public static String post_metimeData = "/api/user/metime";
 
+
+    //POST
+    public static String post_metimePhoto = "/api/recurring/upload";
+
     //GET
     public static String get_metimeData = "/api/user/getmetimes";
 

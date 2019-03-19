@@ -72,7 +72,7 @@ public class ReminderActivity extends CenesActivity {
             replaceFragment(new CreateReminderFragment(), null);
         } else {
 
-            new MarkNotificationReadTask().execute();
+            //new MarkNotificationReadTask().execute();
             replaceFragment(new ReminderFragment(), null);
         }
     }
@@ -92,39 +92,6 @@ public class ReminderActivity extends CenesActivity {
 
         footerHomeIcon.setImageResource(R.drawable.home_icon_unselected);
         footerReminderIcon.setImageResource(R.drawable.reminder_icon_selected);
-    }
-
-    class MarkNotificationReadTask extends AsyncTask<Long, Long, JSONObject> {
-        ProgressDialog progressDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            //progressDialog = new ProgressDialog(ReminderActivity.this);
-            //progressDialog.setMessage("Loading...");
-            //progressDialog.setIndeterminate(false);
-            //progressDialog.setCanceledOnTouchOutside(false);
-            //progressDialog.setCancelable(false);
-            //progressDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(Long... longs) {
-
-            User user = userManager.getUser();
-            user.setApiUrl(urlManager.getApiUrl("dev"));
-            String queryStr = "?userId=" + user.getUserId();
-            JSONObject response = apiManager.markNotificationAsReadByUserIdAndNotificatonId(user, queryStr, ReminderActivity.this);
-            return response;
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject response) {
-            super.onPostExecute(response);
-            //progressDialog.hide();
-            //progressDialog.dismiss();
-            //progressDialog = null;
-        }
     }
 
     View.OnClickListener onClickListener = new View.OnClickListener() {

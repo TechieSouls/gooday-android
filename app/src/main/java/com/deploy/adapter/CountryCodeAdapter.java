@@ -87,7 +87,7 @@ public class CountryCodeAdapter extends BaseExpandableListAdapter {
         }
 
         String headerTitle = (String) getGroup(position);
-        holder.lblCountryListHeader.setText(headerTitle);
+        holder.lblCountryListHeader.setText("The \""+headerTitle+"\" Countries");
 
         return view;
     }

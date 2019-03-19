@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.support.v4.os.ConfigurationCompat;
 import android.telephony.TelephonyManager;
+import android.util.TypedValue;
 
 import com.deploy.R;
 import com.deploy.bo.User;
@@ -34,6 +35,7 @@ public class CenesUtils {
     public static SimpleDateFormat HHmm = new SimpleDateFormat("HH:mm"); //24 Hour Format
     public static SimpleDateFormat hhmm = new SimpleDateFormat("hh:mm");
     public static SimpleDateFormat hhmmaa = new SimpleDateFormat("hh:mm aa");
+    public static SimpleDateFormat hmmaa = new SimpleDateFormat("h:mm aa");
     public static SimpleDateFormat ampm = new SimpleDateFormat("aa");
     public static SimpleDateFormat MMMdd = new SimpleDateFormat("MMM dd");
     public static SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyy-MM-dd");
@@ -41,7 +43,10 @@ public class CenesUtils {
     public static SimpleDateFormat EEEEMMdd = new SimpleDateFormat("EEEE, MM dd"); //Saturday, 10 16
     public static SimpleDateFormat EEEEMMMdd = new SimpleDateFormat("EEEE, MMM dd"); //Saturday, Mar 16
     public static SimpleDateFormat EEEEMMMMdd = new SimpleDateFormat("EEEE, MMMM dd"); //Saturday, March 16
-
+    public static SimpleDateFormat ddMMMYYYY = new SimpleDateFormat("dd MMM yyyy"); //7 Mar 1967
+    public static SimpleDateFormat EEEE = new SimpleDateFormat("EEEE"); //THHURSDAY
+    public static SimpleDateFormat ddMMM = new SimpleDateFormat("ddMMM");
+    public static String[] facebookPermissions = {"public_profile", "email", "user_friends", "user_birthday"};
 
 
     public static ProgressDialog showProcessing(Context context, String message) {
@@ -96,6 +101,10 @@ public class CenesUtils {
 
     public static int dpToPx(int dp) {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    public static int spToPx(int sp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, Resources.getSystem().getDisplayMetrics());
     }
 
     public static void logEntries(User user, String message, Context context) {
@@ -186,5 +195,53 @@ public class CenesUtils {
             return true;
         }
         return false;
+    }
+
+    public static int daysBetween(Long pastDateInMillis, Long currentDateInMillis){
+
+        Calendar currentCal = Calendar.getInstance();
+        currentCal.setTimeInMillis(currentDateInMillis);
+
+        Calendar pastCal = Calendar.getInstance();
+        pastCal.setTimeInMillis(pastDateInMillis);
+
+        int days = currentCal.get(Calendar.DAY_OF_MONTH) - pastCal.get(Calendar.DAY_OF_MONTH);
+
+        return days;
+    }
+
+    public static int differenceInHours(Long pastDateInMillis, Long currentDateInMillis){
+
+        Calendar currentCal = Calendar.getInstance();
+        currentCal.setTimeInMillis(currentDateInMillis);
+
+        Calendar pastCal = Calendar.getInstance();
+        pastCal.setTimeInMillis(pastDateInMillis);
+
+        int hours = currentCal.get(Calendar.HOUR_OF_DAY) - pastCal.get(Calendar.HOUR_OF_DAY);
+        return hours;
+    }
+
+    public static String getDeviceName() {
+        String manufacturer = Build.MANUFACTURER;
+        String model = Build.MODEL;
+        if (model.startsWith(manufacturer)) {
+            return capitalize(model);
+        } else {
+            return capitalize(manufacturer) + " " + model;
+        }
+    }
+
+
+    private static String capitalize(String s) {
+        if (s == null || s.length() == 0) {
+            return "";
+        }
+        char first = s.charAt(0);
+        if (Character.isUpperCase(first)) {
+            return s;
+        } else {
+            return Character.toUpperCase(first) + s.substring(1);
+        }
     }
 }

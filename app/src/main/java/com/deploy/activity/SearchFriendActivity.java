@@ -2,6 +2,7 @@ package com.deploy.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,13 +10,17 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.UrlManager;
@@ -42,7 +47,7 @@ import java.util.Map;
 public class SearchFriendActivity extends CenesActivity {
 
     private ImageView closeSearchFriendsBtn;
-    private EditText searchFriendEditText;
+    public EditText searchFriendEditText;
     private ListView gathSearchFriendListView;
     private Button btnDoneInviteFriend;
 
@@ -149,6 +154,23 @@ public class SearchFriendActivity extends CenesActivity {
         closeSearchFriendsBtn.setOnClickListener(onClickListener);
         searchFriendEditText.setOnClickListener(onClickListener);
         btnDoneInviteFriend.setOnClickListener(onClickListener);
+        searchFriendEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                try {
+                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                        InputMethodManager imm = (InputMethodManager)v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                        return true;
+                    }
+                    return false;
+                } catch (Exception ce) {
+                    ce.printStackTrace();
+                }
+
+                return false;
+            }
+        });
     }
 
     public SearchFriendAdapter getSearchFriendAdapter() {

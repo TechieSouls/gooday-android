@@ -10,9 +10,13 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.MeTimeActivity;
 import com.deploy.bo.MeTime;
+import com.deploy.util.CenesConstants;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
@@ -53,6 +57,16 @@ public class MeTimeService {
         daysIndexMap.put(6, "Friday");
         daysIndexMap.put(7, "Saturday");
         return daysIndexMap;
+    }
+
+    public List<String> daysInStr() {
+        List<String> daysInStrList = new ArrayList<>();
+        daysInStrList.add("Monday");
+        daysInStrList.add("Tuesday");
+        daysInStrList.add("Wednesday");
+        daysInStrList.add("Thursday");
+        daysInStrList.add("Friday");
+        return daysInStrList;
     }
 
     public JSONObject populateMetimeData(Map.Entry<String, JSONObject> meTimeEntryMap, String day) {
@@ -110,7 +124,7 @@ public class MeTimeService {
         return events;
     }
 
-    public List<MeTime> getDefaultMeTimeValues(MeTimeActivity activity) {
+    public List<MeTime> getDefaultMeTimeValues(CenesBaseActivity activity) {
         List<MeTime> defaultMetimeCards = new ArrayList<>();
         JSONArray defaultMeTimeArray = new JSONArray();
 
@@ -156,7 +170,7 @@ public class MeTimeService {
         return defaultMetimeCards;
     }
 
-    public LinearLayout createMetimeCards(MeTimeActivity activity, MeTime meTime) {
+    public LinearLayout createMetimeCards(CenesBaseActivity activity, MeTime meTime) {
         LinearLayout.LayoutParams metimeTileParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         metimeTileParams.setMargins(0, CenesUtils.dpToPx(30), 0, 0);
 
@@ -173,8 +187,7 @@ public class MeTimeService {
             imageViewParams.gravity = Gravity.CENTER;
             imageViewParams.setMargins(CenesUtils.dpToPx(20),0,0,0);
             meTimeImage.setLayoutParams(imageViewParams);
-            meTimeImage.setImageDrawable(activity.getResources().getDrawable(R.drawable.profile_icon));
-
+            Glide.with(activity).load(CenesConstants.imageDomain+meTime.getPhoto()).apply(RequestOptions.placeholderOf(R.drawable.metime_default)).into(meTimeImage);
             metimeTile.addView(meTimeImage);
         } else {
 
@@ -208,10 +221,12 @@ public class MeTimeService {
         detailsLayout.setOrientation(LinearLayout.VERTICAL);
 
         try {
+
+            //The View for Mon, Tue, Wed, Thur, Fri, Sat
             TextView metimeTitle = new TextView(activity);
             metimeTitle.setText(meTime.getTitle());
             metimeTitle.setTextColor(activity.getResources().getColor(R.color.cenes_blue));
-            metimeTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+            metimeTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             detailsLayout.addView(metimeTitle);
         } catch (Exception e) {
             e.printStackTrace();
@@ -220,9 +235,9 @@ public class MeTimeService {
 
         if (meTime.getStartTime() != null) {
             TextView metimeDays = new TextView(activity);
-            metimeDays.setText(meTime.getDays());
+            metimeDays.setText(meTime.getDays().replaceAll("-", ""));
             metimeDays.setTextColor(activity.getResources().getColor(R.color.cenes_new_orange));
-            metimeDays.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            metimeDays.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
             detailsLayout.addView(metimeDays);
 
             Calendar startCal = Calendar.getInstance();
@@ -232,15 +247,15 @@ public class MeTimeService {
             endCal.setTimeInMillis(meTime.getEndTime());
 
             TextView metimeHours = new TextView(activity);
-            metimeHours.setText(CenesUtils.hhmmaa.format(startCal.getTime()) +"-"+CenesUtils.hhmmaa.format(endCal.getTime()));
-            metimeHours.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            metimeHours.setText(CenesUtils.hmmaa.format(startCal.getTime()) +"-"+CenesUtils.hmmaa.format(endCal.getTime()));
+            metimeHours.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
             detailsLayout.addView(metimeHours);
 
         } else {
             TextView metimeDays = new TextView(activity);
             metimeDays.setText("Not Scheduled");
             metimeDays.setTextColor(activity.getResources().getColor(R.color.cenes_light_gray));
-            metimeDays.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            metimeDays.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
             detailsLayout.addView(metimeDays);
         }
         metimeTile.addView(detailsLayout);

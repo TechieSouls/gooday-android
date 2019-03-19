@@ -18,6 +18,7 @@ import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
@@ -42,6 +43,8 @@ import java.util.Calendar;
  */
 
 public class InvitationFragment extends CenesFragment{
+
+    public static String TAG = "InvitationFragment";
 
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
@@ -286,7 +289,7 @@ public class InvitationFragment extends CenesFragment{
                         mMapView.setVisibility(View.GONE);
                     }
 
-                    //Iterating event members from Event to get Logged In user as EventMember
+                    //Iterating parentEvent members from Event to get Logged In user as EventMember
                     if (gatheringData.has("eventMembers") && gatheringData.getJSONArray("eventMembers").length() > 0) {
                         for (int i=0; i<gatheringData.getJSONArray("eventMembers").length(); i++) {
                             JSONObject gatheringMemberObj = gatheringData.getJSONArray("eventMembers").getJSONObject(i);
@@ -315,6 +318,7 @@ public class InvitationFragment extends CenesFragment{
     @Override
     public void onResume() {
         super.onResume();
-        ((GatheringScreenActivity) getActivity()).hideFooter();
+
+        ((CenesBaseActivity) getActivity()).hideFooter();
     }
 }

@@ -74,30 +74,31 @@ public class SearchLocationActivity extends CenesActivity implements LocationLis
         initializeComponents();
         addClickListeners();
 
-        locationSearchEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        try {
+            locationSearchEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-            }
+                }
 
 
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+                @Override
+                public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
 
-                //if (before == 0 && count == 1 && charSequence.charAt(start) == '\n') {
+                    //if (before == 0 && count == 1 && charSequence.charAt(start) == '\n') {
                     Log.e("Searchable Text : ",charSequence.toString());
                     //b.performClick();
                     //e.getText().replace(start, start + 1, ""); //remove the <enter>
-                //}
+                    //}
 
 
 
-            }
-            private Timer timer=new Timer();
-            private final long DELAY = 500; // milliseconds
-            @Override
-            public void afterTextChanged(final Editable editable) {
+                }
+                private Timer timer=new Timer();
+                private final long DELAY = 500; // milliseconds
+                @Override
+                public void afterTextChanged(final Editable editable) {
                 /*timer.cancel();
                 timer = new Timer();
                 timer.schedule(
@@ -106,26 +107,30 @@ public class SearchLocationActivity extends CenesActivity implements LocationLis
                             public void run() {
                                 Log.e("Keyword ",editable.toString());*/
 
-                customLocation = editable.toString();
-                if (editable.toString() == "" || editable.toString().length() == 0) {
-                    //recyclerViewRecentLocations.setVisibility(View.VISIBLE);
-                    if (previousSearchesExists) {
-                        findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
-                        gathSearchLocationListView.setVisibility(View.GONE);
+                    customLocation = editable.toString();
+                    if (editable.toString() == "" || editable.toString().length() == 0) {
+                        //recyclerViewRecentLocations.setVisibility(View.VISIBLE);
+                        if (previousSearchesExists) {
+                            findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
+                            gathSearchLocationListView.setVisibility(View.GONE);
+                        }
+                    } else {
+                        //recyclerViewRecentLocations.setVisibility(View.GONE);
+                        findViewById(R.id.ll_recent_recycler_view).setVisibility(View.GONE);
+                        gathSearchLocationListView.setVisibility(View.VISIBLE);
+                        new SearchLocationTask().execute(editable.toString());
                     }
-                } else {
-                    //recyclerViewRecentLocations.setVisibility(View.GONE);
-                    findViewById(R.id.ll_recent_recycler_view).setVisibility(View.GONE);
-                    gathSearchLocationListView.setVisibility(View.VISIBLE);
-                    new SearchLocationTask().execute(editable.toString());
-                }
 
                             /*}
                         },
                         DELAY
                 );*/
-            }
-        });
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -149,40 +154,44 @@ public class SearchLocationActivity extends CenesActivity implements LocationLis
     };
 
     public void initializeComponents() {
-        closeSearchLocationBtn = (ImageView) findViewById(R.id.close_search_location_btn);
-        gathSearchLocationListView = (ListView) findViewById(R.id.gath_search_location_list_view);
-        locationSearchEditText = (EditText) findViewById(R.id.search_location_edit_text);
-        btnCustomLocation = (Button) findViewById(R.id.btn_custom_location);
 
-        recyclerViewRecentLocations = (RecyclerView) findViewById(R.id.rv_recent_places);
-        cenesApplication = getCenesApplication();
-        coreManager = cenesApplication.getCoreManager();
-        apiManager = coreManager.getApiManager();
+        try {
+            closeSearchLocationBtn = (ImageView) findViewById(R.id.close_search_location_btn);
+            gathSearchLocationListView = (ListView) findViewById(R.id.gath_search_location_list_view);
+            locationSearchEditText = (EditText) findViewById(R.id.search_location_edit_text);
+            btnCustomLocation = (Button) findViewById(R.id.btn_custom_location);
 
-        customLocation = "";
+            recyclerViewRecentLocations = (RecyclerView) findViewById(R.id.rv_recent_places);
+            cenesApplication = getCenesApplication();
+            coreManager = cenesApplication.getCoreManager();
+            apiManager = coreManager.getApiManager();
+
+            customLocation = "";
 
 
-        locationAsyncTask = new LocationAsyncTask(cenesApplication);
-        new LocationAsyncTask.RecentLocationTask(new LocationAsyncTask.RecentLocationTask.AsyncResponse() {
-            @Override
-            public void processFinish(List<com.deploy.bo.Location> locations) {
+            locationAsyncTask = new LocationAsyncTask(cenesApplication);
+            new LocationAsyncTask.RecentLocationTask(new LocationAsyncTask.RecentLocationTask.AsyncResponse() {
+                @Override
+                public void processFinish(List<com.deploy.bo.Location> locations) {
 
-                if (locations != null && locations.size() > 0) {
-                    previousSearchesExists = true;
+                    if (locations != null && locations.size() > 0) {
+                        previousSearchesExists = true;
 
-                    findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
-                    RecentLocationAdapter rla = new RecentLocationAdapter(SearchLocationActivity.this, locations);
+                        findViewById(R.id.ll_recent_recycler_view).setVisibility(View.VISIBLE);
+                        RecentLocationAdapter rla = new RecentLocationAdapter(SearchLocationActivity.this, locations);
 
-                    RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
-                    recyclerViewRecentLocations.setLayoutManager(mLayoutManager);
-                    recyclerViewRecentLocations.setItemAnimator(new DefaultItemAnimator());
-                    recyclerViewRecentLocations.setAdapter(rla);
+                        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+                        recyclerViewRecentLocations.setLayoutManager(mLayoutManager);
+                        recyclerViewRecentLocations.setItemAnimator(new DefaultItemAnimator());
+                        recyclerViewRecentLocations.setAdapter(rla);
+                    }
                 }
-            }
-        }).execute();
+            }).execute();
 
-        checkUserLocationServiceOn();
-
+            checkUserLocationServiceOn();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addClickListeners() {

@@ -4,6 +4,9 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.View;
 import android.view.Window;
@@ -31,6 +34,9 @@ import org.json.JSONObject;
 public class ChoiceActivity extends CenesActivity {
 
     private CallbackManager callbackManager;
+    public FragmentTransaction fragmentTransaction;
+    public FragmentManager fragmentManager;
+
     /*Button buttonEmailSignUp;
     LoginButton buttonJoinFB;
     TextView buttonLogin;*/
@@ -55,8 +61,27 @@ public class ChoiceActivity extends CenesActivity {
         setContentView(R.layout.signup_options);
 
         init();
+
+        fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().commit();
+
     }
 
+    public void replaceFragment(Fragment fragment, String tag) {
+
+        try {
+            fragmentTransaction = fragmentManager.beginTransaction();
+            if (tag != null) {
+                fragmentTransaction.replace(R.id.fragment_container, fragment, tag);
+                fragmentTransaction.addToBackStack(tag);
+            } else {
+                fragmentTransaction.replace(R.id.fragment_container, fragment);
+            }
+            fragmentTransaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     /*public void init() {
         cenesApplication = getCenesApplication();
         coreManager = cenesApplication.getCoreManager();

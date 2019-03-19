@@ -12,8 +12,10 @@ import com.deploy.Manager.Impl.ValidatioManagerImpl;
 import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
+import com.deploy.api.CenesCommonAPI;
 import com.deploy.api.GatheringAPI;
 import com.deploy.application.CenesApplication;
+import com.deploy.backendManager.CenesCommonAPIManager;
 import com.deploy.backendManager.GatheringApiManager;
 import com.deploy.backendManager.HomeScreenApiManager;
 import com.deploy.backendManager.LocationApiManager;
@@ -46,6 +48,7 @@ public class CoreManager {
     public GatheringApiManager gatheringApiManager = null;
     public NotificationAPiManager notificationAPiManager = null;
     public MeTimeApiManager meTimeApiManager = null;
+    public CenesCommonAPIManager cenesCommonAPIManager = null;
 
     public CoreManager(CenesApplication cenesApplication){
         this.cenesApplication = cenesApplication;
@@ -63,6 +66,7 @@ public class CoreManager {
         this.gatheringApiManager = new GatheringApiManager(cenesApplication);
         this.notificationAPiManager = new NotificationAPiManager(cenesApplication);
         this.meTimeApiManager = new MeTimeApiManager(cenesApplication);
+        this.cenesCommonAPIManager = new CenesCommonAPIManager(cenesApplication);
     }
 
     public UserManager getUserManager(){
@@ -118,5 +122,9 @@ public class CoreManager {
 
     public MeTimeApiManager getMeTimeApiManager() {
         return this.meTimeApiManager;
+    }
+
+    public CenesCommonAPIManager getCenesCommonAPIManager() {
+        return this.cenesCommonAPIManager;
     }
 }

@@ -80,4 +80,18 @@ public class MeTime {
     public void setDays(String days) {
         this.days = days;
     }
+
+    @Override
+    public String toString() {
+        return "MeTime{" +
+                "title='" + title + '\'' +
+                ", items=" + items +
+                ", userId='" + userId + '\'' +
+                ", timezone='" + timezone + '\'' +
+                ", photo='" + photo + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", days='" + days + '\'' +
+                '}';
+    }
 }

@@ -5,6 +5,7 @@ import android.os.StrictMode;
 
 import com.deploy.R;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.service.InstabugService;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.google.android.gms.analytics.GoogleAnalytics;
@@ -28,6 +29,7 @@ public class CenesApplication extends Application {
         Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
         coreManager = new CoreManager(this);
         sAnalytics = GoogleAnalytics.getInstance(this);
+        new InstabugService().initiateInstabug(this);
 
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());

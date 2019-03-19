@@ -32,4 +32,26 @@ public class NotificationAPiManager {
         }
         return null;
     }
+
+    public JSONObject getUserNotifications(String queryStr, String authToken) {
+        try {
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ NotificationAPI.get_notification_by_user+"?"+queryStr;
+            JsonParsing jsonParsing = new JsonParsing();
+            return jsonParsing.httpGetJsonObject(apiUrl,authToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject markNotificationAsRead(String queryStr, String authToken) {
+        try {
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ NotificationAPI.get_mark_notification_as_read+"?"+queryStr;
+            JsonParsing jsonParsing = new JsonParsing();
+            return jsonParsing.httpGetJsonObject(apiUrl,authToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -23,7 +23,7 @@ import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
-import com.deploy.activity.GatheringScreenActivity;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.adapter.EventCardExpandableAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.Event;
@@ -32,6 +32,7 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.InvitationFragment;
+import com.deploy.fragment.NavigationFragment;
 import com.deploy.util.RoundedImageView;
 
 import org.json.JSONObject;
@@ -86,17 +87,24 @@ public class GatheringsFragment extends CenesFragment {
             Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homePageProfilePic);
         }
 
+        ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
         Bundle bundle_ = this.getArguments();
         if (bundle_ != null && "push".equals(bundle_.getString("dataFrom"))) {
             new FetchGatheringTask().execute(bundle_);
         } else if (bundle_ != null && "list".equals(bundle_.getString("dataFrom"))) {
+
+            //Lets open the Gathering Preview First
             Bundle bundle = new Bundle();
             bundle.putString("dataFrom", "list");
             bundle.putLong("eventId", bundle_.getLong("eventId"));
             this.getArguments().clear();
-            CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
-            createGatheringFragment.setArguments(bundle);
-            ((GatheringScreenActivity) getActivity()).replaceFragment(createGatheringFragment, "CreateGatheringFragment");
+            //CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
+            //createGatheringFragment.setArguments(bundle);
+            //((GatheringScreenActivity) getActivity()).replaceFragment(createGatheringFragment, "CreateGatheringFragment");
+            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+            gatheringPreviewFragment.setArguments(bundle);
+            ((CenesBaseActivity) getActivity()).replaceFragment(gatheringPreviewFragment, "GatheringPreviewFragment");
+
         } else {
             AsyncTask.execute(new Runnable() {
                 @Override
@@ -117,7 +125,7 @@ public class GatheringsFragment extends CenesFragment {
             });
         }
 
-        AsyncTask.execute(new Runnable() {
+        /*AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 //TODO your background code
@@ -134,7 +142,7 @@ public class GatheringsFragment extends CenesFragment {
                 }).execute();
 
             }
-        });
+        });*/
 
         return view;
     }
@@ -147,7 +155,7 @@ public class GatheringsFragment extends CenesFragment {
         urlManager = coreManager.getUrlManager();
         internetManager = coreManager.getInternetManager();
 
-        gatheringAsyncTasks = new GatheringAsyncTask(cenesApplication);
+        gatheringAsyncTasks = new GatheringAsyncTask(cenesApplication, (CenesBaseActivity) getActivity());
 
         gatheringsEventsList = (ExpandableListView) view.findViewById(R.id.home_events_list_view);
 
@@ -184,7 +192,7 @@ public class GatheringsFragment extends CenesFragment {
             List<String> headers = (List<String>) response.get("headers");
             Map<String, List<Event>> eventMap = (Map<String, List<Event>>) response.get("eventMap");
             Boolean isInvitation = (Boolean)  response.get("isInvitation");
-            listAdapter = new EventCardExpandableAdapter(getCenesActivity(), fragmentManager,  headers, eventMap, isInvitation);
+            listAdapter = new EventCardExpandableAdapter((CenesBaseActivity)getActivity(), fragmentManager,  headers, eventMap, isInvitation);
 
             gatheringsEventsList.setVisibility(View.VISIBLE);
             gatheringsEventsList.setAdapter(listAdapter);
@@ -213,7 +221,8 @@ public class GatheringsFragment extends CenesFragment {
         public void onClick(View view) {
             switch (view.getId()) {
                 case R.id.home_profile_pic:
-                    GatheringScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
+                    ((CenesBaseActivity)getActivity()).fragmentManager.beginTransaction().add(R.id.settings_container, new NavigationFragment(), null).commit();
+                    ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
                     break;
                 case R.id.confirmed_btn:
                     selectTab(confirmedBtn);
@@ -252,8 +261,9 @@ public class GatheringsFragment extends CenesFragment {
                 case R.id.create_gath_btn:
                     //startActivityForResult(new Intent(getActivity(), CreateGatheringActivity.class), CREATE_GATHERING_RESULT_CODE);
                     //break;
+                    ((CenesBaseActivity) getActivity()).parentEvent = null;
                     fragmentManager = getActivity().getSupportFragmentManager();
-                    ((GatheringScreenActivity) getActivity()).replaceFragment(new CreateGatheringFragment(), "cgFragment");
+                    ((CenesBaseActivity) getActivity()).replaceFragment(new CreateGatheringFragment(), CreateGatheringFragment.TAG);
 //                    replaceFragment(new ProfileFragment(), "cgFragment");
                     break;
             }
@@ -290,56 +300,6 @@ public class GatheringsFragment extends CenesFragment {
         selection.setTypeface(Typeface.DEFAULT_BOLD);
     }
 
-    class DeleteGatheringTask extends AsyncTask<Long, JSONObject, JSONObject> {
-        ProgressDialog deleteGathDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            deleteGathDialog = new ProgressDialog(getActivity());
-            deleteGathDialog.setMessage("Deleting..");
-            deleteGathDialog.setIndeterminate(false);
-            deleteGathDialog.setCanceledOnTouchOutside(false);
-            deleteGathDialog.setCancelable(false);
-            deleteGathDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(Long... longs) {
-             User user = userManager.getUser();
-
-            Long eventId = longs[0];
-            user.setApiUrl(urlManager.getApiUrl("dev"));
-            String queryStr = "?event_id=" + eventId;
-            JSONObject response = apiManager.deleteEventById(user, queryStr, getCenesActivity());
-            return response;
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject response) {
-            super.onPostExecute(response);
-            deleteGathDialog.dismiss();
-
-            deleteGathDialog = null;
-            try {
-                if (response.getBoolean("success")) {
-                    Toast.makeText(getActivity(), "Gathering Deleted", Toast.LENGTH_SHORT).show();
-                    //new GatheringsTask().execute("Going");
-                    new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
-                        @Override
-                        public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response);
-                        }
-                    }).execute("Going");
-
-                } else {
-                    Toast.makeText(getActivity(), "Gathering Not Deleted", Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     class FetchGatheringTask extends AsyncTask<Bundle, Map<String,Object>, Map<String,Object>> {
         ProgressDialog fetchingGathDialog;
@@ -396,7 +356,7 @@ public class GatheringsFragment extends CenesFragment {
                         (GatheringsFragment.this).getArguments().clear();
                         InvitationFragment invitationFragment = new InvitationFragment();
                         invitationFragment.setArguments(bundle);
-                        ((GatheringScreenActivity) getActivity()).replaceFragment(invitationFragment, "InvitationFragment");
+                        ((CenesBaseActivity) getActivity()).replaceFragment(invitationFragment, "InvitationFragment");
                     }
                 } else {
                     Toast.makeText(getActivity(), "Gathering Not Available", Toast.LENGTH_SHORT).show();
@@ -410,6 +370,7 @@ public class GatheringsFragment extends CenesFragment {
     @Override
     public void onResume() {
         super.onResume();
-        ((GatheringScreenActivity) getActivity()).showFooter();
+        ((CenesBaseActivity) getActivity()).showFooter();
+        ((CenesBaseActivity) getActivity()).activateFooterIcon(GatheringsFragment.TAG);
     }
 }

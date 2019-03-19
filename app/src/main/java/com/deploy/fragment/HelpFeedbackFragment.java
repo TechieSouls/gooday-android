@@ -5,17 +5,33 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.GravityCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.deploy.R;
 import com.deploy.activity.AlarmActivity;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.HomeScreenActivity;
+import com.deploy.activity.MeTimeActivity;
 import com.deploy.activity.ReminderActivity;
+import com.deploy.application.CenesApplication;
+import com.deploy.bo.User;
+import com.deploy.coremanager.CoreManager;
+import com.deploy.database.manager.UserManager;
+import com.deploy.fragment.dashboard.HomeFragment;
+import com.deploy.service.InstabugService;
+import com.deploy.util.CenesConstants;
+import com.deploy.util.RoundedImageView;
+import com.instabug.chat.Chats;
+import com.instabug.library.Feature;
 
 import java.util.List;
 
@@ -27,7 +43,15 @@ public class HelpFeedbackFragment  extends CenesFragment {
 
     public final static String TAG = "HelpFeedbackFragment";
 
-    ImageView helpFeedbackBlockiv, helpFeedbackClsBtn;
+    private CenesApplication cenesApplication;
+    private CoreManager coreManager;
+    private UserManager userManager;
+    private User loggedInUser;
+
+    private RoundedImageView homeProfilePic;
+    private ImageView homeIcon, ivFaq;
+    private Button btnReportaProblem;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -36,24 +60,65 @@ public class HelpFeedbackFragment  extends CenesFragment {
 
         setFragmentManager();
 
+        homeProfilePic = (RoundedImageView) v.findViewById(R.id.home_profile_pic);
+        homeIcon = (ImageView) v.findViewById(R.id.home_icon);
+        ivFaq = (ImageView) v.findViewById(R.id.iv_faq);
+        btnReportaProblem = (Button) v.findViewById(R.id.btn_report_a_problem);
 
-        helpFeedbackBlockiv = (ImageView) v.findViewById(R.id.help_feedback_block_btn);
-        helpFeedbackClsBtn = (ImageView) v.findViewById(R.id.help_feedback_cls_btn);
+        ((CenesBaseActivity)getActivity()).hideFooter();
 
-        helpFeedbackBlockiv.setOnClickListener(new View.OnClickListener() {
+
+        ivFaq.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://m.me/cenesapp?utm_source=CenesApp&utm_medium=feedback&utm_campaign=FeedbackScreen"));
-                startActivity(intent);
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(CenesConstants.faqLink));
+                startActivity(browserIntent);
             }
         });
-        helpFeedbackClsBtn.setOnClickListener(new View.OnClickListener() {
+        homeProfilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getActivity().onBackPressed();
+                if (getActivity() instanceof HomeScreenActivity) {
+                    HomeScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
+                } else if (getActivity() instanceof ReminderActivity) {
+                    ReminderActivity.mDrawerLayout.openDrawer(GravityCompat.START);
+                } else if (getActivity() instanceof GatheringScreenActivity) {
+                    GatheringScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
+                } else if (getActivity() instanceof MeTimeActivity) {
+                    MeTimeActivity.mDrawerLayout.openDrawer(GravityCompat.START);
+                } else if (getActivity() instanceof AlarmActivity) {
+                    ((AlarmActivity) getActivity()).hideFooter();
+                } else if (getActivity() instanceof CenesBaseActivity) {
+                    ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
+                }
             }
         });
+        homeIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                ((CenesBaseActivity)getActivity()).clearBackStackInclusive(null);
+                ((CenesBaseActivity)getActivity()).replaceFragment(new HomeFragment(), null);
+            }
+        });
+        btnReportaProblem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new InstabugService().invokeBugReporting();
+            }
+        });
+
+        cenesApplication = getCenesActivity().getCenesApplication();
+        coreManager = cenesApplication.getCoreManager();
+        userManager = coreManager.getUserManager();
+
+        loggedInUser = userManager.getUser();
+
+        if (loggedInUser != null && loggedInUser.getPicture() != null && loggedInUser.getPicture() != "null") {
+            // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
+            Glide.with(HelpFeedbackFragment.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
+        }
+
 
         return v;
     }

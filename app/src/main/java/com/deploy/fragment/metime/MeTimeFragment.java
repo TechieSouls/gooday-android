@@ -1,35 +1,43 @@
 package com.deploy.fragment.metime;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.GravityCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.MeTimeAsyncTask;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
-import com.deploy.activity.DiaryActivity;
-import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
-import com.deploy.activity.MeTimeActivity;
-import com.deploy.activity.ReminderActivity;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.MeTime;
 import com.deploy.bo.MeTimeItem;
+import com.deploy.bo.User;
+import com.deploy.coremanager.CoreManager;
+import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
+import com.deploy.fragment.NavigationFragment;
 import com.deploy.service.MeTimeService;
+import com.deploy.util.RoundedImageView;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +55,13 @@ public class MeTimeFragment extends CenesFragment {
     * */
 
     public final static String TAG = "MeTimeFragment";
+    public static int SAVE_METIME_REQUEST_CODE = 1001, DELETE_METIME_REQUEST_CODE = 1002, CANCEL_METIME_REQUEST_CODE = 1003;
+    public static String SAVE_METIME_REQUEST_STRING = "save", DELETE_METIME_REQUEST_STRING = "delete", CANCEL_METIME_REQUEST_STRING = "cancel";
 
-    ImageView footerHomeIcon, footerGatheringIcon;
+    //ImageView footerHomeIcon, footerGatheringIcon;
     ImageView ivAddMetime;
     LinearLayout llMetimeTilesContainer;
+    RoundedImageView homeProfilePic;
 
 
     private FragmentManager fragmentManager;
@@ -69,20 +80,30 @@ public class MeTimeFragment extends CenesFragment {
 
         View v = inflater.inflate(R.layout.fragment_metime, container, false);
 
+        ((CenesBaseActivity) getActivity()).showFooter();
+        ((CenesBaseActivity) getActivity()).activateFooterIcon(MeTimeFragment.TAG);
+
         cenesApplication = getCenesActivity().getCenesApplication();
         meTimeService = new MeTimeService();
-        meTimeAsyncTask = new MeTimeAsyncTask(cenesApplication, (MeTimeActivity) getActivity());
+        meTimeAsyncTask = new MeTimeAsyncTask(cenesApplication, (CenesBaseActivity) getActivity());
 
-        footerHomeIcon = ((MeTimeActivity) getActivity()).footerHomeIcon;
-        footerGatheringIcon = ((MeTimeActivity) getActivity()).footerGatheringIcon;
+        //footerHomeIcon = ((MeTimeActivity) getActivity()).footerHomeIcon;
+        //footerGatheringIcon = ((MeTimeActivity) getActivity()).footerGatheringIcon;
         ivAddMetime = v.findViewById(R.id.iv_add_metime);
         llMetimeTilesContainer = v.findViewById(R.id.ll_metime_tiles_container);
+        homeProfilePic = v.findViewById(R.id.home_profile_pic);
 
-        footerHomeIcon.setOnClickListener(onClickListener);
-        footerGatheringIcon.setOnClickListener(onClickListener);
+        //footerHomeIcon.setOnClickListener(onClickListener);
+        //footerGatheringIcon.setOnClickListener(onClickListener);
         ivAddMetime.setOnClickListener(onClickListener);
-
+        homeProfilePic.setOnClickListener(onClickListener);
         meTimeItemMap = new HashMap<>();
+
+        CoreManager coreManager = cenesApplication.getCoreManager();
+        UserManager userManager = coreManager.getUserManager();
+        User user = userManager.getUser();
+        // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
+        Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
 
         return v;
     }
@@ -92,24 +113,29 @@ public class MeTimeFragment extends CenesFragment {
         public void onClick(View v) {
 
             switch (v.getId()) {
-                case R.id.footer_home_icon:
-                    getActivity().startActivity(new Intent((MeTimeActivity)getActivity(), HomeScreenActivity.class));
-                    getActivity().finish();
-                    break;
+                //case R.id.footer_home_icon:
+                    //getActivity().startActivity(new Intent((MeTimeActivity)getActivity(), HomeScreenActivity.class));
+                    //getActivity().finish();
+                  //  break;
 
-                case R.id.footer_gathering_icon:
-                    getActivity().startActivity(new Intent((MeTimeActivity)getActivity(), GatheringScreenActivity.class));
-                    getActivity().finish();
-                    break;
+                //case R.id.footer_gathering_icon:
+                    //getActivity().startActivity(new Intent((MeTimeActivity)getActivity(), GatheringScreenActivity.class));
+                    //getActivity().finish();
+                  //  break;
 
                 case R.id.iv_add_metime:
-                    MeTimeCardFragment ll = new MeTimeCardFragment();
-                    fragmentManager = getActivity().getSupportFragmentManager();
-                    android.support.v4.app.FragmentTransaction ft = fragmentManager.beginTransaction();
-                    ft.setCustomAnimations(R.anim.enter_from_bottom, R.anim.exit_to_top, R.anim.enter_from_top, R.anim.exit_to_bottom);
-                    ft.replace(R.id.fragment_container, ll);
-                    ft.addToBackStack(null).commit();
+                    ((CenesBaseActivity)getActivity()).getSupportFragmentManager().beginTransaction()
+                            .add(R.id.fragment_container, new MeTimeCardFragment())
+                            .addToBackStack(MeTimeCardFragment.TAG)
+                            .commit();
+
                     break;
+                case R.id.home_profile_pic:
+                if (getActivity() instanceof CenesBaseActivity) {
+                    ((CenesBaseActivity)getActivity()).fragmentManager.beginTransaction().add(R.id.settings_container, new NavigationFragment(), null).commit();
+                    ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
+                }
+                break;
             }
         }
     };
@@ -156,7 +182,7 @@ public class MeTimeFragment extends CenesFragment {
                         meTimeCategoryHeaders = new ArrayList<>();
                         meTimeDataCategoryMap = new HashMap<>();
                         daysSelectionMap = new HashMap<>();
-
+                        llMetimeTilesContainer.removeAllViews();
                         JSONArray meTimeData = response.getJSONArray("data");
 
                         for (int m = 0; m < meTimeData.length(); m++) {
@@ -171,32 +197,62 @@ public class MeTimeFragment extends CenesFragment {
                                 Gson gson = new Gson();
                                 MeTime meTime = gson.fromJson(meTimeJSON.toString(), MeTime.class);
 
+                                System.out.println(meTime.toString());
                                 if (meTimeJSON.has("recurringPatterns")) {
                                     JSONArray recurringPatterns = meTimeJSON.getJSONArray("recurringPatterns");
                                     if (recurringPatterns.length() > 0) {
                                         String daysStr = "";
+
+                                        Integer daysInStrList[] = new Integer[recurringPatterns.length()];
+
                                         for(int j=0; j < recurringPatterns.length(); j++) {
                                             JSONObject recJson = recurringPatterns.getJSONObject(j);
-                                            daysStr += meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek")).substring(0,3).toUpperCase() +",";
+
+                                            Calendar cal = Calendar.getInstance();
+                                            cal.setTimeInMillis(recJson.getLong("dayOfWeekTimestamp"));
+                                            daysInStrList[j] = cal.get(Calendar.DAY_OF_WEEK);//recJson.getInt("dayOfWeek");
                                         }
-                                        meTime.setDays(daysStr.substring(0, daysStr.length() - 1));
+                                        Arrays.sort(daysInStrList);
+                                        /*String daysStrTemp = "";
+                                        for(int j=0; j < recurringPatterns.length(); j++) {
+                                            JSONObject recJson = recurringPatterns.getJSONObject(j);
+                                            daysStrTemp += meTimeService.IndexDayMap().get(recJson.getInt("dayOfWeek"))+",";
+                                        }*/
+                                        boolean allDaysMeTime = false;
+                                        /*for (String daysInStrTemp: daysInStrList) {
+                                            if (daysStrTemp.indexOf(daysInStrTemp) == -1) {
+                                                allDaysMeTime = false;
+                                                break;
+                                            }
+                                        }*/
+                                        if (allDaysMeTime) {
+                                            daysStr = "MON-FRI";
+                                            meTime.setDays(daysStr);
+                                        } else {
+                                            for(int j=0; j < daysInStrList.length; j++) {
+                                                //JSONObject recJson = recurringPatterns.getJSONObject(j);
+                                                daysStr += meTimeService.IndexDayMap().get(daysInStrList[j]).substring(0,3).toUpperCase() +",";
+                                            }
+                                            meTime.setDays(daysStr.substring(0, daysStr.length() - 1));
+                                        }
                                     }
                                 }
+                                System.out.println(meTime.getDays());
 
                                 //MeTimeDetails
-                                LinearLayout detailsLayout = meTimeService.createMetimeCards((MeTimeActivity)getActivity(), meTime);
+                                LinearLayout detailsLayout = meTimeService.createMetimeCards((CenesBaseActivity)getActivity(), meTime);
                                 detailsLayout.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
+
                                         Bundle bundle = new Bundle();
                                         bundle.putString("meTimeCard", meTimeJSON.toString());
                                         MeTimeCardFragment ll = new MeTimeCardFragment();
                                         ll.setArguments(bundle);
-                                        fragmentManager = getActivity().getSupportFragmentManager();
-                                        android.support.v4.app.FragmentTransaction ft = fragmentManager.beginTransaction();
-                                        ft.setCustomAnimations(R.anim.enter_from_bottom, R.anim.exit_to_top, R.anim.enter_from_top, R.anim.exit_to_bottom);
-                                        ft.replace(R.id.fragment_container, ll);
-                                        ft.addToBackStack(TAG).commit();
+                                        ((CenesBaseActivity)getActivity()).getSupportFragmentManager().beginTransaction()
+                                                .add(R.id.fragment_container, ll)
+                                                .addToBackStack(MeTimeCardFragment.TAG)
+                                                .commit();
 
                                     }
                                 });
@@ -218,7 +274,7 @@ public class MeTimeFragment extends CenesFragment {
     }
 
     public void showDefaultMeData() {
-        List<MeTime> defaultCards = meTimeService.getDefaultMeTimeValues((MeTimeActivity) getActivity());
+        List<MeTime> defaultCards = meTimeService.getDefaultMeTimeValues((CenesBaseActivity) getActivity());
         for (MeTime meTime: defaultCards) {
             //MeTimeDetails
             final JSONObject meTimeJSON = new JSONObject();
@@ -227,23 +283,174 @@ public class MeTimeFragment extends CenesFragment {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            LinearLayout detailsLayout = meTimeService.createMetimeCards((MeTimeActivity)getActivity(), meTime);
+            LinearLayout detailsLayout = meTimeService.createMetimeCards((CenesBaseActivity)getActivity(), meTime);
             detailsLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     Bundle bundle = new Bundle();
                     bundle.putString("meTimeCard", meTimeJSON.toString());
                     MeTimeCardFragment ll = new MeTimeCardFragment();
                     ll.setArguments(bundle);
-                    fragmentManager = getActivity().getSupportFragmentManager();
-                    android.support.v4.app.FragmentTransaction ft = fragmentManager.beginTransaction();
-                    ft.setCustomAnimations(R.anim.enter_from_bottom, R.anim.exit_to_top, R.anim.enter_from_top, R.anim.exit_to_bottom);
-                    ft.replace(R.id.fragment_container, ll);
-                    ft.addToBackStack(TAG).commit();
+                    ll.setTargetFragment(MeTimeFragment.this, DELETE_METIME_REQUEST_CODE);
+
+                    ((CenesBaseActivity)getActivity()).getSupportFragmentManager().beginTransaction()
+                            .add(R.id.fragment_container, ll)
+                            .addToBackStack(MeTimeCardFragment.TAG)
+                            .commit();
 
                 }
             });
             llMetimeTilesContainer.addView(detailsLayout);
         }
+    }
+
+    Runnable hideLoadingBlock = new Runnable() {
+        public void run() {
+            if (((CenesBaseActivity)getActivity()).rlLoadingBlock != null) {
+                ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
+            }
+        }
+    };
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            ((CenesBaseActivity) getActivity()).showFooter();
+            ((CenesBaseActivity) getActivity()).activateFooterIcon(MeTimeFragment.TAG);
+
+            //Delete CallBack
+            if(requestCode == DELETE_METIME_REQUEST_CODE) {
+                if(data != null) {
+                    String metimeStr = data.getStringExtra(MeTimeFragment.DELETE_METIME_REQUEST_STRING);
+                    try {
+                        ((CenesBaseActivity) getActivity()).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.VISIBLE);
+                                ((CenesBaseActivity)getActivity()).tvLoadingMsg.setText("Deleting MeTime.");
+                            }
+                        });
+
+                        JSONObject meTimeJSONObj = new JSONObject(metimeStr);
+
+                        if (meTimeJSONObj.has("recurringEventId")) {
+                            new MeTimeAsyncTask.DeleteMeTimeDataTask(new MeTimeAsyncTask.DeleteMeTimeDataTask.AsyncResponse() {
+                                @Override
+                                public void processFinish(JSONObject response) {
+
+                                    ((CenesBaseActivity) getActivity()).runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            ((CenesBaseActivity)getActivity()).tvLoadingMsg.setText("Deleted.");
+
+                                        }
+                                    });
+                                    loadMeTimes();
+                                    Handler handler = new android.os.Handler();
+                                    handler.postDelayed(hideLoadingBlock, 1000);
+
+                                }
+                            }).execute(meTimeJSONObj.getLong("recurringEventId"));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else if(requestCode == SAVE_METIME_REQUEST_CODE) {
+                if(data != null) {
+                    String metimeStr = data.getStringExtra(SAVE_METIME_REQUEST_STRING);
+                    try {
+                        JSONObject meTimeJSONObj = new JSONObject(metimeStr);
+
+                        boolean isUpdateCallTemp = false;
+                        if (meTimeJSONObj.has("recurringEventId")) {
+                            isUpdateCallTemp = true;
+                        }
+                        final boolean isUpdateCall = isUpdateCallTemp;
+                        ((CenesBaseActivity) getActivity()).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.VISIBLE);
+
+                                String loadingText = "Adding MeTIME";
+                                if (isUpdateCall) {
+                                    loadingText = "Updating MeTIME";
+                                }
+
+                                ((CenesBaseActivity)getActivity()).tvLoadingMsg.setText(loadingText);
+                            }
+                        });
+
+                        File metimePhotoFileTemp = null;
+                        if (meTimeJSONObj.has("metimePhotoFilePath")) {
+                            metimePhotoFileTemp = new File(meTimeJSONObj.getString("metimePhotoFilePath"));
+                        }
+                        final File metimePhotoFile = metimePhotoFileTemp;
+                        new MeTimeAsyncTask.MeTimePosting(new MeTimeAsyncTask.MeTimePosting.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+                                try {
+                                    if(response != null) {
+                                        if (metimePhotoFile != null) {
+                                            JSONObject recurringEventJson = response.getJSONObject("recurringEvent");
+                                            Map<String, Object> photoPostData = new HashMap<>();
+                                            photoPostData.put("file",metimePhotoFile);
+                                            photoPostData.put("recurringEventId", recurringEventJson.getLong("recurringEventId"));
+
+                                            new MeTimeAsyncTask.UploadPhotoTask(new MeTimeAsyncTask.UploadPhotoTask.AsyncResponse() {
+                                                @Override
+                                                public void processFinish(JSONObject response) {
+                                                    System.out.println(response.toString());
+                                                    ((CenesBaseActivity) getActivity()).runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            String loadingText = "Added.";
+                                                            if (isUpdateCall) {
+                                                                loadingText = "Updated.";
+                                                            }
+                                                            ((CenesBaseActivity)getActivity()).tvLoadingMsg.setText(loadingText);
+                                                        }
+                                                    });
+                                                    loadMeTimes();
+                                                    Handler handler = new android.os.Handler();
+                                                    handler.postDelayed(hideLoadingBlock, 1000);
+                                                }
+                                            }).execute(photoPostData);
+                                        } else {
+                                            ((CenesBaseActivity) getActivity()).runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    String loadingText = "Added.";
+                                                    if (isUpdateCall) {
+                                                        loadingText = "Updated.";
+                                                    }
+                                                    ((CenesBaseActivity)getActivity()).tvLoadingMsg.setText(loadingText);
+                                                }
+                                            });
+
+                                            loadMeTimes();
+                                            Handler handler = new android.os.Handler();
+                                            handler.postDelayed(hideLoadingBlock, 1000);
+                                        }
+                                    } else {
+                                        ((CenesBaseActivity) getActivity()).showRequestTimeoutDialog();
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute(meTimeJSONObj);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else if(requestCode == CANCEL_METIME_REQUEST_CODE) {
+                System.out.println("Cancelled");
+            }
+        }
+
     }
 }

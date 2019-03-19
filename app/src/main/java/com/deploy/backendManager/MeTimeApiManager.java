@@ -10,6 +10,10 @@ import com.deploy.bo.User;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by mandeep on 10/1/19.
  */
@@ -55,4 +59,18 @@ public class MeTimeApiManager {
         return null;
     }
 
+    public JSONObject uploadMeTimePhoto(String queryStr,String authToken, File file) {
+        try {
+            String apiUrl = UrlManagerImpl.prodAPIUrl+MeTimeAPI.post_metimePhoto;
+            JsonParsing jsonParsing = new JsonParsing();
+            Map<String, String> formFields = new HashMap<>();
+            for (String queryStrArray : queryStr.split("&")) {
+                formFields.put(queryStrArray.split("=")[0], queryStrArray.split("=")[1]);
+            }
+            return jsonParsing.httpPostMultipartWithFormData(apiUrl,formFields, file, authToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
