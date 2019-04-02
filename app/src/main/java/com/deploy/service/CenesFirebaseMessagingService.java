@@ -13,8 +13,6 @@ import android.util.Log;
 
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.leolin.shortcurtbadger.ShortcutBadger;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -93,7 +91,7 @@ public class CenesFirebaseMessagingService extends FirebaseMessagingService {
                         intent.putExtra("dataFrom", "gathering_push");
                         intent.putExtra("eventId", payloadObj.getLong("id"));
                     } else {
-                        intent = new Intent(this, HomeScreenActivity.class);
+                        intent = new Intent(this, CenesBaseActivity.class);
                     }
                 } else if (payloadObj.getString("type").equals("Reminder")) {
                     intent = new Intent(this, ReminderActivity.class);
@@ -101,7 +99,7 @@ public class CenesFirebaseMessagingService extends FirebaseMessagingService {
                     intent.putExtra("reminderId",payloadObj.getLong("notificationTypeId"));*/
                 }
             } else {
-                intent = new Intent(this, HomeScreenActivity.class);
+                intent = new Intent(this, CenesBaseActivity.class);
             }
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);

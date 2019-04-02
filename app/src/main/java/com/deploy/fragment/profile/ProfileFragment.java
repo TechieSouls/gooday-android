@@ -2,10 +2,8 @@ package com.deploy.fragment.profile;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,7 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -26,44 +23,32 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.ProfileAsyncTask;
-import com.deploy.Manager.AlertManager;
-import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.DeviceManager;
-import com.deploy.Manager.UrlManager;
-import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.fragment.NavigationFragment;
-import com.deploy.util.CenesEditText;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedDrawable;
@@ -92,7 +77,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by mandeep on 8/11/17.
@@ -140,9 +124,7 @@ public class ProfileFragment extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof HomeScreenActivity) {
-                ((HomeScreenActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof ReminderActivity) {
+            if (getActivity() instanceof ReminderActivity) {
                 ((ReminderActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
@@ -245,9 +227,7 @@ public class ProfileFragment extends CenesFragment {
             switch (v.getId()) {
                 case R.id.ll_change_password:
                     ChangePasswordFragment changePasswordFragment = new ChangePasswordFragment();
-                    if (getActivity() instanceof HomeScreenActivity) {
-                        ((HomeScreenActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
-                    } else if (getActivity() instanceof ReminderActivity) {
+                    if (getActivity() instanceof ReminderActivity) {
                         ((ReminderActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
                     } else if (getActivity() instanceof GatheringScreenActivity) {
                         ((GatheringScreenActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);

@@ -143,10 +143,7 @@ public class GatheringScreenActivity extends CenesActivity {
         @Override
         public void onClick(View view) {
             switch (view.getId()) {
-                case R.id.footer_home_icon:
-                    startActivity(new Intent(GatheringScreenActivity.this, HomeScreenActivity.class));
-                    finish();
-                    break;
+
                 case R.id.footer_reminder_icon:
                     startActivity(new Intent(GatheringScreenActivity.this, ReminderActivity.class));
                     finish();

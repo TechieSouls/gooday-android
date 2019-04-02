@@ -17,13 +17,11 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.deploy.Manager.DeviceManager;
 import com.deploy.R;
 import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
@@ -131,9 +129,7 @@ public class AboutUsFragment  extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof HomeScreenActivity) {
-                ((HomeScreenActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof ReminderActivity) {
+            if (getActivity() instanceof ReminderActivity) {
                 ((ReminderActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
@@ -162,9 +158,7 @@ public class AboutUsFragment  extends CenesFragment {
     }
 
     public void setFragmentManager() {
-        if (getActivity() instanceof HomeScreenActivity) {
-            fragmentManager = ((HomeScreenActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof ReminderActivity) {
+        if (getActivity() instanceof ReminderActivity) {
             fragmentManager = ((ReminderActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof GatheringScreenActivity) {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;

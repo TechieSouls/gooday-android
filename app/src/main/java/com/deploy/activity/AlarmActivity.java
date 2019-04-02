@@ -72,10 +72,6 @@ public class AlarmActivity extends CenesActivity {
         @Override
         public void onClick(View view) {
             switch (view.getId()) {
-                case R.id.footer_home_icon:
-                    startActivity(new Intent(AlarmActivity.this, HomeScreenActivity.class));
-                    finish();
-                    break;
                 case R.id.footer_reminder_icon:
                     startActivity(new Intent(AlarmActivity.this, ReminderActivity.class));
                     finish();

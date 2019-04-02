@@ -27,7 +27,6 @@ import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.Alarm;
@@ -104,9 +103,7 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void setFragmentManager() {
-        if (getActivity() instanceof HomeScreenActivity) {
-            fragmentManager = ((HomeScreenActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof ReminderActivity) {
+        if (getActivity() instanceof ReminderActivity) {
             fragmentManager = ((ReminderActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof GatheringScreenActivity) {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;
@@ -118,9 +115,7 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void closeDrawer() {
-        if (getActivity() instanceof HomeScreenActivity) {
-            HomeScreenActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else if (getActivity() instanceof ReminderActivity) {
+        if (getActivity() instanceof ReminderActivity) {
             ReminderActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
         } else if (getActivity() instanceof GatheringScreenActivity) {
             GatheringScreenActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -134,9 +129,7 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void replaceFragment(Fragment fragment, String tag) {
-        if (getActivity() instanceof HomeScreenActivity) {
-            ((HomeScreenActivity) getActivity()).replaceFragment(fragment, tag);
-        } else if (getActivity() instanceof ReminderActivity) {
+        if (getActivity() instanceof ReminderActivity) {
             ((ReminderActivity) getActivity()).replaceFragment(fragment, tag);
         } else if (getActivity() instanceof GatheringScreenActivity) {
             ((GatheringScreenActivity) getActivity()).replaceFragment(fragment, tag);

@@ -307,8 +307,13 @@ public class MeTimeFragment extends CenesFragment {
 
     Runnable hideLoadingBlock = new Runnable() {
         public void run() {
-            if (((CenesBaseActivity)getActivity()).rlLoadingBlock != null) {
-                ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
+
+            try {
+                if (((CenesBaseActivity)getActivity()).rlLoadingBlock != null) {
+                    ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     };

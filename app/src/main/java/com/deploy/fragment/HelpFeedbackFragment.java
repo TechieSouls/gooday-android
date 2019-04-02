@@ -19,7 +19,6 @@ import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.MeTimeActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
@@ -78,9 +77,7 @@ public class HelpFeedbackFragment  extends CenesFragment {
         homeProfilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (getActivity() instanceof HomeScreenActivity) {
-                    HomeScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                } else if (getActivity() instanceof ReminderActivity) {
+                if (getActivity() instanceof ReminderActivity) {
                     ReminderActivity.mDrawerLayout.openDrawer(GravityCompat.START);
                 } else if (getActivity() instanceof GatheringScreenActivity) {
                     GatheringScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
@@ -127,9 +124,7 @@ public class HelpFeedbackFragment  extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof HomeScreenActivity) {
-                ((HomeScreenActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof ReminderActivity) {
+            if (getActivity() instanceof ReminderActivity) {
                 ((ReminderActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
@@ -158,9 +153,7 @@ public class HelpFeedbackFragment  extends CenesFragment {
     }
 
     public void setFragmentManager() {
-        if (getActivity() instanceof HomeScreenActivity) {
-            fragmentManager = ((HomeScreenActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof ReminderActivity) {
+         if (getActivity() instanceof ReminderActivity) {
             fragmentManager = ((ReminderActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof GatheringScreenActivity) {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;

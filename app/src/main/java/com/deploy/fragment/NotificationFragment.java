@@ -1,61 +1,40 @@
 package com.deploy.fragment;
 
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GravityCompat;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.BaseExpandableListAdapter;
-import android.widget.ExpandableListView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.NotificationAsyncTask;
-import com.deploy.Manager.AlertManager;
-import com.deploy.Manager.ApiManager;
-import com.deploy.Manager.DeviceManager;
-import com.deploy.Manager.UrlManager;
-import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.adapter.NotificationAdapter;
 import com.deploy.application.CenesApplication;
-import com.deploy.bo.HolidayCalendar;
 import com.deploy.bo.Notification;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.dashboard.HomeFragment;
-import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by mandeep on 20/11/17.

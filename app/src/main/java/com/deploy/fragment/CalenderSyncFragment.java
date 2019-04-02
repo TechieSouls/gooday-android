@@ -3,7 +3,6 @@ package com.deploy.fragment;
 import android.accounts.Account;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,7 +15,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -35,7 +33,6 @@ import com.deploy.activity.ChoiceActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
@@ -140,9 +137,7 @@ public class CalenderSyncFragment extends CenesFragment implements GoogleApiClie
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof HomeScreenActivity) {
-                ((HomeScreenActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof GatheringScreenActivity) {
+            if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
@@ -275,9 +270,7 @@ public class CalenderSyncFragment extends CenesFragment implements GoogleApiClie
             ivProfile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (getActivity() instanceof HomeScreenActivity) {
-                        HomeScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                    } else if (getActivity() instanceof CenesBaseActivity) {
+                    if (getActivity() instanceof CenesBaseActivity) {
                         ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
                     }
                 }

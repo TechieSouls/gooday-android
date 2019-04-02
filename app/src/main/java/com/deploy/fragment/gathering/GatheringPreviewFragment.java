@@ -214,6 +214,7 @@ public class GatheringPreviewFragment  extends CenesFragment {
 
                                     event = gson.fromJson(response.getJSONObject("data").toString(), Event.class);
 
+                                boolean userFound = false;
                                 //Checkout for the status of LoggedIn User for The Event
                                 List<EventMember> eventMembers = event.getEventMembers();
                                 if (eventMembers.size() > 0) {
@@ -221,7 +222,7 @@ public class GatheringPreviewFragment  extends CenesFragment {
                                     for (EventMember eventMember: eventMembers) {
 
                                         if (eventMember.getUserId() != null && loggedInUser.getUserId() != event.getCreatedById() && loggedInUser.getUserId() == eventMember.getUserId()) {
-
+                                            userFound = true;
                                             llAcceptDecline.setVisibility(View.VISIBLE);
 
                                             String status = eventMember.getStatus();
@@ -239,12 +240,20 @@ public class GatheringPreviewFragment  extends CenesFragment {
                                                 ivGatheringLocation.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.gathering_unselected_location_icon));
                                                 ivGatheringGuests.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.gathering__unselcetd_people_icon));
                                             }
+                                        } else if (eventMember.getUserId() != null && loggedInUser.getUserId() == event.getCreatedById() && loggedInUser.getUserId() == eventMember.getUserId()) {
+                                            userFound = true;
                                         }
                                     }
                                 }
 
-                                System.out.println(response.toString());
-                                updateUIWithEventInfo();
+                                if (!userFound) {
+                                    getFragmentManager().popBackStack();
+                                    ((CenesBaseActivity) getActivity()).replaceFragment(new GatheringExpiredFragment(), GatheringExpiredFragment.TAG);
+                                } else {
+                                    System.out.println(response.toString());
+                                    updateUIWithEventInfo();
+                                }
+
                                 } else {
                                     //GatheringExpiredFragment gatheringExpiredFragment = new GatheringExpiredFragment();
                                     //((CenesBaseActivity) getActivity()).clearFragmentsAndOpen(gatheringExpiredFragment);
@@ -653,14 +662,11 @@ public class GatheringPreviewFragment  extends CenesFragment {
                     e.printStackTrace();
                 }
             }
-            //Intent sendIntent = new Intent(Intent.ACTION_VIEW);
-            //sendIntent.addCategory(Intent.CATEGORY_APP_MESSAGING);
-            //sendIntent.setData(Uri.parse("smsto:"+phoneNumbers.substring(0, phoneNumbers.length()-1)));
-            //sendIntent.putExtra("sms_body", CenesConstants.webDomainEventUrl+eventData.getLong("eventId"));
-            //getActivity().setResult(Activity.RESULT_OK, sendIntent);
-            //getActivity().finish();
-            //getActivity().startActivity(sendIntent);
-            //startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+
+            Gson gson = new Gson();
+            event = gson.fromJson(eventData.toString(), Event.class);
+
+
             ((CenesBaseActivity) getActivity()).clearBackStackInclusive(null);
             ((CenesBaseActivity) getActivity()).replaceFragment(new GatheringsFragment(), null);
 

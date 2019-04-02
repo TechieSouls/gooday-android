@@ -222,14 +222,19 @@ public class CenesUtils {
         return hours;
     }
 
-    public static String getDeviceName() {
+    public static String getDeviceManufacturer() {
         String manufacturer = Build.MANUFACTURER;
+        return capitalize(manufacturer);
+    }
+
+    public static String getDeviceModel() {
         String model = Build.MODEL;
-        if (model.startsWith(manufacturer)) {
-            return capitalize(model);
-        } else {
-            return capitalize(manufacturer) + " " + model;
-        }
+        return capitalize(model);
+    }
+
+    public static String getDeviceVersion() {
+        String version = Build.VERSION.RELEASE;
+        return version;
     }
 
 

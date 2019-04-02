@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.ImageView;
@@ -223,7 +224,7 @@ public class CenesBaseActivity extends CenesActivity {
             new CenesCommonAsyncTask.NotificationBadgeCountTask(new CenesCommonAsyncTask.NotificationBadgeCountTask.AsyncResponse() {
                 @Override
                 public void processFinish(JSONObject response) {
-                    System.out.println("Notification Data "+response.toString());
+                    //System.out.println("Notification Data "+response.toString());
 
                     try {
                         if (response != null && response.getBoolean("success") == true) {

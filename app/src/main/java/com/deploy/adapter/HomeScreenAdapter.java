@@ -1,7 +1,6 @@
 package com.deploy.adapter;
 
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -15,10 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.HorizontalScrollView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,21 +23,15 @@ import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.GatheringAsyncTask;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
-import com.deploy.fragment.NavigationFragment;
-import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.fragment.gathering.GatheringPreviewFragment;
-import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.util.List;
 import java.util.Map;

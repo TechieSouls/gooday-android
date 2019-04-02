@@ -1,7 +1,5 @@
 package com.deploy.fragment;
 
-import android.app.ProgressDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
 import android.view.LayoutInflater;
@@ -25,7 +23,6 @@ import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.HolidayCalendar;
@@ -45,7 +42,6 @@ import com.google.gson.reflect.TypeToken;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -341,9 +337,7 @@ public class HolidaySyncFragment extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof HomeScreenActivity) {
-                ((HomeScreenActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof ReminderActivity) {
+            if (getActivity() instanceof ReminderActivity) {
                 ((ReminderActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();

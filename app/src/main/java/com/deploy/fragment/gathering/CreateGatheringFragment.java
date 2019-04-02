@@ -61,7 +61,6 @@ import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.SearchFriendActivity;
 import com.deploy.activity.SearchLocationActivity;
 import com.deploy.application.CenesApplication;
@@ -1465,7 +1464,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             try {
                 if (response.getBoolean("success")) {
                     Toast.makeText(context, "Gathering Deleted", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(getActivity(), HomeScreenActivity.class));
+                    startActivity(new Intent(getActivity(), CenesBaseActivity.class));
                     isPredictiveOn = false;
                     getActivity().finish();
                 } else {

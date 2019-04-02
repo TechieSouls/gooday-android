@@ -22,20 +22,17 @@ import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.HomeScreenActivity;
 import com.deploy.activity.SignInActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.service.InstabugService;
 import com.deploy.util.CenesUtils;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 /**
  * Created by mandeep on 6/10/18.

@@ -250,11 +250,6 @@ public class CreateReminderActivity extends CenesActivity {
                     finish();
                     break;
 
-                case R.id.footer_home_icon:
-                    startActivity(new Intent(CreateReminderActivity.this, HomeScreenActivity.class));
-                    finish();
-                    break;
-
                 case R.id.footer_gathering_icon:
                     startActivity(new Intent(CreateReminderActivity.this, GatheringScreenActivity.class));
                     finish();
