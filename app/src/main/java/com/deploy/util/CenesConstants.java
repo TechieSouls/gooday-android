@@ -13,4 +13,7 @@ public class CenesConstants {
     public static String imageDomain = "https://deploy.cenesgroup.com";
     public static String faqLink = "https://www.cenesgroup.com/faq";
     public static String shareInvitationMessage = "\"[Host]\" invites you to \"[Title]\". RSVP through the Cenes app. Link below: ";
+    public static String GOOGLE_PLACE_LARGE_PHOTOS_API = "https://maps.googleapis.com/maps/api/place/photo?key=AIzaSyAg8FTMwwY2LwneObVbjcjj-9DYZkrTR58&maxwidth=1200&photoreference=";
+    public static String GOOGLE_PLACE_THUMBNAIL_PHOTOS_API = "https://maps.googleapis.com/maps/api/place/photo?key=AIzaSyAg8FTMwwY2LwneObVbjcjj-9DYZkrTR58&maxwidth=200&photoreference=";
+
 }

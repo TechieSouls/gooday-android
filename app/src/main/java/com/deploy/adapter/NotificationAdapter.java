@@ -16,7 +16,10 @@ import com.deploy.AsyncTasks.NotificationAsyncTask;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.bo.Notification;
+import com.deploy.fragment.NotificationFragment;
 import com.deploy.fragment.gathering.GatheringPreviewFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragmentBkup;
+import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
@@ -71,7 +74,7 @@ public class NotificationAdapter extends BaseAdapter {
         final Notification notification = (Notification) notifications.get(position);
 
         System.out.println(notification.toString());
-        holder.notificationMessage.setText(Html.fromHtml("<b>" + notification.getSenderName() + "</b> " + notification.getMessage() + " <b>" + notification.getTitle() + "</b>"));
+        holder.notificationMessage.setText(Html.fromHtml( notification.getMessage() + " <b>" + notification.getTitle() + "</b>"));
         holder.notificationTime.setText(CenesUtils.ddMMM.format(notification.getNotificationTime()).toUpperCase());
 
         //if (notification.getSenderImage() != null && notification.getSenderImage() != "" && notification.getSenderImage() != "null") {
@@ -117,7 +120,13 @@ public class NotificationAdapter extends BaseAdapter {
         holder.llContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (notification.getType().equals("Gathering")) {
+
+
+                GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                gatheringPreviewFragment.event = notification.getEvent();
+                ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragment, NotificationFragment.TAG);
+
+               /* if (notification.getType().equals("Gathering")) {
 
                     Bundle bundle = new Bundle();
                     bundle.putString("dataFrom", "notification");
@@ -125,13 +134,6 @@ public class NotificationAdapter extends BaseAdapter {
                     bundle.putString("message", "Your have been invited to...");
                     bundle.putString("title", notification.getTitle());
 
-                    /*Intent intent = new Intent(getActivity(), GatheringScreenActivity.class);
-                    intent.putExtra("dataFrom", "push");
-                    intent.putExtra("eventId", child.getNotificationTypeId());
-                    intent.putExtra("message", "Your have been invited to...");
-                    intent.putExtra("title", child.getTitle());
-                    startActivity(intent);
-                    getActivity().finish();*/
 
                     new NotificationAsyncTask(((CenesBaseActivity)activity).getCenesApplication(), activity);
                     new NotificationAsyncTask.MarkNotificationReadTask(new NotificationAsyncTask.MarkNotificationReadTask.AsyncResponse() {
@@ -141,22 +143,22 @@ public class NotificationAdapter extends BaseAdapter {
                         }
                     }).execute(notification.getNotificationTypeId());
 
-                    GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-                    gatheringPreviewFragment.setArguments(bundle);
+                    GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+                    gatheringPreviewFragmentBkup.setArguments(bundle);
 
-                    ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragment, GatheringPreviewFragment.TAG);
-                } /*else if (notification.getType().equals("Gathering") && notification.getNotificationTypeStatus().equalsIgnoreCase("old")) {
+                    ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragmentBkup, GatheringPreviewFragmentBkup.TAG);
+                }*/ /*else if (notification.getType().equals("Gathering") && notification.getNotificationTypeStatus().equalsIgnoreCase("old")) {
 
                     Bundle bundle = new Bundle();
                     bundle.putString("dataFrom", "list");
                     bundle.putLong("eventId",notification.getNotificationTypeId());
 
 
-                    GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                    GatheringPreviewFragmentBkup gatheringPreviewFragment = new GatheringPreviewFragmentBkup();
                     gatheringPreviewFragment.setArguments(bundle);
 
 
-                    ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragment, GatheringPreviewFragment.TAG);
+                    ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragment, GatheringPreviewFragmentBkup.TAG);
 
                 }*/ /*else if (child.getType().equals("Reminder")) {
                     startActivity(new Intent(getActivity(), ReminderActivity.class));

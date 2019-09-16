@@ -11,7 +11,6 @@ import android.widget.Button;
 
 import com.deploy.R;
 import com.deploy.fragment.guest.SigninFragment;
-import com.deploy.service.InstabugService;
 
 import java.util.List;
 
@@ -31,8 +30,6 @@ public class SignInActivity extends CenesActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_signin);
 
-
-        new InstabugService().initiateInstabug(getApplication());
 
         buttonSignup = (Button) findViewById(R.id.signup_btn);
         buttonSignup.setText(Html.fromHtml("Don't have an Account? <b>Sign Up Now</b>"));

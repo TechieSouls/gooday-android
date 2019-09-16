@@ -92,123 +92,34 @@ public class GatheringAsyncTask {
                         JSONArray gatherings = gatheringObj.getJSONArray("data");
                         List<String> headers = new ArrayList<>();
                         Map<String, List<Event>> eventMap = new HashMap<>();
-                        List<Event> events = new ArrayList<>();
 
-                        for (int i = 0; i < gatherings.length(); i++) {
+                        Type listType = new TypeToken<List<Event>>() {}.getType();
+                        List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
 
-                            Event event = new Event();
-                            JSONObject eventObj = (JSONObject) gatherings.getJSONObject(i);
+                        for (Event event: events) {
 
-                            SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
-                            SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
-                            SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma");
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d\nEEE");
-
-                            if (eventObj.has("eventId")) {
-                                event.setEventId(eventObj.getLong("eventId"));
+                            Date startDate = new Date(event.getStartTime());
+                            String dateKey = CenesUtils.ddMMM.format(startDate).toUpperCase() + "<b>"+CenesUtils.EEEE.format(startDate).toUpperCase()+"</b>";
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            cal.add(Calendar.DATE, 1);
+                            if (!headers.contains(dateKey)) {
+                                headers.add(dateKey);
                             }
-                            if (eventObj.has("title")) {
-                                event.setTitle(eventObj.getString("title"));
+                            if (eventMap.containsKey(dateKey)) {
+                                events = eventMap.get(dateKey);
+                            } else {
+                                events = new ArrayList<>();
                             }
-                            if (eventObj.has("createdById")) {
-                                event.setCreatedById(eventObj.getLong("createdById"));
-                            }
-                            if (eventObj.has("event_picture")) {
-                                event.setEventPicture(eventObj.getString("event_picture"));
-                            }
-                            if (eventObj.has("location") && eventObj.getString("location") != "null") {
-                                event.setLocation(eventObj.getString("location"));
-                            }
-                            if (eventObj.has("startTime")) {
-                                Date startDate = new Date(eventObj.getLong("startTime"));
-                                event.setStartTime(timeFormat.format(startDate));
-                                event.setEventDate(dateFormat.format(startDate));
-                            }
-                            if (eventObj.has("startTime")) {
-                                Date startDate = new Date(eventObj.getLong("startTime"));
-                                String dateKey = calCategory.format(startDate).toUpperCase() + "<b>"+weekCategory.format(startDate).toUpperCase()+"</b>";
-                                //String dateKey = weekCategory.format(startDate) + "<b>"+calCategory.format(startDate)+"</b>" + CenesUtils.getDateSuffix(startDate.getDate());
-                                /*if (CenesUtils.yyyyMMdd.format(startDate).equals(CenesUtils.yyyyMMdd.format(new Date()))) {
-                                    dateKey = "TODAY " + dateKey;
-                                }*/
-                                Calendar cal = Calendar.getInstance();
-                                cal.setTime(new Date());
-                                cal.add(Calendar.DATE, 1);
-                                /*if (CenesUtils.yyyyMMdd.format(startDate).equals(CenesUtils.yyyyMMdd.format(cal.getTime()))) {
-                                    dateKey = "TOMORROW " + dateKey;
-                                }*/
-                                if (!headers.contains(dateKey)) {
-                                    headers.add(dateKey);
-                                }
-                                if (eventMap.containsKey(dateKey)) {
-                                    events = eventMap.get(dateKey);
-                                } else {
-                                    events = new ArrayList<>();
-                                }
-                                events.add(event);
-                                eventMap.put(dateKey, events);
-                            }
-                            if (eventObj.has("sender")) {
-                                event.setSender(eventObj.getString("sender"));
-                            }
-                            if (eventObj.has("event_member_id")) {
-                                event.setCreatedById(eventObj.getLong("event_member_id"));
-                            }
+                            events.add(event);
+                            eventMap.put(dateKey, events);
 
-                            if (eventObj.has("eventMembers")) {
-                                JSONArray membersArray = eventObj.getJSONArray("eventMembers");
-
-
-
-                                /*List<EventMember> members = new ArrayList<>();
-                                EventMember owner = null;
-                                for (int idx = 0; idx < membersArray.length(); idx++) {
-                                    JSONObject memberObj = (JSONObject) membersArray.get(idx);
-                                    EventMember eventMember = new EventMember();
-                                    if (memberObj.has("picture")) {
-                                        eventMember.setPicture(memberObj.getString("picture"));
-                                    }
-                                    if (memberObj.has("name")) {
-                                        eventMember.setName(memberObj.getString("name"));
-                                    }
-                                    if (memberObj.has("owner")) {
-                                        eventMember.setOwner(memberObj.getBoolean("owner"));
-                                    }
-                                    if (memberObj.has("userId")) {
-                                        eventMember.setUserId(memberObj.getLong("userId"));
-                                    }
-
-
-                                    if (event.getCreatedById() == eventMember.getUserId()) {
-                                        owner = eventMember;
-                                    }
-
-                                    members.add(eventMember);
-                                }*/
-
-                                //System.out.println("Owner Found : "+owner);
-                                //event.setOwner(owner);
-
-                                Type listType = new TypeToken<List<EventMember>>() {}.getType();
-                                List<EventMember> eventMembers = new Gson().fromJson(membersArray.toString(), listType);
-                                event.setEventMembers(eventMembers);
-                            }
-
-                            if (user.getUserId() == event.getCreatedById()) {
-                                event.setIsOwner(true);
-                            }
-                        }
-
-                        boolean isInvitation = false;
-                        if (status.equalsIgnoreCase("pending") || status.equalsIgnoreCase("NotGoing")) {
-                            isInvitation = true;
                         }
 
                         Collections.sort(headers);
                         responseMap = new HashMap<>();
                         responseMap.put("headers", headers);
                         responseMap.put("eventMap", eventMap);
-                        responseMap.put("isInvitation", isInvitation);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -272,7 +183,7 @@ public class GatheringAsyncTask {
     public static class CreateGatheringTask extends AsyncTask<JSONObject, Object, JSONObject> {
 
 
-        ProgressDialog processDialog;
+        //ProgressDialog processDialog;
 
         // you may separate this or combined to caller class.
         public interface AsyncResponse {
@@ -286,12 +197,12 @@ public class GatheringAsyncTask {
 
         @Override
         protected void onPreExecute() {
-            processDialog = new ProgressDialog(activity);
+            /*processDialog = new ProgressDialog(activity);
             processDialog.setMessage("Creating..");
             processDialog.setIndeterminate(false);
             processDialog.setCanceledOnTouchOutside(false);
             processDialog.setCancelable(false);
-            processDialog.show();
+            processDialog.show();*/
         }
 
         @Override
@@ -304,17 +215,16 @@ public class GatheringAsyncTask {
 
             User user = userManager.getUser();
             JSONObject job = gatheringApiManager.createGathering(user.getAuthToken(), jsonObject);
-            //Log.e("Resp", job.toString());
             return job;
         }
 
         @Override
         protected void onPostExecute(JSONObject obj) {
             Log.e("Gathering Obj ", obj.toString());
-            if (processDialog != null) {
+            /*if (processDialog != null) {
                 processDialog.dismiss();
                 processDialog = null;
-            }
+            }*/
             delegate.processFinish(obj);
         }
     }
@@ -429,11 +339,57 @@ public class GatheringAsyncTask {
         }
     }
 
+
+    public static class UploadOnlyImageTask extends AsyncTask<File, JSONObject, JSONObject> {
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+
+        public AsyncResponse delegate = null;
+
+        public UploadOnlyImageTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected JSONObject doInBackground(File... files) {
+
+            UserManager userManager = coreManager.getUserManager();
+            User user = userManager.getUser();
+
+            GatheringApiManager gatheringApiManager = coreManager.getGatheringApiManager();
+            File filesToUpload = files[0];
+            try {
+                JSONObject response = gatheringApiManager.uploadOnlyPhoto(user.getAuthToken(), filesToUpload);
+                return response;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject response) {
+            super.onPostExecute(response);
+            delegate.processFinish(response);
+        }
+    }
+
     public static class UpdateStatusActionTask extends AsyncTask<String, Void, Boolean> {
 
         private CoreManager coreManager = cenesApplication.getCoreManager();
 
-        ProgressDialog mProgressDialog;
+        //ProgressDialog mProgressDialog;
 
         // you may separate this or combined to caller class.
         public interface AsyncResponse {
@@ -450,12 +406,12 @@ public class GatheringAsyncTask {
 
         @Override
         protected void onPreExecute() {
-            mProgressDialog = new ProgressDialog(activity);
+            /*mProgressDialog = new ProgressDialog(activity);
             mProgressDialog.setMessage("Loading...");
             mProgressDialog.setIndeterminate(false);
             mProgressDialog.setCanceledOnTouchOutside(false);
             mProgressDialog.setCancelable(false);
-            mProgressDialog.show();
+            mProgressDialog.show();*/
         }
 
         @Override
@@ -483,10 +439,10 @@ public class GatheringAsyncTask {
         @Override
         protected void onPostExecute(Boolean success) {
 
-            if (mProgressDialog != null) {
+            /*if (mProgressDialog != null) {
                 mProgressDialog.dismiss();
                 mProgressDialog = null;
-            }
+            }*/
             delegate.processFinish(success);
         }
     }
@@ -505,8 +461,6 @@ public class GatheringAsyncTask {
         public DeleteGatheringTask(AsyncResponse delegate) {
             this.delegate = delegate;
         }
-
-
 
         ProgressDialog deleteGathDialog;
 
@@ -539,6 +493,56 @@ public class GatheringAsyncTask {
             if (deleteGathDialog != null) {
                 deleteGathDialog.dismiss();
                 deleteGathDialog = null;
+            }
+            delegate.processFinish(response);
+        }
+    }
+
+    public static class PredictiveCalendarTask extends AsyncTask<String, JSONArray, JSONArray> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONArray response);
+        }
+
+        public AsyncResponse delegate = null;
+
+        public PredictiveCalendarTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        ProgressDialog predictiveGathDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            predictiveGathDialog = new ProgressDialog(activity);
+            predictiveGathDialog.setMessage("Loading...");
+            predictiveGathDialog.setIndeterminate(false);
+            predictiveGathDialog.setCanceledOnTouchOutside(false);
+            predictiveGathDialog.setCancelable(false);
+            predictiveGathDialog.show();
+        }
+
+        @Override
+        protected JSONArray doInBackground(String... queryStrs) {
+            UserManager userManager = coreManager.getUserManager();
+            GatheringApiManager gatheringApiManager = coreManager.getGatheringApiManager();
+            User user = userManager.getUser();
+
+            String queryStr = queryStrs[0];
+            JSONArray response = gatheringApiManager.predictiveDataUserId(queryStr, user.getAuthToken());
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray response) {
+            super.onPostExecute(response);
+            if (predictiveGathDialog != null) {
+                predictiveGathDialog.dismiss();
+                predictiveGathDialog = null;
             }
             delegate.processFinish(response);
         }

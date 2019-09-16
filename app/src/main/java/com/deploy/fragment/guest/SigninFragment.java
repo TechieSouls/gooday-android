@@ -28,7 +28,6 @@ import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.service.InstabugService;
 import com.deploy.util.CenesUtils;
 import com.google.firebase.iid.FirebaseInstanceId;
 
@@ -134,7 +133,6 @@ public class SigninFragment  extends CenesFragment {
                     getActivity().finish();
                     break;
                 case R.id.iv_bug_report:
-                    new InstabugService().invokeBugReporting();
                     break;
                 /*case R.id.bt_fb_join:
                     facebookLoginBtn.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {

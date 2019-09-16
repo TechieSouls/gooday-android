@@ -67,11 +67,14 @@ import com.deploy.util.RoundedImageView;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -81,9 +84,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Created by rohan on 9/11/17.
@@ -118,7 +124,6 @@ public class HomeFragment extends CenesFragment {
     User loggedInUser;
     Tracker mTracker;
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private Map<String, Set<CalendarDay>> calendarHighlights;
 
     boolean calModeMonth;
@@ -224,7 +229,7 @@ public class HomeFragment extends CenesFragment {
         User user = userManager.getUser();
         if (user != null && user.getPicture() != null && user.getPicture() != "null") {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
-            Glide.with(getActivity()).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homePageProfilePic);
+            Glide.with(getActivity()).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homePageProfilePic);
         }
 
         SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
@@ -580,183 +585,48 @@ public class HomeFragment extends CenesFragment {
                    JSONArray jsonArray = new JSONArray();
                    try {
                        jsonArray = (JSONArray) jsonObject.getJSONArray("data");
+
+
+                       List<String> headers = new LinkedList<>();
+                       Map<String, List<Event>> eventMap = new HashMap<>();
+
+                       Gson gson = new GsonBuilder().create();
+                       Type listType = new TypeToken<List<Event>>(){}.getType();
+                       List<Event> events = gson.fromJson( jsonObject.getJSONArray("data").toString(), listType);
+                       for (Event event: events) {
+
+                           String dateKey = CenesUtils.yyyyMMdd.format(new Date(event.getStartTime()));
+
+                           if (!headers.contains(dateKey)) {
+                               headers.add(dateKey);
+                           }
+                           if (eventMap.containsKey(dateKey)) {
+                               events = eventMap.get(dateKey);
+                           } else {
+                               events = new ArrayList<>();
+                           }
+                           events.add(event);
+                           eventMap.put(dateKey, events);
+
+                       }
+
+                       Collections.sort(headers);
+                       listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
+
+                       if (events.size() == 0) {
+                           homeScreenEventsList.setVisibility(View.GONE);
+                           homeNoEvents.setVisibility(View.VISIBLE);
+                           homeNoEvents.setTextSize(20f);
+                           homeNoEvents.setText("No Event Exists For This Date");
+                       } else {
+                           homeScreenEventsList.setVisibility(View.VISIBLE);
+                           homeScreenEventsList.setAdapter(listAdapter);
+                       }
                    } catch (Exception e) {
                        e.printStackTrace();
                    }
 
-                   List<String> headers = new ArrayList<>();
-                   Map<String, List<Event>> eventMap = new HashMap<>();
-                   List<Event> events = new ArrayList<>();
-                   Boolean eventsExists = false;
-                   if (jsonArray.length() > 0) {
-                       eventsExists = true;
-                       for (int i = 0; i < jsonArray.length(); i++) {
-                           try {
 
-                               Event event = new Event();
-                               JSONObject eventObj = (JSONObject) jsonArray.getJSONObject(i);
-                               SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
-                               SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
-                               SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a");
-
-                               if (eventObj.has("type") && eventObj.getString("type").equals("Reminder")) {
-                                   continue;
-                               }
-
-                               if (eventObj.has("id")) {
-                                   event.setEventId(eventObj.getLong("id"));
-                               }
-                               if (eventObj.has("title")) {
-                                   event.setTitle(eventObj.getString("title"));
-                               }
-                               if (eventObj.has("type")) {
-                                   event.setType(eventObj.getString("type"));
-                               }
-                               if (eventObj.has("createdById")) {
-                                   event.setCreatedById(eventObj.getLong("createdById"));
-                               }
-                               if (eventObj.has("eventPicture")) {
-                                   event.setEventPicture(eventObj.getString("eventPicture"));
-                               }
-                               if (eventObj.has("location") && eventObj.getString("location") != "null") {
-                                   event.setLocation(eventObj.getString("location"));
-                               }
-                               if (eventObj.has("isFullDay") && !eventObj.isNull("isFullDay")) {
-                                   event.setIsFullDay(eventObj.getBoolean("isFullDay"));
-                               }
-                        /*if (eventObj.has("startTime")) {
-                            Date startDate = new Date(eventObj.getLong("startTime"));
-                            parentEvent.setStartTime(timeFormat.format(startDate));
-                        }*/
-                               if (eventObj.has("source") && eventObj.getString("source") != null) {
-                                   event.setSource(eventObj.getString("source"));
-                               }
-                               if (eventObj.has("scheduleAs") && eventObj.getString("scheduleAs") != null) {
-                                   event.setScheduleAs(eventObj.getString("scheduleAs"));
-                               }
-
-                               if (eventObj.has("members")) {
-                                   JSONArray membersArray = eventObj.getJSONArray("members");
-                                   List<EventMember> members = new ArrayList<>();
-                                   EventMember owner = null;
-                                   EventMember loggedInUserEventMemberData = null;
-
-                                   for (int idx = 0; idx < membersArray.length(); idx++) {
-                                       JSONObject memberObj = (JSONObject) membersArray.get(idx);
-                                       EventMember eventMember = new EventMember();
-
-                                       Gson gson = new Gson();
-                                       eventMember = gson.fromJson(memberObj.toString(), EventMember.class);
-
-                                       if (eventMember.getUserId() != null && event.getCreatedById().equals(eventMember.getUserId())) {
-                                           owner = eventMember;
-                                       }
-                                       if (eventMember.getUserId() != null && loggedInUser.getUserId() == eventMember.getUserId()) {
-                                           System.out.println("Inside Logegd IN User");
-                                           loggedInUserEventMemberData = eventMember;
-                                           System.out.println("Event Member Id : "+loggedInUserEventMemberData.toString());
-                                       }
-
-                                       members.add(eventMember);
-                                   }
-                                   event.setEventMembers(members);
-
-                                   //This is needed to show owner image next to gathering
-                                   event.setOwner(owner);
-
-                                   System.out.println("Logged IN User member id : "+loggedInUserEventMemberData.getEventMemberId());
-                                   event.setUserEventMemberData(loggedInUserEventMemberData);
-                               }
-
-                               if (loggedInUser.getUserId() == event.getCreatedById()) {
-                                   event.setIsOwner(true);
-                               }
-
-
-                               if (eventObj.has("fullDayStartTime") && eventObj.getString("fullDayStartTime") != "null") {
-                                   eventObj.put("startTime", CenesUtils.yyyyMMdd.parse(eventObj.getString("fullDayStartTime")).getTime());
-                               }
-
-                               if (eventObj.has("startTime") && eventObj.getString("startTime") != "null") {
-                                   Date startDate = new Date(eventObj.getLong("startTime"));
-                                   event.setStartTime(timeFormat.format(startDate));
-                                     event.setStartTimeMillis(eventObj.getLong("startTime"));
-                                   String dateKey = calCategory.format(startDate).toUpperCase() + "<b>"+weekCategory.format(startDate).toUpperCase()+"</b>";
-
-                                  //String dateKey = calCategory.format(startDate) + CenesUtils.getDateSuffix(startDate.getDate());
-                                   if (sdf.format(startDate).equals(sdf.format(new Date()))) {
-                                       dateKey = "TODAY ";
-                                   }
-                                   Calendar cal = Calendar.getInstance();
-                                   cal.setTime(new Date());
-                                   cal.add(Calendar.DATE, 1);
-                                   if (sdf.format(startDate).equals(sdf.format(cal.getTime()))) {
-                                       dateKey = "TOMORROW";
-                                   }
-                                   if (!headers.contains(dateKey)) {
-                                       headers.add(dateKey);
-                                   }
-                                   if (eventMap.containsKey(dateKey)) {
-                                       events = eventMap.get(dateKey);
-                                   } else {
-                                       events = new ArrayList<>();
-                                   }
-                                   events.add(event);
-                                   eventMap.put(dateKey, events);
-                               }
-                           } catch (Exception e) {
-                               e.printStackTrace();
-                           }
-                       }
-
-                       if (eventMap != null) {
-
-
-                           for (Map.Entry<String, List<Event>> eventMapEntrySet : eventMap.entrySet()) {
-
-                               Collections.sort(eventMapEntrySet.getValue(), new Comparator<Event>() {
-                                   public int compare(Event o1, Event o2) {
-                                       return o1.getIsFullDay().compareTo(true) > o2.getIsFullDay().compareTo(true) ? -1 : o1.getIsFullDay().compareTo(true) == o2.getFullDay().compareTo(true) ? 0 : 1;
-                                   }
-                               });
-                           }
-
-                           Iterator iterator = eventMap.entrySet().iterator();
-                           while (iterator.hasNext()) {
-                               Map.Entry<String, List<Event>> entry = (Map.Entry<String, List<Event>>) iterator.next();
-
-                               List<Event> eventList = entry.getValue();
-                               List<Event> tempEvents = new ArrayList<>();
-                               List<Event> tempReminders = new ArrayList<>();
-
-                               for (int i = 0; i < eventList.size(); i++) {
-                                   Event event = eventList.get(i);
-
-                                   if(event.getType().equalsIgnoreCase("Reminder")) {
-                                       tempReminders.add(event);
-                                   } else {
-                                       tempEvents.add(event);
-                                   }
-                               }
-
-                               eventList.clear();
-                               eventList.addAll(tempEvents);
-                               eventList.addAll(tempReminders);
-                           }
-                       }
-
-                       listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
-                   }
-
-                   if (!eventsExists) {
-                       homeScreenEventsList.setVisibility(View.GONE);
-                       homeNoEvents.setVisibility(View.VISIBLE);
-                       homeNoEvents.setTextSize(20f);
-                       homeNoEvents.setText("No Event Exists For This Date");
-                   } else {
-                       homeScreenEventsList.setVisibility(View.VISIBLE);
-                       homeScreenEventsList.setAdapter(listAdapter);
-                   }
                } else {
                    getCenesActivity().showRequestTimeoutDialog();
                }

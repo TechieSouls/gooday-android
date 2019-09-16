@@ -9,15 +9,15 @@
         android:layout_height="50dp"
         android:gravity="center_vertical">
 
-        <ImageView
+        <Button
             android:id="@+id/close_search_friends_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_margin="10dp"
-            android:padding="5dp"
+            android:text="Cancel"
+            android:background="@color/transparent"
+            android:textColor="@color/cenes_blue"
+            android:layout_alignParentLeft="true"/>
 
-            android:src="@drawable/back_arrow_ios" />
 
         <TextView
             android:id="@+id/invite_friend_title"
@@ -25,7 +25,7 @@
             android:layout_height="match_parent"
             android:layout_marginLeft="40dp"
             android:layout_marginRight="40dp"
-            android:text="PEOPLE"
+            android:text="Invite Guests"
             android:textAlignment="center"
             android:gravity="center_vertical"
             android:textStyle="bold"
@@ -35,7 +35,7 @@
             android:id="@+id/btn_done_invite_friend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="DONE"
+            android:text="Done"
             android:background="@color/transparent"
             android:textColor="@color/cenes_blue"
             android:layout_alignParentRight="true"/>
@@ -79,10 +79,44 @@
             android:paddingStart="20dp"
             android:scrollbars="none"/>
     </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/cenes_noncenes_select_bar"
+        android:layout_below="@+id/rl_selected_friends_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="60dp">
+
+        <TextView
+            android:id="@+id/tv_select_bar_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:textColor="@color/black"/>
+        
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@drawable/grey_arrow_icon"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="40dp"
+            />
+    </RelativeLayout>
     <ListView
         android:id="@+id/gath_search_friend_list_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:layout_below="@+id/rl_selected_friends_recycler_view"></ListView>
+        android:layout_below="@+id/cenes_noncenes_select_bar"
+        android:visibility="gone"
+        ></ListView>
+
+    <ExpandableListView
+        android:id="@+id/elv_friend_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/cenes_noncenes_select_bar"
+        android:groupIndicator="@android:color/transparent"
+        ></ExpandableListView>
 </RelativeLayout>

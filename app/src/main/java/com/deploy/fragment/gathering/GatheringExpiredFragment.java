@@ -80,6 +80,7 @@ public class GatheringExpiredFragment extends CenesFragment {
                     ((CenesBaseActivity)getActivity()).clearBackStackInclusive(null);
                     ((CenesBaseActivity)getActivity()).replaceFragment(new HomeFragment(), null);
 
+                    ((CenesBaseActivity)getActivity()).parentEvent = null;
                     CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
                     ((CenesBaseActivity)getActivity()).replaceFragment(createGatheringFragment, CreateGatheringFragment.TAG);
                     break;

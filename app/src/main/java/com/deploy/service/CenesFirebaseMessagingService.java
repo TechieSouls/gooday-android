@@ -94,7 +94,7 @@ public class CenesFirebaseMessagingService extends FirebaseMessagingService {
                         intent = new Intent(this, CenesBaseActivity.class);
                     }
                 } else if (payloadObj.getString("type").equals("Reminder")) {
-                    intent = new Intent(this, ReminderActivity.class);
+                    intent = new Intent(this, CenesBaseActivity.class);
                     /* intent.putExtra("dataFrom","push");
                     intent.putExtra("reminderId",payloadObj.getLong("notificationTypeId"));*/
                 }

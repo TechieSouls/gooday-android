@@ -313,7 +313,7 @@ public class CreateReminderActivity extends CenesActivity {
 
                 case R.id.add_reminder_people:
                 case R.id.iv_add_more_friends:
-                    startActivityForResult(new Intent(CreateReminderActivity.this, SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
+//                    startActivityForResult(new Intent(CreateReminderActivity.this, SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
                     break;
 
                 case R.id.reminder_location:

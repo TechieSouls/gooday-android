@@ -41,7 +41,6 @@ import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.ReminderActivity;
-import com.deploy.activity.SearchFriendActivity;
 import com.deploy.activity.SearchLocationActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.Reminder;
@@ -310,7 +309,7 @@ public class CreateReminderFragment extends CenesFragment {
 
                 case R.id.add_reminder_people:
                 case R.id.iv_add_more_friends:
-                    startActivityForResult(new Intent(getActivity(), SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
+//                    startActivityForResult(new Intent(getActivity(), SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
                     break;
 
                 case R.id.reminder_location:

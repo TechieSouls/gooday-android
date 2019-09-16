@@ -1,9 +1,7 @@
 package com.deploy.fragment.guest;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,10 +26,8 @@ import com.deploy.application.CenesApplication;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.service.InstabugService;
 
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 /**
  * Created by mandeep on 6/10/18.
@@ -147,7 +143,6 @@ public class ForgotPasswordFragment extends CenesFragment {
                     break;
 
                 case R.id.iv_bug_report:
-                    new InstabugService().invokeBugReporting();
                     break;
 
                 case R.id.tv_login_back_again:

@@ -24,6 +24,7 @@ public class Notification {
     private String notificationTypeStatus;
     private Long notificationTypeId;
     private String readStatus;
+    private Event event;
     private User user;
 
 
@@ -113,6 +114,14 @@ public class Notification {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
     }
 
     @Override

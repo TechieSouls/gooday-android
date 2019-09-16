@@ -1,8 +1,6 @@
 package com.deploy.activity;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -17,15 +15,12 @@ import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
 import com.deploy.application.CenesApplication;
-import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.gathering.CreateGatheringFragment;
-import com.deploy.fragment.gathering.GatheringPreviewFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragmentBkup;
 import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.fragment.NavigationFragment;
-
-import org.json.JSONObject;
 
 /**
  * Created by mandeep on 2/11/17.
@@ -98,9 +93,9 @@ public class GatheringScreenActivity extends CenesActivity {
 
             /*GatheringsFragment gatheringsFragment = new GatheringsFragment();
             gatheringsFragment.setArguments(bundle);*/
-            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-            gatheringPreviewFragment.setArguments(bundle);
-            replaceFragment(gatheringPreviewFragment, null);
+            GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+            gatheringPreviewFragmentBkup.setArguments(bundle);
+            replaceFragment(gatheringPreviewFragmentBkup, null);
         } else if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("list")) {
             Bundle bundle = new Bundle();
             bundle.putString("dataFrom", "list");
@@ -110,9 +105,9 @@ public class GatheringScreenActivity extends CenesActivity {
             createGatheringFragment.setArguments(bundle);
 
             replaceFragment(createGatheringFragment, null);*/
-            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-            gatheringPreviewFragment.setArguments(bundle);
-            replaceFragment(gatheringPreviewFragment, null);
+            GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+            gatheringPreviewFragmentBkup.setArguments(bundle);
+            replaceFragment(gatheringPreviewFragmentBkup, null);
         } else if (intent != null && intent.getStringExtra("dataFrom") != null && intent.getStringExtra("dataFrom").equals("fabButton")) {
             replaceFragment(new CreateGatheringFragment(), null);
         } else {

@@ -3,7 +3,6 @@ package com.deploy.fragment.guest;
 import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
-import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -40,9 +39,6 @@ import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.AlertManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
-import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.ChoiceActivity;
-import com.deploy.activity.CompleteYourProfileActivity;
 import com.deploy.activity.GuestActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.UserApiManager;
@@ -51,8 +47,6 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.HolidaySyncFragment;
-import com.deploy.fragment.dashboard.HomeFragment;
-import com.deploy.service.InstabugService;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedDrawable;
@@ -448,7 +442,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
                     gender = "Female";
                     break;
                 case R.id.iv_report_instabug:
-                    new InstabugService().invokeBugReporting();
                     break;
 
             }

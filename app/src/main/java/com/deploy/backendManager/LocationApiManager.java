@@ -38,4 +38,29 @@ public class LocationApiManager {
         Type listType = new TypeToken<List<Location>>(){}.getType();
         return gson.fromJson( locationArray.toString(), listType);
     }
+
+    public JSONObject nearByLocationSearch(String queryString) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = LocationAPI.get_googleNearByLocations+"&"+queryString;
+            return jsonParsing.httpGetJsonObject(apiUrl,null);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public JSONObject worldWideLocationSearch(String queryString) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = LocationAPI.get_googleWorldWideLocations+"&"+queryString;
+            return jsonParsing.httpGetJsonObject(apiUrl,null);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }

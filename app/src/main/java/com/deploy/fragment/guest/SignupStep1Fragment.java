@@ -27,7 +27,6 @@ import com.deploy.backendManager.UserApiManager;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.service.AuthenticateService;
-import com.deploy.service.InstabugService;
 import com.deploy.util.CenesUtils;
 
 import org.json.JSONObject;
@@ -151,7 +150,6 @@ public class SignupStep1Fragment extends CenesFragment {
                     ((GuestActivity) getActivity()).replaceFragment(scls, SignupCountryListFragment.TAG);
                     break;
                 case R.id.iv_bug_report:
-                    new InstabugService().invokeBugReporting();
                     break;
             }
         }

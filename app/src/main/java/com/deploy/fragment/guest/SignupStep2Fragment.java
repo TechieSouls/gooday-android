@@ -21,7 +21,6 @@ import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.UserApiManager;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.service.InstabugService;
 
 import org.json.JSONObject;
 
@@ -158,7 +157,6 @@ public class SignupStep2Fragment extends CenesFragment {
                     setTExtInEditBoxes("-1");
                     break;
                 case R.id.iv_bug_report:
-                    new InstabugService().invokeBugReporting();
                     break;
             }
         }

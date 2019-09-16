@@ -33,7 +33,6 @@ import com.deploy.countrypicker.CountryPickerListener;
 import com.deploy.countrypicker.CountryUtils;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.dashboard.HomeFragment;
-import com.deploy.service.InstabugService;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 import com.google.gson.Gson;
@@ -193,7 +192,6 @@ public class HolidaySyncFragment extends CenesFragment {
 
             switch (v.getId()) {
                 case R.id.instabug_report:
-                    new InstabugService().invokeBugReporting();
                     break;
                 case R.id.btn_change_country:
                     final CountryPicker picker = CountryPicker.newInstance("Select Holiday Calendar");

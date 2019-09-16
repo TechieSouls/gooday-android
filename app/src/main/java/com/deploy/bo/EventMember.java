@@ -14,11 +14,14 @@ public class EventMember {
     private String picture;
     private String status;
     private Long eventId;
-    private Long userId;
+
+    //@SerializedName("memberId")
+    private Integer userId;
     private int userContactId;
     private String phone;
     private boolean owner;
     private User user;
+    private Integer friendId;
     private String cenesMember;
 
     public Long getEventMemberId() {
@@ -61,11 +64,15 @@ public class EventMember {
         this.owner = owner;
     }
 
-    public Long getUserId() {
+    public Integer getUserId() {
+        if (friendId != null) {
+            userId = friendId;
+            return friendId;
+        }
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 
@@ -109,6 +116,21 @@ public class EventMember {
         this.eventId = eventId;
     }
 
+    public Integer getFriendId() {
+        return friendId;
+    }
+
+    public void setFriendId(Integer friendId) {
+        this.friendId = friendId;
+        if (friendId != null) {
+            this.userId = friendId;
+        }
+    }
+
+    public String getCenesMember() {
+        return cenesMember;
+    }
+
     @Override
     public String toString() {
         return "EventMember{" +
@@ -122,6 +144,7 @@ public class EventMember {
                 ", phone='" + phone + '\'' +
                 ", owner=" + owner +
                 ", user=" + user +
+                ", friendId=" + friendId +
                 ", cenesMember='" + cenesMember + '\'' +
                 '}';
     }

@@ -26,11 +26,9 @@ import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.dashboard.HomeFragment;
-import com.deploy.service.InstabugService;
 import com.deploy.util.CenesConstants;
+import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
-import com.instabug.chat.Chats;
-import com.instabug.library.Feature;
 
 import java.util.List;
 
@@ -77,15 +75,7 @@ public class HelpFeedbackFragment  extends CenesFragment {
         homeProfilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (getActivity() instanceof ReminderActivity) {
-                    ReminderActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                } else if (getActivity() instanceof GatheringScreenActivity) {
-                    GatheringScreenActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                } else if (getActivity() instanceof MeTimeActivity) {
-                    MeTimeActivity.mDrawerLayout.openDrawer(GravityCompat.START);
-                } else if (getActivity() instanceof AlarmActivity) {
-                    ((AlarmActivity) getActivity()).hideFooter();
-                } else if (getActivity() instanceof CenesBaseActivity) {
+                if (getActivity() instanceof CenesBaseActivity) {
                     ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
                 }
             }
@@ -101,7 +91,17 @@ public class HelpFeedbackFragment  extends CenesFragment {
         btnReportaProblem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new InstabugService().invokeBugReporting();
+                //new InstabugService().invokeBugReporting();
+
+                Intent intent=new Intent(Intent.ACTION_SEND);
+                String[] recipients={"support@cenesgroup.com"};
+                intent.putExtra(Intent.EXTRA_EMAIL, recipients);
+
+                String phoneDetails = "Device : "+CenesUtils.getDeviceManufacturer()+" "+CenesUtils.getDeviceModel()+" "+CenesUtils.getDeviceVersion()+"\n";
+
+                intent.putExtra(Intent.EXTRA_TEXT,phoneDetails);
+                intent.setType("text/html");
+                startActivity(Intent.createChooser(intent, "Send mail"));
             }
         });
 

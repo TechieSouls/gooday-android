@@ -172,6 +172,24 @@ public class CenesBaseActivity extends CenesActivity {
         }
     }
 
+
+    public void hideAndreplaceFragment(Fragment currentFragment, Fragment fragment , String tag) {
+
+        try {
+            fragmentTransaction = fragmentManager.beginTransaction();
+            if (tag != null) {
+                fragmentTransaction.replace(R.id.fragment_container, fragment, tag);
+                fragmentTransaction.addToBackStack(tag);
+                fragmentTransaction.hide(currentFragment);
+            } else {
+                fragmentTransaction.replace(R.id.fragment_container, fragment);
+            }
+            fragmentTransaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void activateFooterIcon(String tag) {
 
         if (tag.equals(HomeFragment.TAG)) {

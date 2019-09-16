@@ -8,6 +8,7 @@ import com.deploy.api.GatheringAPI;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -75,6 +76,18 @@ public class GatheringApiManager {
         return null;
     }
 
+
+    public JSONObject uploadOnlyPhoto(String authToken, File file) {
+        try {
+            String apiUrl = UrlManagerImpl.prodAPIUrl+GatheringAPI.post_upload_image_v2;
+            JsonParsing jsonParsing = new JsonParsing();
+            return jsonParsing.httpPostMultipartOnlyGeneric(apiUrl, authToken, file);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public JSONObject updateGatheringStatus(String queryStr, String authToken) {
         try {
             JsonParsing jsonParsing = new JsonParsing();
@@ -96,4 +109,16 @@ public class GatheringApiManager {
         }
         return null;
     }
+
+    public JSONArray predictiveDataUserId(String queryStr, String authToken) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ GatheringAPI.get_predictive_calendar_api+"?"+queryStr;
+            return jsonParsing.httpGet(apiUrl,authToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

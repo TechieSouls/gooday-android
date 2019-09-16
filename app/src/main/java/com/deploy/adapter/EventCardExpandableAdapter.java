@@ -1,6 +1,5 @@
 package com.deploy.adapter;
 
-import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -20,17 +19,19 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.R;
-import com.deploy.activity.CenesActivity;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
-import com.deploy.fragment.InvitationFragment;
+import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.fragment.gathering.CreateGatheringFragment;
+import com.deploy.fragment.gathering.GatheringExpiredFragment;
 import com.deploy.fragment.gathering.GatheringPreviewFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragmentBkup;
+import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -128,7 +129,7 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
         if (child.getIsFullDay() != null && child.getIsFullDay()) {
             viewHolder.startTime.setText("00:00AM");
         } else {
-            viewHolder.startTime.setText(child.getStartTime());
+            viewHolder.startTime.setText(CenesUtils.hhmmaa.format(new Date(child.getStartTime())));
         }
 
         //System.out.println(child.getTitle()+","+child.getEventMembers().size());
@@ -204,40 +205,35 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
 
                 fragmentManager = context.getSupportFragmentManager();
 
-                if (isInvitation) {
-                    /*context.hideFooter();
-                    InvitationFragment ifFragment = new InvitationFragment();
-
-                    Bundle bundle = new Bundle();
-                    //bundle.putString("dataFrom", "GatheringsFragment");
-                    bundle.putLong("eventId", viewHolder.eventId);
-                    ifFragment.setArguments(bundle);
-                    context.replaceFragment(ifFragment, "ifFragment");*/
-                    Bundle bundle = new Bundle();
-                    bundle.putString("dataFrom", "notification");
-                    bundle.putLong("eventId", viewHolder.eventId);
-                    GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-                    gatheringPreviewFragment.setArguments(bundle);
-                    context.replaceFragment(gatheringPreviewFragment, GatheringPreviewFragment.TAG);
-
-
+                /*if (child.getExpired() == true) {
+                    GatheringExpiredFragment gatheringExpiredFragment = new GatheringExpiredFragment();
+                    context.replaceFragment(gatheringExpiredFragment, GatheringExpiredFragment.TAG);
                 } else {
-                    CreateGatheringFragment cgFragment = new CreateGatheringFragment();
+                    if (isInvitation) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("dataFrom", "notification");
+                        bundle.putLong("eventId", viewHolder.eventId);
+                        GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+                        gatheringPreviewFragmentBkup.setArguments(bundle);
+                        context.replaceFragment(gatheringPreviewFragmentBkup, GatheringPreviewFragmentBkup.TAG);
 
-                    /*Bundle bundle = new Bundle();
-                    bundle.putString("dataFrom", "list");
-                    bundle.putLong("eventId", viewHolder.eventId);
-                    cgFragment.setArguments(bundle);
-                    ((GatheringScreenActivity) context).replaceFragment(cgFragment, "cgFragment");*/
-                    
-                    Bundle bundle = new Bundle();
-                    bundle.putString("dataFrom", "list");
-                    bundle.putLong("eventId", viewHolder.eventId);
-                    GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-                    gatheringPreviewFragment.setArguments(bundle);
-                    context.replaceFragment(gatheringPreviewFragment, GatheringPreviewFragment.TAG);
 
-                }
+                    } else {
+                        CreateGatheringFragment cgFragment = new CreateGatheringFragment();
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString("dataFrom", "list");
+                        bundle.putLong("eventId", viewHolder.eventId);
+                        GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+                        gatheringPreviewFragmentBkup.setArguments(bundle);
+                        context.replaceFragment(gatheringPreviewFragmentBkup, GatheringPreviewFragmentBkup.TAG);
+
+                    }
+                }*/
+                System.out.println(child.toString());
+                GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                gatheringPreviewFragment.event = child;
+                context.replaceFragment(gatheringPreviewFragment, GatheringsFragment.TAG);
             }
         });
 

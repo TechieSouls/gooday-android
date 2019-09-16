@@ -9,9 +9,6 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
-import com.deploy.service.InstabugService;
-import com.instabug.library.Instabug;
-import com.instabug.library.invocation.InstabugInvocationEvent;
 
 
 public class MainActivity extends CenesActivity {
@@ -26,8 +23,6 @@ public class MainActivity extends CenesActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        new InstabugService().initiateInstabug(getApplication());
 
         cenesApplication = (CenesApplication)getCenesApplication();
         coreManager = cenesApplication.getCoreManager();

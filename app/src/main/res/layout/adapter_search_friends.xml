@@ -2,60 +2,90 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/invite_friend_item"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:padding="10dp">
-
-    <com.deploy.util.RoundedImageView
-        android:id="@+id/invite_friend_picture"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/cenes_user_no_image"
-        android:visibility="visible"/>
-
-    <RelativeLayout
-        android:id="@+id/rv_non_cenes_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"></RelativeLayout>
+    android:layout_height="wrap_content">
 
     <LinearLayout
+        android:id="@+id/ll_invite_frnd_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:weightSum="5.2">
+        android:gravity="center_vertical"
+        android:padding="10dp"
+        >
+
+        <RelativeLayout
+            android:id="@+id/rv_cenes_layout"
+            android:layout_width="50dp"
+            android:layout_height="50dp">
+            <ImageView
+                android:id="@+id/iv_host_circle_member"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/host_gradient_circle_small"
+                android:visibility="gone"/>
+
+
+            <com.deploy.util.RoundedImageView
+                android:id="@+id/invite_friend_picture"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/profile_pic_no_image"
+                android:visibility="visible"
+                android:layout_centerInParent="true"/>
+        </RelativeLayout>
+        <RelativeLayout
+            android:id="@+id/rv_non_cenes_layout"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:visibility="visible"
+            android:background="@drawable/xml_circle_grey_white_border">
+
+            <ImageView
+                android:id="@+id/iv_host_circle"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:src="@drawable/host_gradient_circle_small"
+                android:visibility="visible"/>
+
+            <TextView
+                android:id="@+id/tv_non_cenes_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AS"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:layout_centerInParent="true"
+                />
+        </RelativeLayout>
 
         <LinearLayout
-            android:layout_weight="5"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/invite_friend_name"
+            android:orientation="horizontal">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:text="asdfghjk"
-                android:textSize="20sp" />
-            <TextView
-                android:id="@+id/invite_friend_name_cenes_user_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:text="I am using CENES"
-                android:visibility="gone"
-                android:textSize="12sp" />
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/invite_friend_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="Mandeep"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"/>
+                <TextView
+                    android:id="@+id/tv_friend_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="+91 8437375294"
+                    android:layout_marginStart="10dp"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/iv_cenes_member_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:button="@drawable/circle_unselected"
-            android:layout_weight="1"
-            />
     </LinearLayout>
 
 </LinearLayout>

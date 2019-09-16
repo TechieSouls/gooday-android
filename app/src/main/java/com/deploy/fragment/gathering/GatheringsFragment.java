@@ -33,6 +33,7 @@ import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.InvitationFragment;
 import com.deploy.fragment.NavigationFragment;
+import com.deploy.fragment.friend.FriendListFragment;
 import com.deploy.util.RoundedImageView;
 
 import org.json.JSONObject;
@@ -98,21 +99,15 @@ public class GatheringsFragment extends CenesFragment {
             bundle.putString("dataFrom", "list");
             bundle.putLong("eventId", bundle_.getLong("eventId"));
             this.getArguments().clear();
-            //CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
-            //createGatheringFragment.setArguments(bundle);
-            //((GatheringScreenActivity) getActivity()).replaceFragment(createGatheringFragment, "CreateGatheringFragment");
-            GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-            gatheringPreviewFragment.setArguments(bundle);
-            ((CenesBaseActivity) getActivity()).replaceFragment(gatheringPreviewFragment, "GatheringPreviewFragment");
+            GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup = new GatheringPreviewFragmentBkup();
+            gatheringPreviewFragmentBkup.setArguments(bundle);
+            ((CenesBaseActivity) getActivity()).replaceFragment(gatheringPreviewFragmentBkup, "GatheringPreviewFragmentBkup");
 
         } else {
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
                     //TODO your background code
-                    //gatheringsTask = new GatheringsTask();
-                    //gatheringsTask.execute("Going");
-
                     new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                         @Override
                         public void processFinish(Map<String, Object> response) {
@@ -124,25 +119,6 @@ public class GatheringsFragment extends CenesFragment {
                 }
             });
         }
-
-        /*AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                //TODO your background code
-
-                new GatheringAsyncTask.NotificationCountTask(new GatheringAsyncTask.NotificationCountTask.AsyncResponse() {
-                    @Override
-                    public void processFinish(JSONObject response) {
-                        try {
-                            tvNotificationCount.setText(String.valueOf(response.getInt("data")));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).execute();
-
-            }
-        });*/
 
         return view;
     }
@@ -179,8 +155,6 @@ public class GatheringsFragment extends CenesFragment {
         declinedBtn.setOnClickListener(onClickListener);
         createGatheringBtn.setOnClickListener(onClickListener);
         homePageProfilePic.setOnClickListener(onClickListener);
-
-        //fab.setOnClickListener(onClickListener);
     }
 
     public void updateUIAfterGatheringAsyncTask(Map<String, Object> response) {
@@ -191,7 +165,7 @@ public class GatheringsFragment extends CenesFragment {
 
             List<String> headers = (List<String>) response.get("headers");
             Map<String, List<Event>> eventMap = (Map<String, List<Event>>) response.get("eventMap");
-            Boolean isInvitation = (Boolean)  response.get("isInvitation");
+            boolean isInvitation = false;
             listAdapter = new EventCardExpandableAdapter((CenesBaseActivity)getActivity(), fragmentManager,  headers, eventMap, isInvitation);
 
             gatheringsEventsList.setVisibility(View.VISIBLE);
@@ -204,17 +178,6 @@ public class GatheringsFragment extends CenesFragment {
         }
 
     }
-
-
-    /*@Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CREATE_GATHERING_RESULT_CODE && resultCode == RESULT_OK) {
-            new GatheringsTask().execute("Going");
-        } else if (requestCode == CREATE_GATHERING_RESULT_CODE && resultCode == RESULT_CANCELED) {
-            //Do Nothing
-        }
-    }*/
 
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
@@ -259,13 +222,11 @@ public class GatheringsFragment extends CenesFragment {
                     break;
 
                 case R.id.create_gath_btn:
-                    //startActivityForResult(new Intent(getActivity(), CreateGatheringActivity.class), CREATE_GATHERING_RESULT_CODE);
-                    //break;
                     ((CenesBaseActivity) getActivity()).parentEvent = null;
                     fragmentManager = getActivity().getSupportFragmentManager();
-                    ((CenesBaseActivity) getActivity()).replaceFragment(new CreateGatheringFragment(), CreateGatheringFragment.TAG);
-//                    replaceFragment(new ProfileFragment(), "cgFragment");
+                    ((CenesBaseActivity) getActivity()).replaceFragment(new FriendListFragment(), GatheringsFragment.TAG);
                     break;
+
             }
         }
     };
@@ -274,12 +235,6 @@ public class GatheringsFragment extends CenesFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //if (gatheringAsyncTasks != null) {
-            //gatheringAsyncTasks.cancel(true);
-        //}
-       /* if (notificationCountTask != null) {
-            notificationCountTask.cancel(true);
-        }*/
     }
 
     public void selectTab(TextView selection) {

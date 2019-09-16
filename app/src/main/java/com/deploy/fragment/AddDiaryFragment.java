@@ -43,7 +43,6 @@ import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.DiaryActivity;
-import com.deploy.activity.SearchFriendActivity;
 import com.deploy.activity.SearchLocationActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
@@ -282,7 +281,7 @@ public class AddDiaryFragment extends CenesFragment implements View.OnFocusChang
 
                 case R.id.tv_invite_frnds_btn:
                 case R.id.iv_add_more_friends:
-                    startActivityForResult(new Intent(getActivity(), SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
+                    //startActivityForResult(new Intent(getActivity(), SearchFriendActivity.class), SEARCH_FRIEND_RESULT_CODE);
                     break;
 
                 case R.id.tv_search_location_button:
