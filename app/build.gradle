@@ -63,9 +63,6 @@ dependencies {
     compile "com.daimajia.swipelayout:library:1.2.0@aar"
     compile 'com.google.code.gson:gson:2.8.5'
 
-    //SWipe Card
-    implementation 'com.lorentzos.swipecards:library:1.0.9'
-
 
 // Card View dependencies
     compile 'com.android.support:cardview-v7:28.+'

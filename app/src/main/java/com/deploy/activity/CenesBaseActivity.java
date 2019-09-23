@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.deploy.AsyncTasks.CenesCommonAsyncTask;
+import com.deploy.AsyncTasks.GatheringAsyncTask;
 import com.deploy.Manager.InternetManager;
 import com.deploy.R;
 import com.deploy.application.CenesApplication;
@@ -24,6 +25,7 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.fragment.NavigationFragment;
 import com.deploy.fragment.NotificationFragment;
 import com.deploy.fragment.dashboard.HomeFragment;
+import com.deploy.fragment.gathering.GatheringPreviewFragment;
 import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.fragment.metime.MeTimeCardFragment;
 import com.deploy.fragment.metime.MeTimeFragment;
@@ -102,6 +104,47 @@ public class CenesBaseActivity extends CenesActivity {
 
             }
         });
+
+        String data = getIntent().getDataString();
+        System.out.println(data);
+        if (data != null && data.indexOf("cenes://") != -1) {
+
+            try {
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String params = data.split("\\?")[1];
+            String paramValue = params.split("=")[1];
+            if (paramValue != null) {
+
+                new GatheringAsyncTask(cenesApplication, this);
+                new GatheringAsyncTask.GatheringByKeyTask(new GatheringAsyncTask.GatheringByKeyTask.AsyncResponse() {
+                    @Override
+                    public void processFinish(JSONObject response) {
+
+                        try {
+
+                            boolean success = response.getBoolean("success");
+
+                            if (success == true) {
+
+                                Gson gson = new Gson();
+                                Event event = gson.fromJson(response.getJSONObject("data").toString(), Event.class);
+                                GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                                gatheringPreviewFragment.event = event;
+                                replaceFragment(gatheringPreviewFragment, HomeFragment.TAG);
+
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).execute(paramValue);
+
+            }
+        }
     }
 
 

@@ -18,7 +18,6 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
@@ -135,8 +134,6 @@ public class AboutUsFragment  extends CenesFragment {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof AlarmActivity) {
-                ((AlarmActivity) getActivity()).hideFooter();
             }
         } catch (Exception e) {
 
@@ -164,8 +161,6 @@ public class AboutUsFragment  extends CenesFragment {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof DiaryActivity) {
             fragmentManager = ((DiaryActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof AlarmActivity) {
-            fragmentManager = ((AlarmActivity) getActivity()).fragmentManager;
         }
     }
 }

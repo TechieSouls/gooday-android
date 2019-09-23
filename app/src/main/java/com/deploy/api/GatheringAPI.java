@@ -11,6 +11,7 @@ public class GatheringAPI {
     public static String get_update_invitation_api = "/api/event/memberStatusUpdate";
     public static String get_delete_event_api = "/api/event/delete";
     public static String get_predictive_calendar_api = "/api/predictive/calendar";
+    public static String get_gathering_by_key_api = "/api/event/invitation/";
 
     //POST
     public static String post_create_gathering = "/api/event/create"; //Event Data

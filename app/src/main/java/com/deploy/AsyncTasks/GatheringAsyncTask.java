@@ -16,6 +16,7 @@ import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.GatheringApiManager;
+import com.deploy.backendManager.HomeScreenApiManager;
 import com.deploy.backendManager.NotificationAPiManager;
 import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
@@ -547,4 +548,83 @@ public class GatheringAsyncTask {
             delegate.processFinish(response);
         }
     }
+
+    public static class HomeEventsTask extends AsyncTask<String, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+
+        public AsyncResponse delegate = null;
+
+        public HomeEventsTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... queryStrs) {
+            UserManager userManager = coreManager.getUserManager();
+            HomeScreenApiManager homeScreenApiManager = coreManager.getHomeScreenApiManager();
+            User user = userManager.getUser();
+
+            String queryStr = queryStrs[0];
+            JSONObject response = homeScreenApiManager.getHomescreenEvents(queryStr, user.getAuthToken());
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject response) {
+            super.onPostExecute(response);
+            delegate.processFinish(response);
+        }
+    }
+
+    public static class GatheringByKeyTask extends AsyncTask<String, JSONObject, JSONObject> {
+
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+
+        public AsyncResponse delegate = null;
+
+        public GatheringByKeyTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... queryStrs) {
+
+            UserManager userManager = coreManager.getUserManager();
+            GatheringApiManager gatheringApiManager = coreManager.getGatheringApiManager();
+            User user = userManager.getUser();
+
+            String queryStr = queryStrs[0];
+            JSONObject response =  gatheringApiManager.getGatheringByPrivateKet(queryStr, user.getAuthToken());
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject response) {
+            super.onPostExecute(response);
+            delegate.processFinish(response);
+        }
+    }
+
 }

@@ -111,7 +111,7 @@ public class GatheringsFragment extends CenesFragment {
                     new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                         @Override
                         public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response);
+                            updateUIAfterGatheringAsyncTask(response, false);
                         }
                     }).execute("Going");
 
@@ -157,7 +157,7 @@ public class GatheringsFragment extends CenesFragment {
         homePageProfilePic.setOnClickListener(onClickListener);
     }
 
-    public void updateUIAfterGatheringAsyncTask(Map<String, Object> response) {
+    public void updateUIAfterGatheringAsyncTask(Map<String, Object> response, boolean isInvitation) {
         if (getActivity() == null) {
             return;
         }
@@ -165,7 +165,6 @@ public class GatheringsFragment extends CenesFragment {
 
             List<String> headers = (List<String>) response.get("headers");
             Map<String, List<Event>> eventMap = (Map<String, List<Event>>) response.get("eventMap");
-            boolean isInvitation = false;
             listAdapter = new EventCardExpandableAdapter((CenesBaseActivity)getActivity(), fragmentManager,  headers, eventMap, isInvitation);
 
             gatheringsEventsList.setVisibility(View.VISIBLE);
@@ -194,7 +193,7 @@ public class GatheringsFragment extends CenesFragment {
                     new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                         @Override
                         public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response);
+                            updateUIAfterGatheringAsyncTask(response, false);
                         }
                     }).execute("Going");
                     break;
@@ -205,7 +204,7 @@ public class GatheringsFragment extends CenesFragment {
                     new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                         @Override
                         public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response);
+                            updateUIAfterGatheringAsyncTask(response, true);
                         }
                     }).execute("pending");
                     break;
@@ -216,7 +215,7 @@ public class GatheringsFragment extends CenesFragment {
                     new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                         @Override
                         public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response);
+                            updateUIAfterGatheringAsyncTask(response, false);
                         }
                     }).execute("NotGoing");
                     break;

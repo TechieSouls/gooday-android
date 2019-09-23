@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F0F0F0">
 
 
     <RelativeLayout
@@ -9,27 +10,43 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
-        
+
         <RelativeLayout
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_marginTop="30dp"
-            android:layout_marginLeft="20dp"
+            android:layout_marginLeft="50dp"
             android:layout_alignParentLeft="true">
 
             <ImageView
                 android:id="@+id/iv_accept_icon"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/invitation_accept_button"/>
+                android:layout_height="match_parent"/>
 
         </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginLeft="50dp"
+            android:layout_alignParentLeft="true">
+
+            <ImageView
+                android:id="@+id/iv_invitation_accept_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/invitation_loader_spinner"
+
+                />
+        </RelativeLayout>
+
 
         <RelativeLayout
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:layout_marginTop="30dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginRight="30dp"
             android:layout_alignParentRight="true">
 
             <ImageView
@@ -48,6 +65,21 @@
                 android:layout_alignParentRight="true"
                 android:layout_marginTop="70dp"/>
 
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginRight="45dp"
+            android:layout_alignParentRight="true">
+
+            <ImageView
+                android:id="@+id/iv_invitation_decline_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/invitation_loader_spinner"
+                />
         </RelativeLayout>
 
         <android.support.v7.widget.CardView
@@ -260,28 +292,26 @@
                 </RelativeLayout>
 
             </LinearLayout>
-            <RelativeLayout
-                android:id="@+id/rl_skip_text"
-                android:layout_width="200dp"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentBottom="true"
-                android:alpha="0"
-                >
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="SKIP"
-                    android:textSize="50dp"
-                    android:textColor="@color/white"
-                    android:textAlignment="center"
-                    />
-            </RelativeLayout>
 
         </RelativeLayout>
     </android.support.v7.widget.CardView>
+
+        <RelativeLayout
+            android:id="@+id/rl_skip_text"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:padding="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            >
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/card_up_arrow"
+                android:layout_centerInParent="true"
+                />
+        </RelativeLayout>
 
     </RelativeLayout>
 </RelativeLayout>

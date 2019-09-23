@@ -14,7 +14,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.NotificationAsyncTask;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
@@ -115,8 +114,6 @@ public class NotificationFragment extends CenesFragment {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof AlarmActivity) {
-                ((AlarmActivity) getActivity()).hideFooter();
             }
         } catch (Exception e) {
 

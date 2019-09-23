@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -16,7 +15,6 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -30,12 +28,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.deploy.AsyncTasks.CenesCommonAsyncTask;
+import com.deploy.AsyncTasks.GatheringAsyncTask;
 import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.CreateReminderActivity;
 import com.deploy.adapter.HomeScreenAdapter;
@@ -43,24 +40,20 @@ import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.HomeScreenApiManager;
 import com.deploy.backendManager.UserApiManager;
 import com.deploy.bo.Event;
-import com.deploy.bo.EventMember;
-import com.deploy.bo.Notification;
-import com.deploy.bo.NotificationCountData;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.NavigationFragment;
 import com.deploy.fragment.gathering.CreateGatheringFragment;
 import com.deploy.leolin.shortcurtbadger.ShortcutBadger;
 import com.deploy.materialcalendarview.CalendarDay;
-import com.deploy.materialcalendarview.CalendarFilter;
 import com.deploy.materialcalendarview.CalendarMode;
 import com.deploy.materialcalendarview.MaterialCalendarView;
 import com.deploy.materialcalendarview.OnDateSelectedListener;
 import com.deploy.materialcalendarview.decorators.CurrentDateDecorator;
 import com.deploy.materialcalendarview.decorators.EventDecorator;
-import com.deploy.materialcalendarview.decorators.MultipleEventDecorator;
 import com.deploy.materialcalendarview.decorators.OneDayDecorator;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
@@ -71,7 +64,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
@@ -79,17 +71,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Created by rohan on 9/11/17.
@@ -123,13 +111,14 @@ public class HomeFragment extends CenesFragment {
     HomeScreenApiManager homeScreenApiManager;
     User loggedInUser;
     Tracker mTracker;
+    private EventManagerImpl eventManagerImpl;
 
     private Map<String, Set<CalendarDay>> calendarHighlights;
 
     boolean calModeMonth;
 
     private ProgressDialog mProgressDialog;
-    private EventsTask eventsTask;
+    private GatheringAsyncTask eventsTask;
     private HolidayCalendarTask holidayCalendarTask;
     private CurrentDateDecorator currentDateDecorator;
 
@@ -162,6 +151,9 @@ public class HomeFragment extends CenesFragment {
         loggedInUser = userManager.getUser();
         homeScreenApiManager = coreManager.getHomeScreenApiManager();
 
+        eventsTask = new GatheringAsyncTask(cenesApplication, (CenesBaseActivity)getActivity());
+        eventManagerImpl = new EventManagerImpl(cenesApplication);
+
         getActivity().getSharedPreferences("CenesPrefs", getActivity().MODE_PRIVATE).edit().putString("userId", loggedInUser.getUserId()+"").apply();
         getActivity().getSharedPreferences("CenesPrefs", getActivity().MODE_PRIVATE).edit().putString("authToken", loggedInUser.getAuthToken()).apply();
 
@@ -189,15 +181,8 @@ public class HomeFragment extends CenesFragment {
         homePageProfilePic = (RoundedImageView) v.findViewById(R.id.home_profile_pic);
 
         homeNoEvents = (TextView) v.findViewById(R.id.home_no_events);
-        //footerHomeIcon = ((CenesBaseActivity) getActivity()).footerHomeIcon;
-        //footerReminderIcon = ((CenesBaseActivity) getActivity()).footerReminderIcon;
-        //footerGatheringIcon = ((CenesBaseActivity) getActivity()).footerGatheringIcon;
-        //footerAlarmIcon = ((CenesBaseActivity) getActivity()).footerAlarmIcon;
-        //footerDiaryIcon = ((CenesBaseActivity) getActivity()).footerDiaryIcon;
-        //footerMeTimeIcon = ((CenesBaseActivity) getActivity()).footerMeTimeIcon;
 
         tvSelectedDate = (TextView) v.findViewById(R.id.tv_selected_date);
-        //footerHomeIcon.setCompoundDrawables(getResources().getDrawable(R.drawable.home_icon),null,null,null);
         fab = (FloatingActionButton) v.findViewById(R.id.fab);
         closeFabMenuBtn = (FloatingActionButton) v.findViewById(R.id.close_fab_menu_btn);
         gatheringFabMenuBtn = (FloatingActionButton) v.findViewById(R.id.gathering_fab_menu_btn);
@@ -227,15 +212,11 @@ public class HomeFragment extends CenesFragment {
         //get month and get how many days in current month
 
         User user = userManager.getUser();
-        if (user != null && user.getPicture() != null && user.getPicture() != "null") {
-            // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
+        if (user != null && !CenesUtils.isEmpty(user.getPicture())) {
             Glide.with(getActivity()).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homePageProfilePic);
         }
 
-        SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
-        SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
-        tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
-
+        tvSelectedDate.setText(Html.fromHtml(CenesUtils.ddMMM.format(new Date()).toUpperCase()+"<b>"+CenesUtils.EEEE.format(new Date()).toUpperCase()+"</b>"));
 
         initialSync();
 
@@ -250,112 +231,7 @@ public class HomeFragment extends CenesFragment {
         alarmFabMenuBtn.setOnClickListener(onClickListener);
         homePageProfilePic.setOnClickListener(onClickListener);
 
-        homeCalSearchView.setOnDateChangedListener(new OnDateSelectedListener() {
-            @Override
-            public void onDateSelected(@NonNull MaterialCalendarView widget, @NonNull CalendarDay date, boolean selected) {
-                // TODO Auto-generated method stub
-
-                homeCalSearchView.removeDecorator(currentDateDecorator);
-                homeCalSearchView.removeDecorator(mOneDayDecorator);
-
-                Boolean isDefault = true;
-                if (calendarHighlights != null) {
-
-                    if (calendarHighlights.containsKey("Holiday")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-                        }
-                    }
-
-                    if (calendarHighlights.containsKey("Holiday")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_teal);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-                    if (calendarHighlights.containsKey("Google")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Google");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_red);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-                    if (calendarHighlights.containsKey("Outlook")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Outlook");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_outlook_blue);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-                    if (calendarHighlights.containsKey("Facebook")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Facebook");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-                    if (calendarHighlights.containsKey("Apple")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Apple");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_gray);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-                    if (calendarHighlights.containsKey("Cenes")) {
-                        Set<CalendarDay> calendarDays = calendarHighlights.get("Cenes");
-                        if (calendarDays.contains(date)) {
-                            isDefault = false;
-                            //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-                            mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-
-                        }
-                    }
-
-                }
-                if (isDefault) {
-                    mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
-                }
-
-                homeCalSearchView.addDecorator(mOneDayDecorator);
-
-                Calendar cal = Calendar.getInstance();
-                cal.set(date.getYear(), date.getMonth(), date.getDay());
-                cal.set(Calendar.HOUR_OF_DAY,0);
-                cal.set(Calendar.MINUTE,0);
-                cal.set(Calendar.SECOND,0);
-                cal.set(Calendar.MILLISECOND,0);
-
-                SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
-                SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
-                tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
-
-                String queryStr = "&date=" + cal.getTimeInMillis();
-                if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
-                    try {
-                        eventsTask = new EventsTask();
-                        eventsTask.execute(queryStr);
-                    } catch (Exception e) {
-                        Toast.makeText((CenesBaseActivity) getActivity(), "Bad Request", Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText((CenesBaseActivity) getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        homeCalSearchView.setOnDateChangedListener(onDateSelectedListener);
 
     }
 
@@ -367,15 +243,19 @@ public class HomeFragment extends CenesFragment {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        final String queryStr = "&date=" + cal.getTimeInMillis();
         if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
 
+            List<Event> events = eventManagerImpl.fetchAllEvents();
+            summarizeEventsForHomeScreen(events);
+
+            final String queryStr = "user_id="+loggedInUser.getUserId()+"&date=" + cal.getTimeInMillis();
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
                     //TODO your background code
-                    eventsTask = new EventsTask();
-                    eventsTask.execute(queryStr);
+                    //eventsTask = new EventsTask();
+                    //eventsTask.execute(queryStr);
+                    makeHomeEventsApiCall(queryStr);
                 }
             });
 
@@ -393,7 +273,10 @@ public class HomeFragment extends CenesFragment {
                 }
             });
         } else {
-            Toast.makeText(getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
+            //Toast.makeText(getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
+            List<Event> events = eventManagerImpl.fetchAllEvents();
+            System.out.println("All Offline Events : "+events.size());
+            summarizeEventsForHomeScreen(events);
         }
     }
 
@@ -407,6 +290,112 @@ public class HomeFragment extends CenesFragment {
         }
     }
 
+    OnDateSelectedListener onDateSelectedListener = new OnDateSelectedListener() {
+        @Override
+        public void onDateSelected(@NonNull MaterialCalendarView widget, @NonNull CalendarDay date, boolean selected) {
+            // TODO Auto-generated method stub
+
+            homeCalSearchView.removeDecorator(currentDateDecorator);
+            homeCalSearchView.removeDecorator(mOneDayDecorator);
+
+            Boolean isDefault = true;
+            if (calendarHighlights != null) {
+
+                if (calendarHighlights.containsKey("Holiday")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+                    }
+                }
+
+                if (calendarHighlights.containsKey("Holiday")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Holiday");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_teal);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+                if (calendarHighlights.containsKey("Google")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Google");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_red);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+                if (calendarHighlights.containsKey("Outlook")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Outlook");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_outlook_blue);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+                if (calendarHighlights.containsKey("Facebook")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Facebook");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_blue);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+                if (calendarHighlights.containsKey("Apple")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Apple");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_gray);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+                if (calendarHighlights.containsKey("Cenes")) {
+                    Set<CalendarDay> calendarDays = calendarHighlights.get("Cenes");
+                    if (calendarDays.contains(date)) {
+                        isDefault = false;
+                        //mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+                        mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+
+                    }
+                }
+
+            }
+            if (isDefault) {
+                mOneDayDecorator = new OneDayDecorator(date, getActivity(), R.drawable.calendar_selector_orange);
+            }
+
+            homeCalSearchView.addDecorator(mOneDayDecorator);
+
+            Calendar cal = Calendar.getInstance();
+            cal.set(date.getYear(), date.getMonth(), date.getDay());
+            cal.set(Calendar.HOUR_OF_DAY,0);
+            cal.set(Calendar.MINUTE,0);
+            cal.set(Calendar.SECOND,0);
+            cal.set(Calendar.MILLISECOND,0);
+
+            SimpleDateFormat weekCategory = new SimpleDateFormat("EEEE");
+            SimpleDateFormat calCategory = new SimpleDateFormat("ddMMM");
+            tvSelectedDate.setText(Html.fromHtml(calCategory.format(new Date()).toUpperCase()+"<b>"+weekCategory.format(new Date()).toUpperCase()+"</b>"));
+
+            String queryStr = "user_id="+loggedInUser.getUserId()+"&date=" + cal.getTimeInMillis();
+            if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
+                try {
+                    //eventsTask.execute(queryStr);
+                    makeHomeEventsApiCall(queryStr);
+                } catch (Exception e) {
+                    Toast.makeText((CenesBaseActivity) getActivity(), "Bad Request", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText((CenesBaseActivity) getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
+            }
+        }
+    };
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -467,13 +456,6 @@ public class HomeFragment extends CenesFragment {
                     data.putExtra("dataFrom", "fabButton");
                     startActivityForResult(data,CREATE_REMINDER_RESULT_CODE);
                     break;
-                case R.id.alarm_fab_menu_btn:
-                    rlFabMenu.setVisibility(View.GONE);
-                    fab.setVisibility(View.VISIBLE);
-                    data = new Intent(new Intent((CenesBaseActivity) getActivity(), AlarmActivity.class));
-                    data.putExtra("dataFrom", "fabButton");
-                    startActivityForResult(data,0001);
-                    break;
             }
         }
     };
@@ -523,7 +505,7 @@ public class HomeFragment extends CenesFragment {
         super.onDestroy();
 
         if (eventsTask != null) {
-            eventsTask.cancel(true);
+            //eventsTask.cancel(true);
         }
         if (holidayCalendarTask != null) {
             holidayCalendarTask.cancel(true);
@@ -542,17 +524,9 @@ public class HomeFragment extends CenesFragment {
     }
 
     class EventsTask extends AsyncTask<String, Void, JSONObject> {
-        ImageView bmImage;
-        //ProgressDialog mProgressDialog;
-
         @Override
         protected void onPreExecute() {
-            //mProgressDialog = new ProgressDialog(getActivity());
-//            mProgressDialog.setMessage("Loading...");
-//            mProgressDialog.setIndeterminate(false);
-//            mProgressDialog.setCanceledOnTouchOutside(false);
-            //mProgressDialog.setCancelable(true);
-            //mProgressDialog.show();
+
         }
 
         @Override
@@ -565,18 +539,14 @@ public class HomeFragment extends CenesFragment {
 
                 User user = userManager.getUser();
                 user.setApiUrl(urlManager.getApiUrl("dev"));
-                return apiManager.getUserEvents(user, queryStr, (CenesBaseActivity) getActivity());
+                return null;//apiManager.getUserEvents(user, queryStr, (CenesBaseActivity) getActivity());
             } else {
                 return null;
             }
-
         }
 
         @Override
         protected void onPostExecute(JSONObject jsonObject) {
-            //mProgressDialog.hide();
-            //mProgressDialog.dismiss();
-            //mProgressDialog = null;
             if (getActivity() == null) {
                 return;
             }
@@ -636,7 +606,7 @@ public class HomeFragment extends CenesFragment {
         @Override
         protected void onCancelled() {
             super.onCancelled();
-            eventsTask.cancel(true);
+            //eventsTask.cancel(true);
         }
     }
 
@@ -871,6 +841,73 @@ public class HomeFragment extends CenesFragment {
                 }
     }
 
+    public void makeHomeEventsApiCall(String queryStr) {
+
+        new GatheringAsyncTask.HomeEventsTask(new GatheringAsyncTask.HomeEventsTask.AsyncResponse() {
+            @Override
+            public void processFinish(JSONObject response) {
+
+                try {
+                    boolean success = response.getBoolean("success");
+                    if (success) {
+
+                        try {
+
+                            Gson gson = new GsonBuilder().create();
+                            Type listType = new TypeToken<List<Event>>(){}.getType();
+                            List<Event> events = gson.fromJson(response.getJSONArray("data").toString(), listType);
+
+                            eventManagerImpl.deleteAllEvents();
+                            eventManagerImpl.addEvent(events);
+                            summarizeEventsForHomeScreen(events);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        showAlert("Alert", response.getString("message"));
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).execute(queryStr);
+    }
+
+    public void summarizeEventsForHomeScreen(List<Event> events) {
+        List<String> headers = new LinkedList<>();
+        Map<String, List<Event>> eventMap = new HashMap<>();
+
+        for (Event event: events) {
+
+            String dateKey = CenesUtils.yyyyMMdd.format(new Date(event.getStartTime()));
+
+            if (!headers.contains(dateKey)) {
+                headers.add(dateKey);
+            }
+            if (eventMap.containsKey(dateKey)) {
+                events = eventMap.get(dateKey);
+            } else {
+                events = new ArrayList<>();
+            }
+            events.add(event);
+            eventMap.put(dateKey, events);
+        }
+
+        Collections.sort(headers);
+        listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
+
+        if (events.size() == 0) {
+            homeScreenEventsList.setVisibility(View.GONE);
+            homeNoEvents.setVisibility(View.VISIBLE);
+            homeNoEvents.setTextSize(20f);
+            homeNoEvents.setText("No Event Exists For This Date");
+        } else {
+            homeScreenEventsList.setVisibility(View.VISIBLE);
+            homeScreenEventsList.setAdapter(listAdapter);
+        }
+    }
     private class ContactsSyncTask extends AsyncTask<String, Void, String> {
         private ProgressDialog pd;
 

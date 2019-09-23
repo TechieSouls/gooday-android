@@ -143,10 +143,6 @@ public class GatheringScreenActivity extends CenesActivity {
                     startActivity(new Intent(GatheringScreenActivity.this, ReminderActivity.class));
                     finish();
                     break;
-                case R.id.footer_alarm_icon:
-                    startActivity(new Intent(GatheringScreenActivity.this, AlarmActivity.class));
-                    finish();
-                    break;
                 case R.id.footer_diary_icon:
                     startActivity(new Intent(GatheringScreenActivity.this, DiaryActivity.class));
                     finish();

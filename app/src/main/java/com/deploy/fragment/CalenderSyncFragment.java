@@ -26,7 +26,6 @@ import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.ChoiceActivity;
@@ -141,8 +140,6 @@ public class CalenderSyncFragment extends CenesFragment implements GoogleApiClie
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof AlarmActivity) {
-                ((AlarmActivity) getActivity()).hideFooter();
             }
         } catch (Exception e) {
 

@@ -107,10 +107,6 @@ public class ReminderActivity extends CenesActivity {
                     startActivity(new Intent(ReminderActivity.this, DiaryActivity.class));
                     finish();
                     break;
-                case R.id.footer_alarm_icon:
-                    startActivity(new Intent(ReminderActivity.this, AlarmActivity.class));
-                    finish();
-                    break;
             }
         }
     };

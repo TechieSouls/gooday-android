@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
@@ -14,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -35,11 +37,11 @@ import com.deploy.util.CenesConstants;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 import com.google.gson.Gson;
-import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.List;
 
 public class GatheringPreviewFragment extends CenesFragment {
 
@@ -54,22 +56,24 @@ public class GatheringPreviewFragment extends CenesFragment {
     private CardView tinderCardView;
     private RelativeLayout rlParentVew, rlSkipText;
     private RoundedImageView ivProfilePicView;
-    private SwipeFlingAdapterView flingContainer;
+    private ImageView invitationAcceptSpinner, invitationRejectSpinner;
 
     private CenesApplication cenesApplication;
     private VelocityTracker mVelocityTracker = null;
     private User loggedInUser;
     public Event event;
+    public List<Event> pendingEvents;
     private EventMember eventOwner, loggedInUserAsEventMember;
     private boolean enableLeftToRightSwipe, enableRightToLeftSwipe;
     private boolean isNewOrEditMode;
+    private int pendingEventIndex;
     int windowWidth, windowHeight;
     int screenCenter;
     int xCord, yCord, newXcord, newYCord;
     float x, y;
     boolean leftPartClicked, bottomBarClicked;
     boolean ifSwipedLeftToRight, ifSwipedRightToLeft, ifSwipedUp;
-
+    boolean cardSwipedToExtent;
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -96,8 +100,8 @@ public class GatheringPreviewFragment extends CenesFragment {
         ivAcceptSendIcon = (ImageView) view.findViewById(R.id.iv_accept_icon);
         ivEditRejectIcon = (ImageView) view.findViewById(R.id.iv_edit_reject_icon);
         ivDeleteIcon = (ImageView) view.findViewById(R.id.iv_delete_icon);
-
-
+        invitationAcceptSpinner = (ImageView) view.findViewById(R.id.iv_invitation_accept_spinner);
+        invitationRejectSpinner = (ImageView) view.findViewById(R.id.iv_invitation_decline_spinner);
 
         tinderCardView = (CardView) view.findViewById(R.id.tinderCardView);
         rlParentVew = (RelativeLayout) view.findViewById(R.id.rl_parent_vew);
@@ -121,110 +125,21 @@ public class GatheringPreviewFragment extends CenesFragment {
         windowHeight = getActivity().getWindowManager().getDefaultDisplay().getHeight();
         screenCenter = windowWidth / 2;
 
+        invitationAcceptSpinner.setVisibility(View.GONE);
+        invitationRejectSpinner.setVisibility(View.GONE);
 
         ivEventPicture.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, CenesUtils.dpToPx(getActivity().getWindowManager().getDefaultDisplay().getHeight())));
+
+        if (pendingEvents != null && pendingEvents.size() > 0) {
+            event =  pendingEvents.get(0);
+            pendingEventIndex++;
+        }
+
         if (event != null) {
 
-            tvEventTitle.setText(event.getTitle());
-
-            String eventDate = CenesUtils.EEEMMMMdd.format(new Date(event.getStartTime()))+","+CenesUtils.hmmaa.format(new Date(event.getStartTime()))+"-"+CenesUtils.hmmaa.format(new Date(event.getEndTime()));
-            tvEventDate.setText(eventDate);
-            if (!CenesUtils.isEmpty(event.getEventPicture())) {
-                Glide.with(getContext()).load(event.getThumbnail()).into(ivEventPicture);
-                Glide.with(getContext()).load(event.getEventPicture()).into(ivEventPicture);
-            }
-
-
-            if (event.getEventId() != null) {
-                if (event.isEditMode()) {
-                    ivAcceptSendIcon.setImageResource(R.drawable.invitation_send_button);
-                } else {
-                    ivAcceptSendIcon.setImageResource(R.drawable.invitation_accept_button);
-                }
-            } else {
-                ivAcceptSendIcon.setImageResource(R.drawable.invitation_send_button);
-            }
+            populateInvitationCard(event);
         }
 
-        if (event.getEventMembers() != null && event.getEventMembers().size() > 0) {
-
-            for (EventMember eventMember: event.getEventMembers()) {
-
-                if (eventMember.getUserId() != null && eventMember.getUserId().equals(event.getCreatedById())) {
-                    eventOwner = eventMember;
-                    break;
-                }
-            }
-
-            for (EventMember eventMember: event.getEventMembers()) {
-                if (eventMember.getUserId() != null && eventMember.getUserId().equals(loggedInUser.getUserId())) {
-                    loggedInUserAsEventMember = eventMember;
-                    break;
-                }
-            }
-        }
-
-        if (eventOwner != null) {
-
-            if (eventOwner.getUser() != null && !CenesUtils.isEmpty(eventOwner.getUser().getPicture())) {
-
-                Glide.with(getContext()).load(eventOwner.getUser().getPicture()).apply(RequestOptions.centerCropTransform()).into(ivProfilePicView);
-
-            } else {
-
-                ivProfilePicView.setImageResource(R.drawable.profile_pic_no_image);
-            }
-        }
-
-
-        if (event.getEventId() == null) {
-            enableLeftToRightSwipe = true;
-            enableRightToLeftSwipe = true;
-            isNewOrEditMode = true;
-        } else {
-
-            //If Logged In User is the owner of the event
-            if (eventOwner.getUserId() != null && eventOwner.getUser().getUserId() == loggedInUser.getUserId()) {
-
-                isNewOrEditMode = true;
-                if (event.isEditMode()) {
-                    enableLeftToRightSwipe = true;
-                } else {
-                    //User cannot accept or send invitation
-                    enableLeftToRightSwipe = false;
-                }
-
-                //User Can edit or delete the invitation
-                enableRightToLeftSwipe = true;
-                ivEditRejectIcon.setImageResource(R.drawable.invitation_edit_button);
-                ivDeleteIcon.setVisibility(View.VISIBLE);
-
-            } else {
-
-                isNewOrEditMode = false;
-                ivEditRejectIcon.setImageResource(R.drawable.invitation_decline_button);
-                ivDeleteIcon.setVisibility(View.GONE);
-
-                //If this is the event from somebody. Then user can accept decline that event
-                if (CenesUtils.isEmpty(loggedInUserAsEventMember.getStatus())) {
-                    enableLeftToRightSwipe = true;
-                    enableRightToLeftSwipe = true;
-                } else {
-                    if ("Going".equals(loggedInUserAsEventMember.getStatus())) {
-
-                        enableLeftToRightSwipe = false;
-                        enableRightToLeftSwipe = true;
-
-                    } else if ("NotGoing".equals(loggedInUserAsEventMember.getStatus())) {
-
-
-                        enableLeftToRightSwipe = true;
-                        enableRightToLeftSwipe = false;
-
-                    }
-                }
-            }
-        }
         return view;
     }
 
@@ -377,7 +292,6 @@ public class GatheringPreviewFragment extends CenesFragment {
             xCord = (int)event.getRawX();
             yCord = (int) event.getRawY();
 
-            ivAcceptSendIcon.setAlpha(0.0f);
             tinderCardView.setX(0);
             tinderCardView.setY(0);
 
@@ -387,6 +301,11 @@ public class GatheringPreviewFragment extends CenesFragment {
 
                     x = (int) event.getX();
                     y = (int) event.getY();
+                    xCord = 0;
+                    tinderCardView.setX(0);
+                    tinderCardView.setY(0);
+                    tinderCardView.setRotation(0);
+                    ifSwipedRightToLeft = false;
 
                     if (x < screenCenter) {
                         leftPartClicked = true;
@@ -400,313 +319,397 @@ public class GatheringPreviewFragment extends CenesFragment {
                     Log.d("Bottom : ", (y > (windowHeight - 100))+"");
                     Log.v("On touch", x + " " + y+ " Screen Center : "+screenCenter);
 
-                    //tinderCardView.setX(0);
-                    //tinderCardView.setY(0);
-                    //tinderCardView.setRotation(0);
-                    if(mVelocityTracker == null) {
-                        // Retrieve a new VelocityTracker object to watch the
-                        // velocity of a motion.
-                        mVelocityTracker = VelocityTracker.obtain();
-                    }
-                    else {
-                        // Reset the velocity tracker back to its initial state.
-                        mVelocityTracker.clear();
-                    }
-                    mVelocityTracker.addMovement(event);
+                    cardSwipedToExtent = false;
 
                     break;
 
                 case MotionEvent.ACTION_UP:
-                    //mVelocityTracker.addMovement(event);
-                    // When you want to determine the velocity, call
-                    // computeCurrentVelocity(). Then call getXVelocity()
-                    // and getYVelocity() to retrieve the velocity for each pointer ID.
-                    //mVelocityTracker.computeCurrentVelocity(5000);
-                    // Log velocity of pixels per second
-                    // Best practice to use VelocityTrackerCompat where possible.
-                    //Log.d("", "X velocity: " + mVelocityTracker.getXVelocity(pointerId));
-                    //Log.d("", "Y velocity: " + mVelocityTracker.getYVelocity(pointerId));
-
-                    //if (!isNewOrEditMode) {
 
                     if (ifSwipedRightToLeft) {
 
-                        tinderCardView.setX(newXcord);
-                        tinderCardView.setY(newYCord);
+
+                        if (cardSwipedToExtent) {
+                            tinderCardView.setRotation(-20);
+                            tinderCardView.setX(-300);
+                        } else {
+                            tinderCardView.setRotation(0);
+                        }
+                        if (isNewOrEditMode) {
+
+                            if (Math.abs(xCord - x) > 300) {
+                                tinderCardView.setX(-300);
+                                tinderCardView.setRotation(-20);
+
+                            } else {
+                                //tinderCardView.setX(newXcord);
+                                tinderCardView.setX(0);
+                                tinderCardView.setY(0);
+                                tinderCardView.setRotation(0);
+                            }
+                            //tinderCardView.setY(newYCord);
+
+                        } else {
+
+                            if (Math.abs(newXcord) > 300) {
+                                tinderCardView.setX(-300);
+                                tinderCardView.setRotation(-20);
+
+                            }
+                            //tinderCardView.setY(newYCord);
+                        }
                         ifSwipedLeftToRight = false;
                         ifSwipedRightToLeft = false;
                         ifSwipedUp = false;
-
-                        if (isNewOrEditMode) {
-
-                            //((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-
-                        } else {
-                            String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=NotGoing";
-                            updateAttendingStatus(queryStr);
-                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-
+                        cardSwipedToExtent = false;
+                        //ivAcceptSendIcon.setVisibility(View.GONE);
+                        //ivEditRejectIcon.setVisibility(View.GONE);
+                        if (pendingEvents != null && pendingEvents.size() > 0) {
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    cardSwipedToExtent = false;
+                                    tinderCardView.setX(0);
+                                    tinderCardView.setY(0);
+                                    tinderCardView.setRotation(0.0f);
+                                    populateInvitationCard((GatheringPreviewFragment.this).event);
+                                }
+                            }, 500);
                         }
+
 
                     } else if (ifSwipedLeftToRight) {
 
+                        if (newXcord > 300) {
+                            tinderCardView.setX(300);
+                        } else {
+                            tinderCardView.setX(newXcord);
+                        }
+                        tinderCardView.setRotation(20);
+                        //tinderCardView.setY(newYCord);
                         ifSwipedLeftToRight = false;
                         ifSwipedRightToLeft = false;
                         ifSwipedUp = false;
+                        //ivAcceptSendIcon.setVisibility(View.GONE);
+                        //ivEditRejectIcon.setVisibility(View.GONE);
 
-                        if (isNewOrEditMode) {
-
-                            createGathering();
-                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                            ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
-
-                        } else {
-
-                            String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=Going";
-                            updateAttendingStatus(queryStr);
-                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                        if (pendingEvents != null && pendingEvents.size() > 0) {
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    cardSwipedToExtent = false;
+                                    tinderCardView.setX(0);
+                                    tinderCardView.setY(0);
+                                    tinderCardView.setRotation(0.0f);
+                                    populateInvitationCard((GatheringPreviewFragment.this).event);
+                                }
+                            }, 500);
                         }
-
-
-                        tinderCardView.setX(0);
-                        tinderCardView.setY(0);
-                        tinderCardView.setRotation(0);
-
 
 
                     } else if (ifSwipedUp) {
 
-                        ifSwipedLeftToRight = false;
-                        ifSwipedRightToLeft = false;
+                        //ifSwipedLeftToRight = false;
+                        //ifSwipedRightToLeft = false;
                         ifSwipedUp = false;
-                        tinderCardView.setX(0);
-                        tinderCardView.setY(-windowHeight);
                         tinderCardView.setRotation(0);
+                        tinderCardView.setY(-400);
 
-                        ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                tinderCardView.setX(0);
+                                tinderCardView.setY(-windowHeight + 400);
+                            }
+                        }, 500);
+
+                        if (pendingEvents != null && pendingEvents.size() > 0) {
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tinderCardView.setY(0);
+                                    tinderCardView.setRotation(0);
+
+                                    populateInvitationCard((GatheringPreviewFragment.this).event);
+                                }
+                            }, 500);
+                        }
 
                     } else {
 
-                        tinderCardView.setX(0);
-                        tinderCardView.setY(0);
-                        tinderCardView.setRotation(0);
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                tinderCardView.setX(0);
+                                tinderCardView.setY(0);
+                                tinderCardView.setRotation(0);
+                            }
+                        }, 500);
+
 
                     }
-                    rlSkipText.setAlpha(0.0f);
                     bottomBarClicked = false;
                     leftPartClicked = false;
                      //}
 
                     break;
 
+
+
                 case MotionEvent.ACTION_MOVE:
+
                     xCord = (int) event.getRawX();
                     yCord = (int) event.getRawY();
 
                     newXcord = (int)(xCord - x);
-                    newYCord = (int)(yCord - y);
+                    //newYCord = (int)(yCord - y);
 
                     Log.d("xCord : yCord : ",(xCord - x)+""+(yCord - y));
-                    if (enableLeftToRightSwipe && enableRightToLeftSwipe) {
+                    if (enableLeftToRightSwipe && enableRightToLeftSwipe && !ifSwipedUp) {
 
-                        tinderCardView.setX(xCord - x);
-                        tinderCardView.setY(yCord - y);
+                        if (Math.abs(newXcord) < 300) {
 
-                    } else if (enableLeftToRightSwipe && !enableRightToLeftSwipe) {
-
-                        if (enableLeftToRightSwipe && newXcord > 0) {
-
-                            tinderCardView.setX(xCord - x);
-                            tinderCardView.setY(yCord - y);
-
-                        } else if (newYCord < 0) {
-
-                            tinderCardView.setX(xCord - x);
-                            tinderCardView.setY(yCord - y);
+                            tinderCardView.setX(newXcord);
+                            tinderCardView.setY(newYCord);
 
                         } else {
 
-                            tinderCardView.setX(0);
-                            tinderCardView.setY(0);
+                            if (newXcord < 0) {
+
+                                tinderCardView.setX(-300);
+                                cardSwipedToExtent = true;
+
+                            } else if (newXcord > 0) {
+
+                                tinderCardView.setX(300);
+                                cardSwipedToExtent = true;
+
+                            }
 
                         }
 
-                    } else if (!enableLeftToRightSwipe && enableRightToLeftSwipe) {
+                    } else if (enableLeftToRightSwipe && !enableRightToLeftSwipe && !ifSwipedUp) {
 
+                        if (enableLeftToRightSwipe && newXcord > 0) {
+
+                            if (Math.abs(xCord - x) < 300 && Math.abs(newYCord) < 100) {
+
+                                tinderCardView.setX(newXcord);
+                                tinderCardView.setY(newXcord);
+
+                            } else {
+                                    tinderCardView.setX(300);
+                                    cardSwipedToExtent = true;
+                                    ifSwipedRightToLeft = true;
+                            }
+
+
+                        } else if (newYCord < 0) {
+
+                            //if (Math.abs(yCord - y) < 300) {
+
+                                tinderCardView.setX(0);
+                                tinderCardView.setY(yCord - y);
+
+                            //}
+
+                        } else {
+
+                            tinderCardView.setX(0);
+                            //tinderCardView.setY(0);
+
+                        }
+
+                    } else if (!enableLeftToRightSwipe && enableRightToLeftSwipe && !ifSwipedUp) {
+
+                        Log.d("RightToLeftSwipe : ", newXcord+" newYCord : "+newYCord);
                         if (enableRightToLeftSwipe && newXcord < 0) {
 
-                            tinderCardView.setX(xCord - x);
-                            tinderCardView.setY(yCord - y);
+
+                                if (Math.abs(newXcord) < 300 ) {
+
+                                    Log.d("Right To Left Sipe : ",(newXcord)+"  :   "+(yCord - y));
+                                    tinderCardView.setX(newXcord);
+                                    tinderCardView.setY(newYCord);
+                                    ifSwipedRightToLeft = true;
+
+                                } else {
+
+                                    if (Math.abs(newYCord) < 200) {
+
+                                        tinderCardView.setX(-300);
+                                        cardSwipedToExtent = true;
+
+                                    }
+                                    ifSwipedRightToLeft = false;
+
+                                }
 
                         }  else if (newYCord < 0) {
 
-                            tinderCardView.setX(xCord - x);
-                            tinderCardView.setY(yCord - y);
+                                tinderCardView.setX(0);
+                                tinderCardView.setY(yCord - y);
 
                         } else {
 
                             tinderCardView.setX(0);
                             tinderCardView.setY(0);
+                            tinderCardView.setRotation(0);
 
                         }
                     }
 
-                    //Log.v("On Move", xCord + " " + yCord+" Rotation : "+(xCord - screenCenter)+""+" X :  "+x+", Y : "+y);
-
-                    //Log.v("On Move", "Send Icon : "+(float)((xCord - x)/2 *  (Math.PI/32))+" xCord -  X Diff : "+(xCord - x)+ " YCord - Y Diff : " +(yCord - y)+" Rotation : "+(xCord - screenCenter)+""+" X :  "+x+", Y : "+y);
-                    //Log.v("Alpha Vaklue : ",(float) ((float)(((xCord - x) - screenCenter/2)/screenCenter) * (Math.PI/32))*50+"");
-
-                   Log.v("X And Xcord : ", (xCord - x)+" Screen Center : "+screenCenter);
-                    if ((xCord - x) > 100 && enableLeftToRightSwipe) {
+                    Log.v("X And Xcord : ", (xCord - x)+" Screen Center : "+screenCenter);
+                    if ((xCord - x) > 100 && enableLeftToRightSwipe && !ifSwipedUp) {
                         //If User swipe from left to right
 
-                        ivAcceptSendIcon.setAlpha((float) ((float)(((xCord - x) - screenCenter/2)/screenCenter) * (Math.PI/32))*50);
+                        if ((float)((xCord - x)/2 *  (Math.PI/32)) < 15) {
+                            tinderCardView.setRotation((float)((xCord - x)/2 *  (Math.PI/32)));
+                        }
+                        ifSwipedLeftToRight = true;
+                        if ((xCord - x) > 200) {
 
-                        if ((xCord - x) < (screenCenter - 200)) {
 
-                            if ((float)((xCord - x)/2 *  (Math.PI/32)) < 15) {
-                                tinderCardView.setRotation((float)((xCord - x)/2 *  (Math.PI/32)));
+                            if (isNewOrEditMode) {
+
+                                if (!cardSwipedToExtent) {
+                                    cardSwipedToExtent = true;
+
+                                    createGathering();
+                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                    ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
+
+                                }
+                            } else {
+
+                                Log.v("Swipe Cords : ",(xCord - x)+" ===  "+(screenCenter - 150));
+                                    if (!cardSwipedToExtent) {
+                                        cardSwipedToExtent = true;
+                                        invitationAcceptSpinner.setVisibility(View.VISIBLE);
+                                        rotate(360, invitationAcceptSpinner);
+
+                                        String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=Going";
+                                        updateAttendingStatus(queryStr);
+
+                                        if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+
+                                            (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                            pendingEventIndex++;
+
+                                        } else {
+
+                                            new Handler().postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                                }
+                                            }, 500);
+                                        }
+
+                                    }
                             }
 
                         } else {
                             ifSwipedLeftToRight = true;
                         }
 
-                    } else if ((xCord - x) < -100 && enableRightToLeftSwipe) {
+                    } else if ((xCord - x) < -100 && enableRightToLeftSwipe && !ifSwipedUp) {
                         //If User swipe from right to left
+                        ifSwipedRightToLeft = false;
 
-                        ivDeleteIcon.setAlpha(Math.abs((float) ((float)(((xCord - x) - screenCenter/2)/screenCenter) * (Math.PI/32))*50));
-                        ivEditRejectIcon.setAlpha(Math.abs((float) ((float)(((xCord - x) - screenCenter/2)/screenCenter) * (Math.PI/32))*50));
+                        if ((float)((xCord - x)/2 *  (Math.PI/32)) > -15) {
+                            tinderCardView.setRotation((float)((xCord - x)/2 *  (Math.PI/32)));
 
-                        if (Math.abs(xCord - x) < (screenCenter - 200)) {
+                        }
 
-                            if ((float)((xCord - x)/2 *  (Math.PI/32)) > -15) {
-                                tinderCardView.setRotation((float)((xCord - x)/2 *  (Math.PI/32)));
+                        if (Math.abs(xCord - x) > 200) {
 
-                                ifSwipedRightToLeft = false;
+                            ifSwipedRightToLeft = true;
+
+                            if (isNewOrEditMode) {
+
+                                //((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+
+                            } else {
+
+                                Log.v("Swipe Cords : ",Math.abs(xCord - x)+" ===  "+(screenCenter - 150));
+                                if (!cardSwipedToExtent) {
+                                    cardSwipedToExtent = true;
+
+                                    invitationRejectSpinner.setVisibility(View.VISIBLE);
+                                    rotate(360, invitationRejectSpinner);
+
+                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=NotGoing";
+                                    updateAttendingStatus(queryStr);
+
+                                    if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+
+                                        (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                        pendingEventIndex++;
+
+                                    } else {
+
+                                        new Handler().postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                            }
+                                        }, 500);
+
+                                    }
+
+                                }
+
                             }
                         } else {
                             ifSwipedRightToLeft = true;
                         }
                     }
 
-                    if ((xCord - x) > (screenCenter/2)) {
-                        //ivAcceptSendIcon.setAlpha(1.0f);
-                        rlSkipText.setAlpha(0.0f);
-                    }
 
-                    if (Math.abs(yCord  - y) > windowHeight/4) {
-                        ivAcceptSendIcon.setAlpha(0.0f);
-                        rlSkipText.setAlpha(1.0f);
-                        ifSwipedUp = true;
-                    } else {
-                        ifSwipedUp = false;
-                        rlSkipText.setAlpha(0.0f);
-                    }
-                    /*if (!bottomBarClicked) {
+                    //This is when user move the card up
+                    Log.d("Y Cords : ",Math.abs(yCord  - y)+"");
+                    if ((yCord - y) < 0) {
+                        tinderCardView.setY(yCord - y);
+                        tinderCardView.setX(0);
 
-                        if (leftPartClicked) {
-
-                            tinderCardView.setX((float)(Math.abs(xCord - x) + (Math.PI/32)));
-                            tinderCardView.setRotation((float) ((xCord - screenCenter/2) * (Math.PI/32)));
-
-                        } else {
-
-                            System.out.println(xCord - windowWidth);
-                            tinderCardView.setX(-(float)(Math.abs(xCord - windowWidth) + (Math.PI/32)));
-                            tinderCardView.setY((float)(Math.abs(yCord - windowHeight) * (Math.PI/32)));
-
-                            tinderCardView.setRotation(-(float)(Math.abs(xCord - x) * (Math.PI/32)));
+                        if ((yCord - y) > -100) {
+                            tinderCardView.setRotation(0);
                         }
 
-                    } else {
+                    }
+                    if ((yCord - y) < -300) {
+                        //ivAcceptSendIcon.setAlpha(0.0f);
+                        //rlSkipText.setAlpha(1.0f);
+                        Log.e("Skip Text : ", rlSkipText.getScaleX()+"");
+                        ifSwipedUp = true;
+                        if (!cardSwipedToExtent) {
+                            cardSwipedToExtent = true;
 
-                        tinderCardView.setRotation(0);
-                        tinderCardView.setY((yCord - windowHeight)/2);
-                        rlSkipText.setAlpha((float)(Math.abs(y-yCord) * (Math.PI)));
-                    }*/
-                        /*if (y <  (windowHeight - 100)) {
-                        //If the swipe is greater than center
-                        if (x < (screenCenter) && enableLeftToRightSwipe) {
+                            if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
 
-
-                            ivAcceptSendIcon.setAlpha((float)xCord/screenCenter);
-                            Log.v("xFromCenter", xCord+" "+screenCenter+" "+(float)xCord/screenCenter+"");
-                            if (xCord > (screenCenter + 150)) {
-                                enableLeftToRightSwipe = false;
-
-                                if (isNewOrEditMode) {
-
-                                    createGathering();
-                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                    ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
-
-                                } else {
-
-                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=Going";
-                                    updateAttendingStatus(queryStr);
-                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-                                }
+                                (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                pendingEventIndex++;
 
                             } else {
-                                System.out.println("xCord : "+xCord+" screenCenter : "+screenCenter/2 +"  Math.PI : "+Math.PI+" ROTATION : "+(float) ((xCord - screenCenter/2) * (Math.PI/32)));
-                                tinderCardView.setRotation(20);
-                            }
 
-                        } else if (x > (screenCenter) && enableRightToLeftSwipe) {
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                    }
+                                }, 500);
 
-                            //If xcord is in center and is less than screensize i.e move more away from screen center.
-                            if ((xCord/2) < (screenCenter/2 - 100)) {
-
-                                if (isNewOrEditMode) {
-
-                                    //((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-
-                                } else {
-                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=NotGoing";
-                                    updateAttendingStatus(queryStr);
-                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-
-                                }
-                                tinderCardView.setY(yCord);
-                                tinderCardView.setX(xCord);
-                            }
-                            System.out.println("xCord : "+xCord/2+" screenCenter : "+screenCenter +" Math.PI : "+Math.PI+" ROTATION : "+(-(float) (Math.abs(xCord - screenCenter) * (Math.PI/32))));
-                            if ((float) (Math.abs(xCord - screenCenter) * (Math.PI/32)) < 30) {
-                                tinderCardView.setRotation(-(float) (Math.abs(xCord - screenCenter) * (Math.PI/32)));
                             }
 
                         }
+
                     } else {
-
-
-                        if (yCord > (windowHeight - 50)) {
-                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-                        }
-                        //tinderCardView.setX(xCord);
-                        System.out.println("screenCenter : "+screenCenter+",  windowHeight : "+windowHeight+", yCord : "+yCord+"  - ------ "+(windowHeight - yCord)/2);
-                        tinderCardView.setY((yCord - windowHeight)/2);
-
-                    }*/
+                        ifSwipedUp = false;
+                        //rlSkipText.setAlpha(0.0f);
+                    }
 
                     break;
-                /*case MotionEvent.ACTION_MOVE:
-
-                    xCord = (int) event.getRawX();
-                    yCord = (int) event.getRawY();
-
-                    System.out.println("screenCenter : "+screenCenter+" , X Cord : "+xCord+ ", Y Cord : "+yCord);
-
-                    tinderCardView.setX(x);
-                    ///tinderCardView.setY(yCord - y);
-                    tinderCardView.setRotation((float) ((xCord - screenCenter) * (Math.PI / 32)));
-
-                    break;
-
-                    case MotionEvent.ACTION_BUTTON_RELEASE:
-                        tinderCardView.setX(0);
-                        tinderCardView.setY(0);
-                        break;*/
 
                 default:
 
@@ -776,6 +779,133 @@ public class GatheringPreviewFragment extends CenesFragment {
 
             }
         }).execute(event.getEventId());
+
+    }
+
+    private void rotate(float degree, ImageView imageView) {
+        final RotateAnimation rotateAnim = new RotateAnimation(0.0f, degree,
+                RotateAnimation.RELATIVE_TO_SELF, 0.5f,
+                RotateAnimation.RELATIVE_TO_SELF, 0.5f);
+
+        rotateAnim.setDuration(500);
+        rotateAnim.setFillAfter(true);
+        imageView.startAnimation(rotateAnim);
+    }
+
+    public void populateInvitationCard(final Event event) {
+        tvEventTitle.setText(event.getTitle());
+
+        String eventDate = CenesUtils.EEEMMMMdd.format(new Date(event.getStartTime())) + "," + CenesUtils.hmmaa.format(new Date(event.getStartTime())) + "-" + CenesUtils.hmmaa.format(new Date(event.getEndTime()));
+        tvEventDate.setText(eventDate);
+        if (!CenesUtils.isEmpty(event.getEventPicture())) {
+            if (((CenesBaseActivity)getActivity()) != null) {
+                Glide.with(getContext()).load(event.getEventPicture());
+                Glide.with(getContext()).load(event.getEventPicture()).into(ivEventPicture);
+            }
+        }
+
+
+        if (event.getEventId() != null) {
+            if (event.isEditMode()) {
+                ivAcceptSendIcon.setImageResource(R.drawable.invitation_send_button);
+            } else {
+                ivAcceptSendIcon.setImageResource(R.drawable.invitation_accept_button);
+            }
+        } else {
+            ivAcceptSendIcon.setImageResource(R.drawable.invitation_send_button);
+        }
+
+
+        if (event.getEventMembers() != null && event.getEventMembers().size() > 0) {
+
+            for (EventMember eventMember : event.getEventMembers()) {
+
+                if (eventMember.getUserId() != null && eventMember.getUserId().equals(event.getCreatedById())) {
+                    eventOwner = eventMember;
+                    break;
+                }
+            }
+
+            for (EventMember eventMember : event.getEventMembers()) {
+                if (eventMember.getUserId() != null && eventMember.getUserId().equals(loggedInUser.getUserId())) {
+                    loggedInUserAsEventMember = eventMember;
+                    break;
+                }
+            }
+        }
+
+        if (eventOwner != null) {
+
+            if (eventOwner.getUser() != null && !CenesUtils.isEmpty(eventOwner.getUser().getPicture())) {
+
+                if (((CenesBaseActivity)getActivity()) != null) {
+
+                    Glide.with(getContext()).load(eventOwner.getUser().getPicture()).apply(RequestOptions.centerCropTransform()).into(ivProfilePicView);
+
+                }
+
+            } else {
+
+                ivProfilePicView.setImageResource(R.drawable.profile_pic_no_image);
+            }
+        }
+
+        if (event.getEventId() == null) {
+            enableLeftToRightSwipe = true;
+            enableRightToLeftSwipe = true;
+            isNewOrEditMode = true;
+        } else {
+
+            //If Logged In User is the owner of the event
+            if (eventOwner != null && eventOwner.getUserId() != null && eventOwner.getUser().getUserId() == loggedInUser.getUserId()) {
+
+                isNewOrEditMode = true;
+                if (event.isEditMode()) {
+                    enableLeftToRightSwipe = true;
+                } else {
+                    //User cannot accept or send invitation
+                    enableLeftToRightSwipe = false;
+                }
+
+                //User Can edit or delete the invitation
+                enableRightToLeftSwipe = true;
+                ivEditRejectIcon.setImageResource(R.drawable.invitation_edit_button);
+                ivDeleteIcon.setVisibility(View.VISIBLE);
+
+            } else {
+
+                isNewOrEditMode = false;
+                ivEditRejectIcon.setImageResource(R.drawable.invitation_decline_button);
+                ivDeleteIcon.setVisibility(View.GONE);
+
+                //If this is the event from somebody. Then user can accept decline that event
+                if (loggedInUserAsEventMember != null) {
+                    if (CenesUtils.isEmpty(loggedInUserAsEventMember.getStatus())) {
+                        enableLeftToRightSwipe = true;
+                        enableRightToLeftSwipe = true;
+                    } else {
+                        if ("Going".equals(loggedInUserAsEventMember.getStatus())) {
+
+                            enableLeftToRightSwipe = false;
+                            enableRightToLeftSwipe = true;
+
+                        } else if ("NotGoing".equals(loggedInUserAsEventMember.getStatus())) {
+
+
+                            enableLeftToRightSwipe = true;
+                            enableRightToLeftSwipe = false;
+
+                        }
+                    }
+                }
+
+            }
+        }
+
+        tinderCardView.setX(0);
+        tinderCardView.setY(0);
+        ivAcceptSendIcon.setVisibility(View.VISIBLE);
+        ivEditRejectIcon.setVisibility(View.VISIBLE);
 
     }
 }

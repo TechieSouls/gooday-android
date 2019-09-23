@@ -22,7 +22,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
@@ -109,8 +108,6 @@ public class NavigationFragment extends CenesFragment {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof DiaryActivity) {
             fragmentManager = ((DiaryActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof AlarmActivity) {
-            fragmentManager = ((AlarmActivity) getActivity()).fragmentManager;
         }
     }
 
@@ -121,9 +118,7 @@ public class NavigationFragment extends CenesFragment {
             GatheringScreenActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
         } else if (getActivity() instanceof DiaryActivity) {
             DiaryActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else if (getActivity() instanceof AlarmActivity) {
-            AlarmActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
-        }else if (getActivity() instanceof CenesBaseActivity) {
+        } else if (getActivity() instanceof CenesBaseActivity) {
             ((CenesBaseActivity)getActivity()).mDrawerLayout.closeDrawer(GravityCompat.START);
         }
     }
@@ -135,8 +130,6 @@ public class NavigationFragment extends CenesFragment {
             ((GatheringScreenActivity) getActivity()).replaceFragment(fragment, tag);
         } else if (getActivity() instanceof DiaryActivity) {
             ((DiaryActivity) getActivity()).replaceFragment(fragment, tag);
-        } else if (getActivity() instanceof AlarmActivity) {
-            ((AlarmActivity) getActivity()).replaceFragment(fragment, tag);
         } else if (getActivity() instanceof CenesBaseActivity) {
             ((CenesBaseActivity) getActivity()).replaceFragment(fragment, tag);
         }

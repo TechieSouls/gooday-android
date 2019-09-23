@@ -18,7 +18,6 @@ import com.deploy.Manager.ApiManager;
 import com.deploy.Manager.DeviceManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
@@ -341,8 +340,6 @@ public class HolidaySyncFragment extends CenesFragment {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof AlarmActivity) {
-                ((AlarmActivity) getActivity()).hideFooter();
             }
         } catch (Exception e) {
 

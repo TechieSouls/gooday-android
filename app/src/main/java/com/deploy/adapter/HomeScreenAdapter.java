@@ -26,6 +26,7 @@ import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.fragment.gathering.GatheringExpiredFragment;
@@ -135,6 +136,33 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
                 viewHolder.tvReminderTitle.setTextColor(context.getResources().getColor(R.color.cenes_dark_gray));
             }
         } else {*/
+
+        EventMember owner = null;
+        if (child.getEventMembers() != null) {
+
+            for (EventMember ownerMember: child.getEventMembers()) {
+
+                if (ownerMember.getUserId() != null && ownerMember.getUserId().equals(child.getCreatedById())) {
+                    owner = ownerMember;
+                    break;
+                }
+            }
+            if (owner != null) {
+
+                if (owner.getUser() != null && !CenesUtils.isEmpty(owner.getUser().getPicture())) {
+
+                    RequestOptions requestOptions = new RequestOptions();
+                    requestOptions.placeholder(R.drawable.profile_pic_no_image);
+                    requestOptions.circleCrop();
+                    Glide.with(context).load(owner.getUser().getPicture()).apply(requestOptions).into(viewHolder.ivOwnerImage);
+
+                } else {
+                    viewHolder.ivOwnerImage.setImageResource(R.drawable.profile_pic_no_image);
+                }
+            }
+
+        }
+
             viewHolder.llEventRowItem.setVisibility(View.VISIBLE);
             viewHolder.llReminderRowItem.setVisibility(View.GONE);
             viewHolder.scheduleAs = child.getScheduleAs();

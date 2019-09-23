@@ -31,6 +31,7 @@ import com.deploy.fragment.gathering.GatheringsFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -232,7 +233,60 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
                 }*/
                 System.out.println(child.toString());
                 GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-                gatheringPreviewFragment.event = child;
+                if (isInvitation) {
+                    List<Event> events = new ArrayList<>();
+                    events.add(child);
+
+                    List<Event> eventsBeforeSelection = new ArrayList<>();
+                    List<Long> previousEventsId = new ArrayList<>();
+
+                    List<Event> eventsAfterSelection = null;
+
+                    boolean previuosEventsTracked = false;
+                    for (Map.Entry<String, List<Event>> eventsMapSet: eventsMap.entrySet()) {
+
+                        if (!previuosEventsTracked) {
+
+                            for (Event event: eventsMapSet.getValue()) {
+                                if (child.getEventId().equals(event.getEventId())) {
+                                    previuosEventsTracked = true;
+                                    break;
+                                }
+                                eventsBeforeSelection.add(event);
+                                previousEventsId.add(event.getEventId());
+                            }
+
+                        }
+                    }
+
+                    for (Map.Entry<String, List<Event>> eventsMapSet: eventsMap.entrySet()) {
+
+                        for (Event event: eventsMapSet.getValue()) {
+
+                            if (previousEventsId.contains(event.getEventId())) {
+                                continue;
+                            }
+                            if (child.getEventId().equals(event.getEventId())) {
+                                eventsAfterSelection = new ArrayList<>();
+                                continue;
+                            }
+                            if (eventsAfterSelection != null) {
+                                eventsAfterSelection.add(event);
+                            }
+
+                        }
+                    }
+                    for (Event event : eventsAfterSelection) {
+                        events.add(event);
+                    }
+                    for (Event event : eventsBeforeSelection) {
+                        events.add(event);
+                    }
+
+                    gatheringPreviewFragment.pendingEvents = events;
+                } else {
+                    gatheringPreviewFragment.event = child;
+                }
                 context.replaceFragment(gatheringPreviewFragment, GatheringsFragment.TAG);
             }
         });

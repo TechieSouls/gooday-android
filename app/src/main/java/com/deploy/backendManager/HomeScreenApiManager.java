@@ -31,4 +31,12 @@ public class HomeScreenApiManager {
         JsonParsing jsonParsing = new JsonParsing();
         return jsonParsing.httpGetJsonObject(url, authToken);
     }
+
+
+    public JSONObject getHomescreenEvents(String params, String authToken) {
+        String url = UrlManagerImpl.prodAPIUrl+ HomeScreenAPI.get_homescreen_events+"?"+params;
+        JsonParsing jsonParsing = new JsonParsing();
+        return jsonParsing.httpGetJsonObject(url, authToken);
+    }
+
 }

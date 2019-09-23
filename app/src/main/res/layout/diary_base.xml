@@ -62,8 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:drawablePadding="5dp"
-            android:gravity="center"
-            android:src="@drawable/alarm_icon" />
+            android:gravity="center" />
     </LinearLayout>
 
 </LinearLayout>

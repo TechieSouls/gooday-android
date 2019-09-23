@@ -90,7 +90,6 @@
                     android:layout_weight="1"
                     android:drawablePadding="5dp"
                     android:gravity="center"
-                    android:src="@drawable/alarm_icon"
                     android:visibility="gone"/>
             </LinearLayout>
         </LinearLayout>

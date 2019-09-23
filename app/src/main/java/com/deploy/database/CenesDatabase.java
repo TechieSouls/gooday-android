@@ -5,7 +5,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.deploy.application.CenesApplication;
+import com.deploy.database.impl.CenesUserManagerImpl;
 import com.deploy.database.impl.EventManagerImpl;
+import com.deploy.database.impl.EventMemberManagerImpl;
 
 /**
  * Created by puneet on 11/8/17.
@@ -45,6 +47,8 @@ public class CenesDatabase {
             db.execSQL("CREATE TABLE alarms (alarm_id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT, repeat TEXT, sound TEXT,alarm_time LONG, is_on INTEGER)");
             //db.execSQL("CREATE TABLE reminders (reminder_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT,reminder_time LONG, location TEXT,created_by_id LONG, status TEXT)");
             db.execSQL(EventManagerImpl.createTableQuery);
+            db.execSQL(EventMemberManagerImpl.createTableQuery);
+            db.execSQL(CenesUserManagerImpl.createTableQuery);
 
         }
 

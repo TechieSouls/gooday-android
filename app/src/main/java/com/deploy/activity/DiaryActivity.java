@@ -72,10 +72,6 @@ public class DiaryActivity extends CenesActivity {
                     startActivity(new Intent(DiaryActivity.this, GatheringScreenActivity.class));
                     finish();
                     break;
-                case R.id.footer_alarm_icon:
-                    startActivity(new Intent(DiaryActivity.this, AlarmActivity.class));
-                    finish();
-                    break;
             }
         }
     };

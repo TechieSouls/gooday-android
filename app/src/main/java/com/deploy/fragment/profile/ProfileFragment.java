@@ -17,8 +17,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -39,7 +37,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.DeviceManager;
 import com.deploy.R;
-import com.deploy.activity.AlarmActivity;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
@@ -130,8 +127,6 @@ public class ProfileFragment extends CenesFragment {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof AlarmActivity) {
-                ((AlarmActivity) getActivity()).hideFooter();
             }
         } catch (Exception e) {
 
@@ -233,8 +228,6 @@ public class ProfileFragment extends CenesFragment {
                         ((GatheringScreenActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
                     } else if (getActivity() instanceof DiaryActivity) {
                         ((DiaryActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
-                    } else if (getActivity() instanceof AlarmActivity) {
-                        ((AlarmActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
                     }
                 break;
                 case R.id.iv_profile_back:

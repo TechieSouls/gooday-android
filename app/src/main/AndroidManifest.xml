@@ -28,8 +28,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_ceneslogos"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        >
+        android:theme="@style/AppTheme">
         <activity
             android:name="com.deploy.activity.SplashActivity"
             android:screenOrientation="portrait">
@@ -42,16 +41,6 @@
         <activity
             android:name="com.deploy.activity.MainActivity"
             android:screenOrientation="portrait">
-            <intent-filter>
-                <data
-                    android:scheme="http"
-                    android:host="www.cenesgroup.com"
-                    android:pathPrefix="/event" />
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>
         </activity>
         <activity
             android:name="com.deploy.activity.WalkthroughActivity"
@@ -59,16 +48,15 @@
         <activity
             android:name="com.deploy.activity.CenesBaseActivity"
             android:screenOrientation="portrait">
-            <intent-filter>
+            <intent-filter android:label="Cenes">
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="http"
-                    android:host="cenesdeploy.com" />
+                <!-- Accepts URIs that begin with "example://gizmos” -->
+                <data android:scheme="cenes"
+                    android:host="event" />
             </intent-filter>
+
         </activity>
         <activity
             android:name="com.deploy.activity.WelcomeActivity"
@@ -104,9 +92,6 @@
             android:name="com.deploy.activity.GatheringScreenActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.deploy.activity.AlarmActivity"
-            android:screenOrientation="portrait" />
-        <activity
             android:name="com.deploy.activity.DiaryActivity"
             android:screenOrientation="portrait" />
 
@@ -127,7 +112,7 @@
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

@@ -121,4 +121,16 @@ public class GatheringApiManager {
         return null;
     }
 
+    public JSONObject getGatheringByPrivateKet(String pathVariable, String authToken) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ GatheringAPI.get_gathering_by_key_api+"/"+pathVariable;
+            return jsonParsing.httpGetJsonObject(apiUrl,authToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }
