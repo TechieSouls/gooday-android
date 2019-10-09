@@ -68,8 +68,8 @@ public class GatheringGuestListItemAdapter extends BaseAdapter {
 
         System.out.println(eventMember.toString());
         String host = "";
-        if (eventMember.getUserId() != null && eventMember.getUserId().equals(gatheringGuestListFragment.loggedInUser.getUserId())) {
-            host = "(Host)";
+        if (eventMember.getUserId() != null && eventMember.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
+            host = " (Host)";
         }
         viewHolder.tvCenesName.setText(eventMember.getName()+" "+host);
         if (eventMember.getUser() != null) {

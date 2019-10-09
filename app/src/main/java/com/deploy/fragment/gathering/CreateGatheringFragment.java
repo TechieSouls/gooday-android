@@ -116,17 +116,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     private FragmentTransaction fragmentTransaction;
     private FragmentManager fragmentManager;
 
-    private Set<EventMember> inviteFriendsImageList;
     private boolean isPredictiveOn;
     private Calendar currentMonth;
-    private JSONArray predictiveClanedarAPIData;
 
     private EditText gathEventTitleEditView;
     TextView gathSelectDatetimeBtn;
     private Switch predictiveCalSwitch;
 
     private TextView startTimePickerLabel, endTimePickerLabel;
-    private TextView editGatheringSummaryBtn;
     private ProgressBar progressBar;
 
     private ImageView ivAbandonEvent, ivPredictiveInfo, gathInviteFrndsBtn;
@@ -304,14 +301,11 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         startTimePickerLabel = (TextView) fragmentView.findViewById(R.id.start_time_picker_label);
         endTimePickerLabel = (TextView) fragmentView.findViewById(R.id.end_time_picker_label);
 
-        editGatheringSummaryBtn = (TextView) fragmentView.findViewById(R.id.edit_gathering_btn);
-
         materialCalendarView = (MaterialCalendarView) fragmentView.findViewById(R.id.material_calendar_view);
 
         materialCalendarView.setOnDateChangedListener(onDateSelectedListener);
 
         context = this.getContext();
-        inviteFriendsImageList = new HashSet<>();
         createGatheringDto = new CreateGatheringDto();
     }
 
@@ -552,9 +546,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             //Setting End Time to 1Hour Delay of Start Time by Default.
             if (!createGatheringDto.isEndTime()) {
                 Calendar predictedDateEndCal = Calendar.getInstance();
-                predictedDateEndCal.set(Calendar.DAY_OF_MONTH, predictedDateStartCal.get(Calendar.DAY_OF_MONTH));
-                predictedDateEndCal.set(Calendar.HOUR_OF_DAY, predictedDateStartCal.get(predictedDateStartCal.HOUR_OF_DAY));
-                predictedDateEndCal.set(Calendar.MINUTE, predictedDateStartCal.get(predictedDateStartCal.MINUTE));
+                predictedDateEndCal.setTimeInMillis(predictedDateStartCal.getTimeInMillis());
                 predictedDateEndCal.add(Calendar.MINUTE, 60);
                 endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()));
                 Log.e("End Date : ", predictedDateEndCal.getTime().toString());
@@ -626,52 +618,79 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 
                 Long selectedTime = date.getCalendar().getTimeInMillis();
 
-                try {
+                Calendar selectedTimeCal = Calendar.getInstance();
+                selectedTimeCal.setTimeInMillis(selectedTime);
 
-                    Calendar eventDateCalendar = Calendar.getInstance();
-                    eventDateCalendar.setTimeInMillis(selectedTime);
+                Calendar currentDate = Calendar.getInstance();
+                currentDate.set(Calendar.HOUR, 0);
+                currentDate.set(Calendar.MINUTE, 0);
+                currentDate.set(Calendar.SECOND, 0);
+                currentDate.set(Calendar.MILLISECOND, 0);
 
-                    //This code is needed to check if the selected date in MVC
-                    //is of same Year or next Year
-                    Calendar currentDateCal = Calendar.getInstance();
+                if (((selectedTimeCal.get(Calendar.DAY_OF_MONTH) < currentDate.get(Calendar.DAY_OF_MONTH) || selectedTimeCal.get(Calendar.DAY_OF_MONTH) >= currentDate.get(Calendar.DAY_OF_MONTH)) &&
+                        (selectedTimeCal.get(Calendar.MONTH) >= currentDate.get(Calendar.MONTH) || selectedTimeCal.get(Calendar.MONTH) < currentDate.get(Calendar.MONTH)) &&
+                        selectedTimeCal.get(Calendar.YEAR) > currentDate.get(Calendar.YEAR)) ||
 
-                    //Code to show selected date
-                    if (currentDateCal.get(Calendar.YEAR) == eventDateCalendar.get(Calendar.YEAR)) {
-                        tvEventDate.setText(CenesUtils.EEEMMMMdd.format(eventDateCalendar.getTime()));
-                    } else {
-                        tvEventDate.setText(CenesUtils.EEEMMMMddcmyyyy.format(eventDateCalendar.getTime()));
+                        (selectedTimeCal.get(Calendar.DAY_OF_MONTH) >= currentDate.get(Calendar.DAY_OF_MONTH) &&
+                                (selectedTimeCal.get(Calendar.MONTH) >= currentDate.get(Calendar.MONTH)) &&
+                                selectedTimeCal.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR)) ||
+
+                        (selectedTimeCal.get(Calendar.DAY_OF_MONTH) < currentDate.get(Calendar.DAY_OF_MONTH) &&
+                                (selectedTimeCal.get(Calendar.MONTH) > currentDate.get(Calendar.MONTH)) &&
+                                selectedTimeCal.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR)) ) {
+
+                    try {
+
+                        Calendar eventDateCalendar = Calendar.getInstance();
+                        eventDateCalendar.setTimeInMillis(selectedTime);
+
+                        //This code is needed to check if the selected date in MVC
+                        //is of same Year or next Year
+                        Calendar currentDateCal = Calendar.getInstance();
+
+                        //Code to show selected date
+                        if (currentDateCal.get(Calendar.YEAR) == eventDateCalendar.get(Calendar.YEAR)) {
+                            tvEventDate.setText(CenesUtils.EEEMMMMdd.format(eventDateCalendar.getTime()));
+                        } else {
+                            tvEventDate.setText(CenesUtils.EEEMMMMddcmyyyy.format(eventDateCalendar.getTime()));
+                        }
+
+                        Calendar startTimeCal = Calendar.getInstance();
+                        startTimeCal.setTimeInMillis(event.getStartTime());
+                        startTimeCal.set(Calendar.DAY_OF_MONTH, eventDateCalendar.get(Calendar.DAY_OF_MONTH));
+                        startTimeCal.set(Calendar.YEAR, eventDateCalendar.get(Calendar.YEAR));
+                        startTimeCal.set(Calendar.MONTH, eventDateCalendar.get(Calendar.MONTH));
+
+                        Calendar endTimeCal = Calendar.getInstance();
+                        endTimeCal.setTimeInMillis(event.getEndTime());
+                        endTimeCal.set(Calendar.DAY_OF_MONTH, eventDateCalendar.get(Calendar.DAY_OF_MONTH));
+                        endTimeCal.set(Calendar.YEAR, eventDateCalendar.get(Calendar.YEAR));
+                        endTimeCal.set(Calendar.MONTH, eventDateCalendar.get(Calendar.MONTH));
+
+                        if (startTimeCal.getTimeInMillis() > endTimeCal.getTimeInMillis()) {
+                            endTimeCal.add(Calendar.DAY_OF_MONTH, 1);
+                        }
+
+                        event.setStartTime(startTimeCal.getTimeInMillis());
+                        event.setEndTime(endTimeCal.getTimeInMillis());
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
 
-                    Calendar startTimeCal = Calendar.getInstance();
-                    startTimeCal.setTimeInMillis(event.getStartTime());
-                    startTimeCal.set(Calendar.DAY_OF_MONTH, eventDateCalendar.get(Calendar.DAY_OF_MONTH));
-                    startTimeCal.set(Calendar.YEAR, eventDateCalendar.get(Calendar.YEAR));
+                    llPredictiveCalCell.setVisibility(View.GONE);
+                    llPredictiveCalInfo.setVisibility(View.GONE);
 
-                    Calendar endTimeCal = Calendar.getInstance();
-                    endTimeCal.setTimeInMillis(event.getEndTime());
-                    endTimeCal.set(Calendar.DAY_OF_MONTH, eventDateCalendar.get(Calendar.DAY_OF_MONTH));
-                    endTimeCal.set(Calendar.YEAR, eventDateCalendar.get(Calendar.YEAR));
+                    llGatheringDateBars.setVisibility(View.VISIBLE);
+                    llGatheringInfoBars.setVisibility(View.VISIBLE);
+                    rlSelectedFriendsRecyclerView.setVisibility(View.VISIBLE);
+                    rlHeader.setVisibility(View.VISIBLE);
+                    rlPreviewInvitationButton.setVisibility(View.VISIBLE);
 
-                    if (startTimeCal.getTimeInMillis() > endTimeCal.getTimeInMillis()) {
-                        endTimeCal.add(Calendar.DAY_OF_MONTH, 1);
-                    }
+                    createGatheringDto.setDate(true);
+                } else {
 
-                    event.setStartTime(startTimeCal.getTimeInMillis());
-                    event.setEndTime(endTimeCal.getTimeInMillis());
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
 
-                llPredictiveCalCell.setVisibility(View.GONE);
-                llPredictiveCalInfo.setVisibility(View.GONE);
-
-                llGatheringDateBars.setVisibility(View.VISIBLE);
-                llGatheringInfoBars.setVisibility(View.VISIBLE);
-                rlSelectedFriendsRecyclerView.setVisibility(View.VISIBLE);
-                rlHeader.setVisibility(View.VISIBLE);
-                rlPreviewInvitationButton.setVisibility(View.VISIBLE);
-
-                createGatheringDto.setDate(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -874,14 +893,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 }
 
 
-                if (isPredictiveOn) {
+                if (event.getPredictiveOn()) {
                     showPredictions();
                 }
 
             } else if (requestCode == GATHERING_SUMMARY_RESULT_CODE && resultCode == Activity.RESULT_OK) {
 
                 getActivity().setResult(Activity.RESULT_OK);
-                isPredictiveOn = false;
+                event.setPredictiveOn(false);
                 getActivity().finish();
 
             }  else if (requestCode == MESSAGE_FRAGMENT_CODE && resultCode == Activity.RESULT_OK) {
@@ -928,11 +947,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                isPredictiveOn = true;
                 event.setPredictiveOn(true);
                 showPredictions();
             } else {
-                isPredictiveOn = false;
                 event.setPredictiveOn(false);
                 Set<CalendarDay> drawableDates = CenesUtils.getDrawableMonthDateList(currentMonth);
                 BackgroundDecorator calBgDecorator = new BackgroundDecorator(getContext(), R.drawable.mcv_white_color, drawableDates, false, false);
@@ -943,18 +960,16 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     };
 
     public void showPredictions() {
-        if (isPredictiveOn) {
+        if (event.getPredictiveOn()) {
             try {
 
                 Calendar predictiveStartCal = Calendar.getInstance();
                 predictiveStartCal.setTimeInMillis(event.getStartTime());
-                predictiveStartCal.set(Calendar.DAY_OF_MONTH, new Date().getDate());
-                predictiveStartCal.set(Calendar.MONTH, new Date().getMonth());
+                predictiveStartCal.set(Calendar.MILLISECOND, 0);
 
                 Calendar predictiveEndCal = Calendar.getInstance();
                 predictiveEndCal.setTimeInMillis(event.getEndTime());
-                predictiveEndCal.set(Calendar.DAY_OF_MONTH, new Date().getDate());
-                predictiveEndCal.set(Calendar.MONTH, new Date().getMonth());
+                predictiveEndCal.set(Calendar.MILLISECOND, 0);
 
                 JSONObject job = new JSONObject();
                 job.put("startTimeMilliseconds", predictiveStartCal.getTimeInMillis());
@@ -1013,14 +1028,26 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 //                enableDates = GatheringService.getEnableDates(currentMonth);
 //                materialCalendarView.addDecorator(new DayEnableDecorator(enableDates));
 
-                if (isPredictiveOn) {
+                if (event.getPredictiveOn()) {
                     Calendar predictiveStartCal = Calendar.getInstance();
+                    predictiveStartCal.setTimeInMillis(event.getStartTime());
                     predictiveStartCal.set(Calendar.YEAR, currentMonth.getYear());
                     predictiveStartCal.set(Calendar.MONTH, currentMonth.getMonth());
+                    predictiveStartCal.set(Calendar.MILLISECOND, 0);
+
+
+                    Calendar nextMonth = Calendar.getInstance();
+                    nextMonth.set(Calendar.DAY_OF_MONTH, 1);
+                    nextMonth.set(Calendar.YEAR, currentMonth.getYear());
+                    nextMonth.set(Calendar.MONTH, currentMonth.getMonth());
+                    nextMonth.add(Calendar.MONTH, 1);
+
 
                     Calendar predictiveEndCal = Calendar.getInstance();
+                    predictiveEndCal.setTimeInMillis(event.getEndTime());
                     predictiveEndCal.set(Calendar.MONTH, currentMonth.getMonth());
                     predictiveEndCal.set(Calendar.YEAR, currentMonth.getYear());
+                    predictiveEndCal.set(Calendar.MILLISECOND, 0);
 
                     JSONObject job = new JSONObject();
                     try {
@@ -1082,7 +1109,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             if (membersSelected.size() > 0) {
                 String friends = "";
                 for (EventMember friendMap : membersSelected) {
-                    if (friendMap.getUserId() == null || (friendMap.getUserId() != null && loggedInUser.getUserId() == friendMap.getUserId())) {
+                    if (friendMap.getUserId() == null || (friendMap.getUserId() != null && loggedInUser.getUserId().equals(friendMap.getUserId()))) {
                         continue;
                     }
                     friends += friendMap.getUserId() + ",";
@@ -1095,6 +1122,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             e.printStackTrace();
         }
 
+        System.out.println(queryStr);
         new GatheringAsyncTask.PredictiveCalendarTask(new GatheringAsyncTask.PredictiveCalendarTask.AsyncResponse() {
             @Override
             public void processFinish(JSONArray response) {
@@ -1107,7 +1135,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                     }
                     Set<CalendarDay> colorSet = null;
                     if (calEntrySet.getKey().equals("WHITE")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.time_match_predictive_cross, calEntrySet.getValue(), false, true);
+                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_lightgrey_color, calEntrySet.getValue(), false, true);
                         materialCalendarView.addDecorator(calBgDecorator);
                     } else if (calEntrySet.getKey().equals("YELLOW")) {
                         BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_yellow_color, calEntrySet.getValue(), true, false);
@@ -1117,7 +1145,8 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         materialCalendarView.addDecorator(calBgDecorator);
                     } else if (calEntrySet.getKey().equals("PINK")) {
                         BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_ping_color, calEntrySet.getValue(), true, false);
-                        materialCalendarView.addDecorator(calBgDecorator);                } else if (calEntrySet.getKey().equals("GREEN")) {
+                        materialCalendarView.addDecorator(calBgDecorator);
+                    } else if (calEntrySet.getKey().equals("GREEN")) {
                         BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_green_color, calEntrySet.getValue(), true, false);
                         materialCalendarView.addDecorator(calBgDecorator);                }
                 }
@@ -1184,6 +1213,10 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 
             endTimePickerLabel.setText(CenesUtils.hmmaa.format(new Date(event.getEndTime())));
             createGatheringDto.setEndTime(true);
+
+            if (event.getPredictiveOn()) {
+                predictiveCalSwitch.setChecked(true);
+            }
 
             membersSelected = event.getEventMembers();
             populateFriendCollectionView();

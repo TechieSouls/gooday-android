@@ -107,43 +107,53 @@ public class CenesBaseActivity extends CenesActivity {
 
         String data = getIntent().getDataString();
         System.out.println(data);
-        if (data != null && data.indexOf("cenes://") != -1) {
+        if (data != null) {
 
             try {
+                    String params = "";
+                    if (data.indexOf("https://dev.cenesgroup.com/event/invitation") != -1) {
+                        params = data.substring(data.lastIndexOf("/"), data.length());
+                    } else if (data.indexOf("https://dev.cenesgroup.com/app/signupOptions") != -1) {
+                        String parameters = data.split("\\?")[1];
+                        if (parameters != null && parameters.split("=").length > 1) {
+                            params = parameters.split("=")[1];
+                        }
+                    }
+                    if (params != null) {
+
+                        new GatheringAsyncTask(cenesApplication, this);
+                        new GatheringAsyncTask.GatheringByKeyTask(new GatheringAsyncTask.GatheringByKeyTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+
+                                try {
+
+                                    boolean success = response.getBoolean("success");
+
+                                    if (success == true) {
+
+                                        Gson gson = new Gson();
+                                        Event event = gson.fromJson(response.getJSONObject("data").toString(), Event.class);
+                                        GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
+                                        gatheringPreviewFragment.event = event;
+                                        replaceFragment(gatheringPreviewFragment, HomeFragment.TAG);
+
+                                    }
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute(params);
+
+                    }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            String params = data.split("\\?")[1];
-            String paramValue = params.split("=")[1];
-            if (paramValue != null) {
 
-                new GatheringAsyncTask(cenesApplication, this);
-                new GatheringAsyncTask.GatheringByKeyTask(new GatheringAsyncTask.GatheringByKeyTask.AsyncResponse() {
-                    @Override
-                    public void processFinish(JSONObject response) {
 
-                        try {
 
-                            boolean success = response.getBoolean("success");
-
-                            if (success == true) {
-
-                                Gson gson = new Gson();
-                                Event event = gson.fromJson(response.getJSONObject("data").toString(), Event.class);
-                                GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
-                                gatheringPreviewFragment.event = event;
-                                replaceFragment(gatheringPreviewFragment, HomeFragment.TAG);
-
-                            }
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).execute(paramValue);
-
-            }
         }
     }
 

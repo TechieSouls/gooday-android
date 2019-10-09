@@ -125,17 +125,6 @@ public class HomeScreenAdapter extends BaseExpandableListAdapter {
         } else {
             viewHolder.divider.setVisibility(View.VISIBLE);
         }
-        /*if(child.getType().equalsIgnoreCase("Reminder")) {
-            viewHolder.llEventRowItem.setVisibility(View.GONE);
-            viewHolder.llReminderRowItem.setVisibility(View.VISIBLE);
-            viewHolder.tvReminderTitle.setText(child.getTitle());
-            //viewHolder.reminderTime.setText(child.getStartTime());
-            if(child.getStartTimeMillis() != null && child.getStartTimeMillis() < System.currentTimeMillis()) {
-                viewHolder.tvReminderTitle.setTextColor(Color.RED);
-            } else {
-                viewHolder.tvReminderTitle.setTextColor(context.getResources().getColor(R.color.cenes_dark_gray));
-            }
-        } else {*/
 
         EventMember owner = null;
         if (child.getEventMembers() != null) {

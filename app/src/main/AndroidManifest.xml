@@ -56,6 +56,14 @@
                 <data android:scheme="cenes"
                     android:host="event" />
             </intent-filter>
+            <intent-filter android:label="CenesWeb">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Accepts URIs that begin with "example://gizmos” -->
+                <data android:scheme="https"
+                    android:host="dev.cenesgroup.com" />
+            </intent-filter>
 
         </activity>
         <activity
@@ -63,9 +71,6 @@
             android:screenOrientation="portrait" />
         <activity
             android:name="com.deploy.activity.GuestActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name="com.deploy.activity.ChoiceActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name="com.deploy.activity.SignInActivity"

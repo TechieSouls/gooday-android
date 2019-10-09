@@ -1,15 +1,24 @@
 package com.deploy.activity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 
 import com.deploy.R;
+import com.deploy.application.CenesApplication;
+import com.deploy.bo.User;
+import com.deploy.coremanager.CoreManager;
+import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.guest.GuestFragment;
+import com.deploy.fragment.guest.SignupOptionsFragment;
+import com.deploy.fragment.guest.SignupStep1Fragment;
+import com.deploy.util.CenesUtils;
 
 import java.util.List;
 
@@ -19,6 +28,10 @@ import java.util.List;
 
 public class GuestActivity extends CenesActivity {
 
+    private CenesApplication cenesApplication;
+    private CoreManager coreManager;
+    private UserManager userManager;
+
     public FragmentTransaction fragmentTransaction;
     public FragmentManager fragmentManager;
 
@@ -26,9 +39,20 @@ public class GuestActivity extends CenesActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_guest);
-
         fragmentManager = getSupportFragmentManager();
-        replaceFragment(new GuestFragment(), null);
+
+        cenesApplication = getCenesApplication();
+        coreManager = cenesApplication.getCoreManager();
+        userManager = coreManager.getUserManager();
+        User user = userManager.getUser();
+
+        if (user == null) {
+            replaceFragment(new GuestFragment(), null);
+        } else if (user != null && CenesUtils.isEmpty(user.getPhone())) {
+            replaceFragment(new SignupStep1Fragment(), null);
+        } else {
+            replaceFragment(new SignupOptionsFragment(), null);
+        }
         fragmentManager.beginTransaction().commit();
 
         ActivityCompat.requestPermissions(GuestActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, 101);

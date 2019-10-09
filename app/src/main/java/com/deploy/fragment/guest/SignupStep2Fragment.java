@@ -14,12 +14,15 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.AlertManager;
 import com.deploy.R;
 import com.deploy.activity.GuestActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.UserApiManager;
+import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 
 import org.json.JSONObject;
@@ -43,6 +46,7 @@ public class SignupStep2Fragment extends CenesFragment {
 
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
+    private UserManager userManager;
     private UserApiManager userApiManager;
     private AlertManager alertManager;
     private String countryCode, phoneNumber, countryCodeStr;
@@ -110,6 +114,8 @@ public class SignupStep2Fragment extends CenesFragment {
         coreManager = cenesApplication.getCoreManager();
         userApiManager = coreManager.getUserAppiManager();
         alertManager = coreManager.getAlertManager();
+        userManager = coreManager.getUserManager();
+
     }
 
     View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -287,63 +293,38 @@ public class SignupStep2Fragment extends CenesFragment {
                 } catch (Exception e){
                     e.printStackTrace();
                 }
-                new CheckVerificationCodeTask().execute(postData);
+                new ProfileAsyncTask(cenesApplication, getActivity());
+                new ProfileAsyncTask.CheckVerificationCodeTask(new ProfileAsyncTask.CheckVerificationCodeTask.AsyncResponse() {
+                    @Override
+                    public void processFinish(JSONObject response) {
+
+                        try {
+                            if (response.getBoolean("success")) {
+                                System.out.println("countryCodeStr : "+countryCodeStr);
+
+                                User user = new User();
+                                user.setCountry(countryCodeStr.toUpperCase());
+                                user.setPhone(countryCode+phoneNumber);
+                                userManager.deleteAll();
+                                userManager.addUser(user);
+                                SignupOptionsFragment signupOptionsFragment = new SignupOptionsFragment();
+                                ((GuestActivity) getActivity()).replaceFragment(signupOptionsFragment, null);
+
+                            } else {
+                                etBox1.setText("");
+                                etBox2.setText("");
+                                etBox3.setText("");
+                                etBox4.setText("");
+                                verificationCode = "";
+                                alertManager.getAlert((GuestActivity)getActivity(), response.getString("message"), "Alert", null, false, "OK");
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).execute(postData);
             }
         }
 
-    }
-
-    class CheckVerificationCodeTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
-        ProgressDialog verifyCodeDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            verifyCodeDialog = new ProgressDialog((GuestActivity)getActivity());
-            verifyCodeDialog.setMessage("Verifying Code");
-            verifyCodeDialog.setIndeterminate(false);
-            verifyCodeDialog.setCanceledOnTouchOutside(false);
-            verifyCodeDialog.setCancelable(false);
-            verifyCodeDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(JSONObject... jsons) {
-
-            JSONObject popstData = jsons[0];
-            return userApiManager.checkVerificationCode(popstData);
-
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject response) {
-            super.onPostExecute(response);
-            verifyCodeDialog.dismiss();
-            verifyCodeDialog = null;
-            try {
-                if (response.getBoolean("success")) {
-                    //startActivity(new Intent((GuestActivity)getActivity(), SignUpActivity.class));
-                    System.out.println("countryCodeStr : "+countryCodeStr);
-                    SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("countryCodeStr", countryCodeStr);
-                    bundle.putString("phoneNumber", countryCode+phoneNumber);
-                    signupStepSuccessFragment.setArguments(bundle);
-
-                    ((GuestActivity) getActivity()).replaceFragment(signupStepSuccessFragment, "SignupStepSuccessFragment");
-
-                } else {
-                    etBox1.setText("");
-                    etBox2.setText("");
-                    etBox3.setText("");
-                    etBox4.setText("");
-                    verificationCode = "";
-                    alertManager.getAlert((GuestActivity)getActivity(), response.getString("message"), "Alert", null, false, "OK");
-
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

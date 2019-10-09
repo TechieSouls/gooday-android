@@ -16,7 +16,6 @@ import java.io.File;
 public interface ApiManager {
 
     public JSONObject signUpByEmail(User user, AppCompatActivity appCompatActivity);
-    public JSONObject logIn(User user, AppCompatActivity appCompatActivity);
     public JSONObject postMultipart(User user, File file, AppCompatActivity appCompatActivity);
     public JSONArray syncFacebookEvents(User user, AppCompatActivity appCompatActivity);
     public JSONArray googleEvents(User user, String queryStr, AppCompatActivity activity);
@@ -26,7 +25,6 @@ public interface ApiManager {
     public JSONObject saveReminder(User user,JSONObject jsonObject,AppCompatActivity activity);
     public JSONObject getReminders(User user,String  queryStr,AppCompatActivity activity);
     public JSONObject getUserHolidays(User user,String  queryStr,AppCompatActivity activity);
-    public JSONObject syncDeviceToekn(User user,JSONObject postDataJson,AppCompatActivity appCompatActivity);
     public JSONObject getEventById(User user,Long eventId,AppCompatActivity appCompatActivity);
     public JSONObject updateReminderToFinish(User user,String queryStr,AppCompatActivity appCompatActivity);
     public JSONObject updateReminderInvitation(User user,String queryStr,AppCompatActivity appCompatActivity);

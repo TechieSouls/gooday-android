@@ -23,7 +23,6 @@ public class ApiManagerImpl implements ApiManager {
 
 
     public String SIGNUPURL= "/api/users/";
-    public String LOGINURL = "/auth/user/authenticate";
     public String IMAGE_UPLOAD_URL = "/api/profile/upload";
     public String DIARY_UPLOAD_URL = "/api/diary/upload";
     public String GOOGLE_EVENTS_URL = "/api/google/events";
@@ -37,7 +36,6 @@ public class ApiManagerImpl implements ApiManager {
     public String REMINDER_SAVE_API = "/api/reminder/save";
     public String USER_REMINDERS_API = "/api/reminder/list";
     public String USER_HOLIDAYS_API = "/api/events/holidays";
-    public String DEVICE_TOKEN_SYNC_API = "/api/user/registerdevice";
     public String GET_EVENT_BY_ID_API = "/api/event/";
     public String REMINDER_UPDATE_FINISH_API = "/api/reminder/updateToFinish";
     public String REMINDER_ACCEPT_DECLINE_API = "/api/reminder/updateReminderMemberStatus";
@@ -64,33 +62,8 @@ public class ApiManagerImpl implements ApiManager {
 
         JSONObject postData = new JSONObject();
         try {
-            postData.put(user.AUTHTYPE,user.getAuthType());
-            if (user.getAuthType() == "facebook") {
-                postData.put(user.FACEBOOKID,user.getFacebookID());
-                postData.put(user.FACEBOOKAUTHTOKEN,user.getFacebookAuthToken());
-            } else if (user.getAuthType() == "email") {
-                postData.put(user.NAME,user.getName());
-                postData.put(user.EMAIL,user.getEmail());
-                postData.put(user.PASSWORD,user.getPassword());
-            }
             JsonParsing jsonParsing = new JsonParsing();
             return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+SIGNUPURL,postData,user.getAuthToken());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public JSONObject logIn(User user, AppCompatActivity appCompatActivity){
-        JSONObject postData = new JSONObject();
-        try {
-            postData.put(user.AUTHTYPE,"email");
-            postData.put(user.EMAIL,user.getEmail());
-            postData.put(user.PASSWORD,user.getPassword());
-
-            JsonParsing jsonParsing = new JsonParsing();
-            return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+LOGINURL,postData,user.getAuthToken());
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -125,7 +98,7 @@ public class ApiManagerImpl implements ApiManager {
     public JSONArray syncFacebookEvents(User user,AppCompatActivity appCompatActivity) {
         try {
             JsonParsing jsonParsing = new JsonParsing();
-            String apiUrl = UrlManagerImpl.prodAPIUrl+FACEBOOK_EVENTS_URL+"/"+user.getFacebookID()+"/"+user.getFacebookAuthToken();
+            String apiUrl = UrlManagerImpl.prodAPIUrl+FACEBOOK_EVENTS_URL+"/"+user.getFacebookId()+"/"+user.getFacebookAuthToken();
             Log.e("Facebook events ",apiUrl);
             return jsonParsing.httpGet(apiUrl,user.getAuthToken());
         } catch(Exception e) {
@@ -211,19 +184,6 @@ public class ApiManagerImpl implements ApiManager {
             JsonParsing jsonParsing = new JsonParsing();
             String apiUrl = UrlManagerImpl.prodAPIUrl+USER_HOLIDAYS_API+queryStr;
             return jsonParsing.httpGetJsonObject(apiUrl,user.getAuthToken());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public JSONObject syncDeviceToekn(User user,JSONObject postDataJson,AppCompatActivity appCompatActivity) {
-        //This will be null in case of signup request
-        try {
-            String apiUrl = UrlManagerImpl.prodAPIUrl+DEVICE_TOKEN_SYNC_API;
-            JsonParsing jsonParsing = new JsonParsing();
-            return jsonParsing.httpPost(apiUrl,postDataJson,user.getAuthToken());
         } catch(Exception e) {
             e.printStackTrace();
         }

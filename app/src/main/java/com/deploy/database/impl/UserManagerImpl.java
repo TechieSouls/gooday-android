@@ -4,6 +4,7 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.database.CenesDatabase;
 import com.deploy.database.manager.UserManager;
+import com.deploy.util.CenesUtils;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,6 +19,23 @@ public class UserManagerImpl implements UserManager {
     CenesDatabase cenesDatabase;
     SQLiteDatabase db;
 
+    public static String CreateTableQuery = "CREATE TABLE IF NOT EXISTS user_record (" +
+            "user_id LONG, " +
+            "email TEXT, " +
+            "facebook_auth_token TEXT, " +
+            "facebook_id TEXT," +
+            "name TEXT, " +
+            "password TEXT, " +
+            "token TEXT, " +
+            "auth_type TEXT, " +
+            "api_url TEXT, " +
+            "picture TEXT, " +
+            "gender TEXT, " +
+            "phone TEXT, " +
+            "birth_day_str TEXT," +
+            "country TEXT," +
+            "google_id TEXT)";
+
     public UserManagerImpl(CenesApplication cenesApplication){
         this.cenesApplication = cenesApplication;
         cenesDatabase = new CenesDatabase(cenesApplication);
@@ -26,11 +44,77 @@ public class UserManagerImpl implements UserManager {
 
     @Override
     public void addUser(User user){
-        db.execSQL("insert into user_record values(" + user.getUserId()
-                + " , '" + user.getEmail() + "' , '" + user.getFacebookAuthToken()
-                + "' , '" + user.getFacebookID() + "' , '" + user.getName()+"' , '" + user.getPassword()
-                + "' , '" + user.getAuthToken()
-                + "' , '"+user.getApiUrl()+"' , '"+user.getPicture()+"' , '"+user.getGender()+"', '"+user.getPhone()+"', "+user.getBirthDate()+")");
+
+
+        String insertQuery = "insert into user_record values(" + user.getUserId() +" , '" + user.getEmail() + "'";
+        if (!CenesUtils.isEmpty(user.getFacebookAuthToken())) {
+            insertQuery = insertQuery + ",'"+user.getFacebookAuthToken()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getFacebookAuthToken()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getFacebookId())) {
+            insertQuery = insertQuery + ",'"+user.getFacebookId()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getFacebookId()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getName())) {
+            insertQuery = insertQuery + ",'"+user.getName()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getName()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getPassword())) {
+            insertQuery = insertQuery + ",'"+user.getPassword()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getPassword()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getAuthToken())) {
+            insertQuery = insertQuery + ",'"+user.getAuthToken()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getAuthToken()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getAuthType())) {
+            insertQuery = insertQuery + ",'"+user.getAuthType()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getAuthType()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getApiUrl())) {
+            insertQuery = insertQuery + ",'"+user.getApiUrl()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getApiUrl()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getPicture())) {
+            insertQuery = insertQuery + ",'"+user.getPicture()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getPicture()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getGender())) {
+            insertQuery = insertQuery + ",'"+user.getGender()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getGender()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getPhone())) {
+            insertQuery = insertQuery + ",'"+user.getPhone()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getPhone()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getBirthDateStr())) {
+            insertQuery = insertQuery + ",'"+user.getBirthDateStr()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getBirthDateStr()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getCountry())) {
+            insertQuery = insertQuery + ",'"+user.getCountry()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getCountry()+"";
+        }
+        if (!CenesUtils.isEmpty(user.getGoogleId())) {
+            insertQuery = insertQuery + ",'"+user.getGoogleId()+"'";
+        } else {
+            insertQuery = insertQuery + ","+user.getGoogleId()+"";
+        }
+        insertQuery = insertQuery + ")";
+        System.out.println(insertQuery);
+        db.execSQL(insertQuery);
     }
 
     @Override
@@ -53,12 +137,17 @@ public class UserManagerImpl implements UserManager {
             user.setEmail(cursor.getString(cursor.getColumnIndex("email")));
             user.setPassword(cursor.getString(cursor.getColumnIndex("password")));
             user.setApiUrl(cursor.getString(cursor.getColumnIndex("api_url")));
-            user.setAuthToken(cursor.getString(cursor.getColumnIndex("tocken")));
+            user.setAuthToken(cursor.getString(cursor.getColumnIndex("token")));
             user.setName(cursor.getString(cursor.getColumnIndex("name")));
             user.setPicture(cursor.getString(cursor.getColumnIndex("picture")));
             user.setGender(cursor.getString(cursor.getColumnIndex("gender")));
             user.setPhone(cursor.getString(cursor.getColumnIndex("phone")));
-            user.setBirthDate(cursor.getLong(cursor.getColumnIndex("birth_date")));
+            user.setBirthDateStr(cursor.getString(cursor.getColumnIndex("birth_day_str")));
+            user.setAuthType(cursor.getString(cursor.getColumnIndex("auth_type")));
+            user.setFacebookId(cursor.getString(cursor.getColumnIndex("facebook_id")));
+            user.setGoogleId(cursor.getString(cursor.getColumnIndex("google_id")));
+            user.setCountry(cursor.getString(cursor.getColumnIndex("country")));
+
             return user;
         }
         return user;
@@ -73,21 +162,25 @@ public class UserManagerImpl implements UserManager {
         if (cursor.moveToFirst()) {
             user = new User();
             user.setUserId(cursor.getInt(cursor.getColumnIndex("user_id")));
-            user.setUserId(418);
+            //user.setUserId(418);
             user.setEmail(cursor.getString(cursor.getColumnIndex("email")));
             user.setPassword(cursor.getString(cursor.getColumnIndex("password")));
             user.setApiUrl(cursor.getString(cursor.getColumnIndex("api_url")));
-            user.setAuthToken(cursor.getString(cursor.getColumnIndex("tocken")));
+            user.setAuthToken(cursor.getString(cursor.getColumnIndex("token")));
             user.setName(cursor.getString(cursor.getColumnIndex("name")));
             user.setPicture(cursor.getString(cursor.getColumnIndex("picture")));
+            user.setAuthType(cursor.getString(cursor.getColumnIndex("auth_type")));
             user.setGender(cursor.getString(cursor.getColumnIndex("gender")));
+            user.setGoogleId(cursor.getString(cursor.getColumnIndex("google_id")));
             user.setPhone(cursor.getString(cursor.getColumnIndex("phone")));
-            user.setBirthDate(cursor.getLong(cursor.getColumnIndex("birth_date")));
+            user.setFacebookId(cursor.getString(cursor.getColumnIndex("facebook_id")));
+            user.setBirthDateStr(cursor.getString(cursor.getColumnIndex("birth_day_str")));
+            user.setCountry(cursor.getString(cursor.getColumnIndex("country")));
+
             return user;
         }
         return user;
     }
-
 
     @Override
     public void updateProfilePic(User user) {
@@ -97,7 +190,7 @@ public class UserManagerImpl implements UserManager {
     @Override
     public void updateUser(User user) {
         db.execSQL("update user_record set name = '"+user.getName()+"', gender = '"+user.getGender()+"', email = '"+user.getEmail()+"', " +
-                "tocken = '"+user.getAuthToken()+"', picture = '"+user.getPicture()+"', birth_date = "+user.getBirthDate()+"");
+                "token = '"+user.getAuthToken()+"', picture = '"+user.getPicture()+"', birth_day_str = '"+user.getBirthDateStr()+"'");
     }
 
     @Override

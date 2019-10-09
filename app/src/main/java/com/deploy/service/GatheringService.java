@@ -80,11 +80,18 @@ public class GatheringService {
                 //    continue;
                 //}
 
-                /*if (cal.get(Calendar.DAY_OF_MONTH) == todayCalendar.get(Calendar.DAY_OF_MONTH) &&
-                        cal.get(Calendar.MONTH) == todayCalendar.get(Calendar.MONTH) &&
-                        cal.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)) {
+                if (predictiveDateCal.get(Calendar.DAY_OF_MONTH) < todayCalendar.get(Calendar.DAY_OF_MONTH) &&
+                        predictiveDateCal.get(Calendar.MONTH) <= todayCalendar.get(Calendar.MONTH) &&
+                        predictiveDateCal.get(Calendar.YEAR) <= todayCalendar.get(Calendar.YEAR)) {
                     continue;
-                }*/
+                }
+
+                if (predictiveDateCal.get(Calendar.DAY_OF_MONTH) >= todayCalendar.get(Calendar.DAY_OF_MONTH) &&
+                        predictiveDateCal.get(Calendar.MONTH) < todayCalendar.get(Calendar.MONTH) &&
+                        predictiveDateCal.get(Calendar.YEAR) <= todayCalendar.get(Calendar.YEAR)) {
+                    continue;
+                }
+
                 CalendarDay calDay = new CalendarDay(predictiveDateCal);
                 System.out.println("Day : "+calDay.getDay()+", Month : "+calDay.getMonth()+", Year : "+calDay.getYear()+", Percentage : "+job.getInt("predictivePercentage"));
 

@@ -98,4 +98,15 @@ public class UserApiManager {
         return null;
     }
 
+    public JSONObject emailLogin(JSONObject postData) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ UserAPI.post_login_API;
+            return jsonParsing.httpPost(apiUrl,postData,null);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

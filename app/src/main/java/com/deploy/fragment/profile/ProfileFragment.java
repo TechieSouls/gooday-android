@@ -168,13 +168,14 @@ public class ProfileFragment extends CenesFragment {
         tvName.setText(loggedInUser.getName());
         tvEmail.setText(loggedInUser.getEmail());
         tvPhone.setText(loggedInUser.getPhone());
-        if (loggedInUser.getBirthDate() ==  null || loggedInUser.getBirthDate() == 0l) {
+        if (CenesUtils.isEmpty(loggedInUser.getBirthDateStr())) {
             tvBirthday.setText("Choose BirthDate");
         } else {
-            Calendar yesCalendar = Calendar.getInstance();
-            yesCalendar.setTimeInMillis(loggedInUser.getBirthDate());
-            String birthDateStr = CenesUtils.ddMMMYYYY.format(yesCalendar.getTime());
-            tvBirthday.setText(birthDateStr);
+
+            //Calendar yesCalendar = Calendar.getInstance();
+            //yesCalendar.setTimeInMillis(loggedInUser.getBirthDateStr());
+            //String birthDateStr = CenesUtils.ddMMMYYYY.format(yesCalendar.getTime());
+            tvBirthday.setText(loggedInUser.getBirthDateStr());
 
         }
 
@@ -244,7 +245,7 @@ public class ProfileFragment extends CenesFragment {
                         @Override
                         public void onSuccess(LoginResult loginResult) {
                             Log.e("Fb status : ", "Facebook Id : " + loginResult.getAccessToken().getUserId() + ",Access Token : " + loginResult.getAccessToken().getToken());
-                            loggedInUser.setFacebookID(loginResult.getAccessToken().getUserId());
+                            loggedInUser.setFacebookId(loginResult.getAccessToken().getUserId());
                             loggedInUser.setFacebookAuthToken(loginResult.getAccessToken().getToken());
 
                             GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
@@ -317,8 +318,16 @@ public class ProfileFragment extends CenesFragment {
 
                         // TODO Auto-generated method stub
                         Calendar birthCal = Calendar.getInstance();
-                        if (loggedInUser.getBirthDate() != null) {
-                            birthCal.setTimeInMillis(loggedInUser.getBirthDate());
+                        if (!CenesUtils.isEmpty(loggedInUser.getBirthDateStr())) {
+
+                            try {
+
+                                Date birthDate = CenesUtils.ddMMMYYYY.parse(loggedInUser.getBirthDateStr());
+                                birthCal.setTimeInMillis(birthDate.getTime());
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
 
                         new DatePickerDialog(getActivity(), datePickerListener, birthCal
@@ -452,8 +461,9 @@ public class ProfileFragment extends CenesFragment {
             yesCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             yesCalendar.set(Calendar.MONTH, monthOfYear);
             yesCalendar.set(Calendar.YEAR, year);
-            loggedInUser.setBirthDate(yesCalendar.getTimeInMillis());
+
             String birthDateStr = CenesUtils.ddMMMYYYY.format(yesCalendar.getTime());
+            loggedInUser.setBirthDateStr(birthDateStr);
             tvBirthday.setText(birthDateStr);
 
             if (btnProfileDone.getVisibility() == View.GONE) {

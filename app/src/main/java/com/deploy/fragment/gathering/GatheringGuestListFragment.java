@@ -16,6 +16,7 @@ import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.adapter.GatheringGuestListItemAdapter;
 import com.deploy.application.CenesApplication;
+import com.deploy.bo.Event;
 import com.deploy.bo.EventMember;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
@@ -37,6 +38,7 @@ public class GatheringGuestListFragment extends CenesFragment {
 
     private GatheringGuestListItemAdapter gatheringGuestListItemAdapter;
     public List<EventMember> eventMembers, invitedMembers, acceptedMembers, declinedMembers;
+    public Event event;
 
     private CenesApplication cenesApplication;
     public User loggedInUser;
@@ -76,10 +78,20 @@ public class GatheringGuestListFragment extends CenesFragment {
         ivCloseGuestList.setOnClickListener(onClickListener);
 
         invitedMembers = new ArrayList<>();
+        eventMembers = event.getEventMembers();
         int nonCenesCounts = 0;
+
+        //Checking for host which should be at the top
+        for (EventMember member: eventMembers) {
+            if (member.getUserId() != null && member.getUserId().equals(event.getCreatedById())) {
+                invitedMembers.add(member);
+            }
+        }
         for (EventMember member: eventMembers) {
             if (member.getUserId() != null) {
-                invitedMembers.add(member);
+                if (!member.getUserId().equals(event.getCreatedById())) {
+                    invitedMembers.add(member);
+                }
             } else {
                 nonCenesCounts++;
             }

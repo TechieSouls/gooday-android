@@ -507,4 +507,169 @@ public class ProfileAsyncTask {
         }
     }
 
+    public static class SendVerrificationTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public SendVerrificationTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        ProgressDialog sendCodeDialog;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            sendCodeDialog = new ProgressDialog(activity);
+            sendCodeDialog.setMessage("Sending Verification Code");
+            sendCodeDialog.setIndeterminate(false);
+            sendCodeDialog.setCanceledOnTouchOutside(false);
+            sendCodeDialog.setCancelable(false);
+            sendCodeDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsons) {
+
+            JSONObject postDta = jsons[0];
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            return userApiManager.sentVerificationCode(postDta);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            sendCodeDialog.dismiss();
+            sendCodeDialog = null;
+
+            delegate.processFinish(jsonObject);
+        }
+    }
+
+    public static class EmailoginTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public EmailoginTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        ProgressDialog sendCodeDialog;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            sendCodeDialog = new ProgressDialog(activity);
+            sendCodeDialog.setMessage("Loading...");
+            sendCodeDialog.setIndeterminate(false);
+            sendCodeDialog.setCanceledOnTouchOutside(false);
+            sendCodeDialog.setCancelable(false);
+            sendCodeDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsons) {
+
+            JSONObject postDta = jsons[0];
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            return userApiManager.emailLogin(postDta);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            sendCodeDialog.dismiss();
+            sendCodeDialog = null;
+
+            delegate.processFinish(jsonObject);
+        }
+    }
+
+    public static class DeviceTokenSyncTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public DeviceTokenSyncTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsons) {
+
+            JSONObject postDta = jsons[0];
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            UserManager  userManager = coreManager.getUserManager();
+            User user = userManager.getUser();
+            return userApiManager.syncDeviceToken(postDta, user.getAuthToken());
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            delegate.processFinish(jsonObject);
+        }
+    }
+
+    public static class CheckVerificationCodeTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+        ProgressDialog verifyCodeDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            verifyCodeDialog = new ProgressDialog(activity);
+            verifyCodeDialog.setMessage("Verifying Code");
+            verifyCodeDialog.setIndeterminate(false);
+            verifyCodeDialog.setCanceledOnTouchOutside(false);
+            verifyCodeDialog.setCancelable(false);
+            verifyCodeDialog.show();
+        }
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public CheckVerificationCodeTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsons) {
+
+            JSONObject popstData = jsons[0];
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            return userApiManager.checkVerificationCode(popstData);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject response) {
+            super.onPostExecute(response);
+            verifyCodeDialog.dismiss();
+            verifyCodeDialog = null;
+
+            delegate.processFinish(response);
+        }
+    }
 }

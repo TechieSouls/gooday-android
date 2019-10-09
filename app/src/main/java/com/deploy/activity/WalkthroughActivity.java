@@ -70,7 +70,7 @@ public class WalkthroughActivity extends FragmentActivity {
 
     public void finishActivity() {
         WalkthroughActivity.this.setResult(RESULT_OK);
-        startActivity(new Intent(WalkthroughActivity.this,ChoiceActivity.class));
+        //startActivity(new Intent(WalkthroughActivity.this,ChoiceActivity.class));
         finish();
     }
 

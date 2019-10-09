@@ -35,6 +35,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baoyz.actionsheet.ActionSheet;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.AlertManager;
 import com.deploy.Manager.ValidationManager;
@@ -51,16 +53,7 @@ import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedDrawable;
 import com.deploy.util.RoundedImageView;
-import com.facebook.AccessToken;
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.login.LoginManager;
-import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
+import com.google.gson.Gson;
 import com.soundcloud.android.crop.Crop;
 
 import org.json.JSONArray;
@@ -99,41 +92,45 @@ public class SignupStepSuccessFragment extends CenesFragment {
     private UserApiManager userApiManager;
     private UserManager userManager;
     private ValidationManager validationManager;
-    private CallbackManager callbackManager;
 
-    private String phoneNumber, facebookId, facebookToken, gender, photo, countryCodeStr, birthDayStr;
-    private Long birthDate;
     private String isTakeOrUpload = "take_picture";
     private  File file;
     private Uri cameraFileUri;
-    private User user = null;
-    private Long userId = null;
+    private User loggedInUser = null;
 
     private EditText etSignupSuccessName, etSignupSuccessEmail, etSignupSuccessPassword;
-    private TextView etSignupSuccessBirthday;
-    private RelativeLayout tvSyncWithFb;
+    private TextView etSignupSuccessBirthday, tvSignupSuccessGender, tvGenderMale, tvGenderFemale, tvGenderOther, tvGenderCancel;
+    private TextView tvTakePhoto, tvUploadGallery, tvPhotoCancel;
+    private RelativeLayout rlGenderActionSheet, rlPhotoActionSheet;
     private View avatar;
-    private LoginButton buttonJoinFB;
-    private ImageView ivDefaultImg, ivProfileForwardGrey, ivReportInstabug;
+    private ImageView ivProfileForwardGrey, ivReportInstabug;
     private RoundedImageView rivProfileRoundedImg;
-    private Button btnMale, btnFemale;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        FacebookSdk.sdkInitialize(getActivity().getApplicationContext());
-        callbackManager = CallbackManager.Factory.create();
 
         View v = inflater.inflate(R.layout.fragment_signup_success, container, false);
 
-        initializeLayoutComponents(v);
         initilizeComponents();
+
+        loggedInUser = userManager.getUser();
+        if (loggedInUser == null) {
+            loggedInUser = new User();
+        }
+
+        initializeLayoutComponents(v);
+        if (loggedInUser.getAuthType() != null) {
+
+            etSignupSuccessPassword.setVisibility(View.GONE);
+        }
+
 
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         etSignupSuccessName.setNextFocusDownId(R.id.et_signup_success_email);
         etSignupSuccessEmail.setNextFocusDownId(R.id.et_signup_success_password);
         etSignupSuccessPassword.setNextFocusDownId(R.id.et_signup_success_birthday);
-        etSignupSuccessBirthday.setNextFocusDownId(R.id.btn_male);
+        etSignupSuccessBirthday.setNextFocusDownId(R.id.tv_signup_success_gender);
         return v;
     }
 
@@ -146,18 +143,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
         validationManager = coreManager.getValidatioManager();
 
         new ProfileAsyncTask(cenesApplication, getActivity());
-        try {
-            phoneNumber = getArguments().getString("phoneNumber");
-            countryCodeStr = getArguments().getString("countryCodeStr");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        user = new User();
-        facebookId = "";
-        facebookToken = "";
-        birthDate = null;
-        birthDayStr =  null;
     }
 
     public void initializeLayoutComponents(View v) {
@@ -166,30 +151,53 @@ public class SignupStepSuccessFragment extends CenesFragment {
         etSignupSuccessEmail = (EditText) v.findViewById(R.id.et_signup_success_email);
         etSignupSuccessPassword = (EditText) v.findViewById(R.id.et_signup_success_password);
         etSignupSuccessBirthday = (TextView) v.findViewById(R.id.et_signup_success_birthday);
-        btnFemale = (Button) v.findViewById(R.id.btn_female);
-        btnMale = (Button) v.findViewById(R.id.btn_male);
+        tvSignupSuccessGender = (TextView) v.findViewById(R.id.tv_signup_success_gender);
 
-        tvSyncWithFb = (RelativeLayout) v.findViewById(R.id.tv_sync_with_fb);
+        rlGenderActionSheet = (RelativeLayout) v.findViewById(R.id.rl_gender_action_sheet);
+        rlPhotoActionSheet = (RelativeLayout) v.findViewById(R.id.rl_photo_action_sheet);
 
-        rivProfileRoundedImg = (RoundedImageView) v.findViewById(R.id.riv_profile_rounded_img);
-        ivDefaultImg = (ImageView) v.findViewById(R.id.iv_default_img);
+        tvGenderMale = (TextView) v.findViewById(R.id.tv_gender_male);
+        tvGenderFemale = (TextView) v.findViewById(R.id.tv_gender_female);
+        tvGenderOther = (TextView) v.findViewById(R.id.tv_gender_other);
+        tvGenderCancel = (TextView) v.findViewById(R.id.tv_gender_cancel);
+
+        tvTakePhoto = (TextView) v.findViewById(R.id.tv_take_photo);
+        tvUploadGallery = (TextView) v.findViewById(R.id.tv_choose_library);
+        tvPhotoCancel = (TextView) v.findViewById(R.id.tv_photo_cancel);
+
+        rivProfileRoundedImg = (RoundedImageView) v.findViewById(R.id.riv_profile_pic);
         ivProfileForwardGrey = (ImageView) v.findViewById(R.id.iv_profile_forward_grey);
         ivReportInstabug = (ImageView) v.findViewById(R.id.iv_report_instabug);
 
-        buttonJoinFB = (LoginButton) v.findViewById(R.id.bt_fb_join);
-        buttonJoinFB.setFragment(this);
-        buttonJoinFB.setReadPermissions(Arrays.asList(CenesUtils.facebookPermissions));
+        rivProfileRoundedImg.setOnClickListener(onClickListener);
+        tvGenderMale.setOnClickListener(onClickListener);
+        tvGenderFemale.setOnClickListener(onClickListener);
+        tvGenderOther.setOnClickListener(onClickListener);
+        tvGenderCancel.setOnClickListener(onClickListener);
+        tvTakePhoto.setOnClickListener(onClickListener);
+        tvUploadGallery.setOnClickListener(onClickListener);
+        tvPhotoCancel.setOnClickListener(onClickListener);
 
-        avatar = (View) v.findViewById(R.id.avatar);
-
-        avatar.setOnClickListener(onClickListener);
-        buttonJoinFB.setOnClickListener(onClickListener);
-        tvSyncWithFb.setOnClickListener(onClickListener);
         etSignupSuccessBirthday.setOnClickListener(onClickListener);
+        tvSignupSuccessGender.setOnClickListener(onClickListener);
         ivProfileForwardGrey.setOnClickListener(onClickListener);
-        btnFemale.setOnClickListener(onClickListener);
-        btnMale.setOnClickListener(onClickListener);
         ivReportInstabug.setOnClickListener(onClickListener);
+
+        if (loggedInUser != null) {
+
+            if (!CenesUtils.isEmpty(loggedInUser.getName())) {
+                etSignupSuccessName.setText(loggedInUser.getName());
+            }
+
+            if (!CenesUtils.isEmpty(loggedInUser.getEmail())) {
+                etSignupSuccessEmail.setText(loggedInUser.getEmail());
+            }
+
+            if (loggedInUser.getPicture() != null) {
+
+                Glide.with(getContext()).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(rivProfileRoundedImg);
+            }
+        }
     }
 
     View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -202,33 +210,20 @@ public class SignupStepSuccessFragment extends CenesFragment {
 
                         JSONObject jsonObject = new JSONObject();
                         try {
-                            jsonObject.put("authType", "email");
-                            jsonObject.put("name", etSignupSuccessName.getText().toString());
-                            jsonObject.put("email", etSignupSuccessEmail.getText().toString());
-                            jsonObject.put("password", etSignupSuccessPassword.getText().toString());
-                            jsonObject.put("phone", phoneNumber);
-                            jsonObject.put("country", countryCodeStr.toUpperCase());
-                            if (gender != null) {
-                                jsonObject.put("gender", gender);
+                            if (CenesUtils.isEmpty(loggedInUser.getAuthType())) {
+
+                                loggedInUser.setAuthType("email");
+                                loggedInUser.setPassword(etSignupSuccessPassword.getText().toString());
+
                             }
-                            if (photo != null) {
-                                jsonObject.put("photo", photo);
-                            }
-                            if (facebookId.length() != 0) {
-                                jsonObject.put("facebookID", facebookId);
-                            }
-                            if (facebookToken.length() != 0) {
-                                jsonObject.put("facebookAuthToken", facebookToken);
-                            }
-                            if (birthDate != null) {
-                                jsonObject.put("birthDate", birthDate);
-                                jsonObject.put("birthDayStr", birthDayStr);
-                            }
+                            loggedInUser.setName(etSignupSuccessName.getText().toString());
+                            loggedInUser.setEmail(etSignupSuccessEmail.getText().toString());
+
+                            Gson gson = new Gson();
+                            jsonObject = new JSONObject(gson.toJson(loggedInUser));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        System.out.println(jsonObject.toString());
-                        //new SignupStepSuccessTask().execute(jsonObject);
 
                         new ProfileAsyncTask.SignupStepSuccessTask(new ProfileAsyncTask.SignupStepSuccessTask.AsyncResponse() {
                             @Override
@@ -237,36 +232,13 @@ public class SignupStepSuccessFragment extends CenesFragment {
                                     if (jsonObject.has("errorCode")) {
                                         try {
                                             if (jsonObject.getInt("errorCode") == 0) {
-                                                if (jsonObject.has(user.USERID)) {
-                                                    user.setUserId(jsonObject.getInt(user.USERID));
-                                                }
-                                                if (jsonObject.has(user.USERNAME)) {
-                                                    user.setUsername(jsonObject.getString(user.USERNAME));
-                                                }
-                                                if (jsonObject.has(user.TOKEN)) {
-                                                    user.setAuthToken(jsonObject.getString(user.TOKEN));
-                                                }
-                                                if (jsonObject.has(user.NAME)) {
-                                                    user.setName(jsonObject.getString(user.NAME));
-                                                }
-                                                if (jsonObject.has(user.EMAIL)) {
-                                                    user.setEmail(jsonObject.getString(user.EMAIL));
-                                                }
-                                                if (jsonObject.has(user.PHOTO)) {
-                                                    user.setPicture(jsonObject.getString(user.PHOTO));
-                                                }
-                                                if (jsonObject.has(user.PHONE)) {
-                                                    user.setPhone(jsonObject.getString(user.PHONE));
-                                                }
-                                                if (jsonObject.has("gender")) {
-                                                    user.setGender(jsonObject.getString("gender"));
-                                                }
-                                                if (jsonObject.has(user.BIRTHDATE)) {
-                                                    user.setBirthDate(Long.valueOf(jsonObject.getString(user.BIRTHDATE)));
-                                                }
-                                                userManager.addUser(user);
+
+                                                Gson gson = new Gson();
+                                                loggedInUser = gson.fromJson(jsonObject.toString(), User.class);
+                                                userManager.deleteAll();
+                                                userManager.addUser(loggedInUser);
                                                 System.out.println(userManager.getUser().toString());
-                                                System.out.println(user);
+                                                System.out.println(loggedInUser);
                                                 SharedPreferences prefs = getActivity().getSharedPreferences("CenesPrefs", Context.MODE_PRIVATE);
                                                 String token = prefs.getString("FcmToken", null);
 
@@ -278,7 +250,7 @@ public class SignupStepSuccessFragment extends CenesFragment {
                                                     registerDeviceObj.put("manufacturer", CenesUtils.getDeviceManufacturer());
                                                     registerDeviceObj.put("version", CenesUtils.getDeviceVersion());
                                                     registerDeviceObj.put("deviceType", "android");
-                                                    registerDeviceObj.put("userId", user.getUserId());
+                                                    registerDeviceObj.put("userId", loggedInUser.getUserId());
                                                     new DeviceTokenSync().execute(registerDeviceObj);
                                                 }
 
@@ -289,14 +261,13 @@ public class SignupStepSuccessFragment extends CenesFragment {
                                                             try {
                                                                 if (response != null && response.getInt("errorCode") == 0) {
                                                                     if (response.has("photo")) {
-                                                                        user.setPicture(response.getString("photo"));
-                                                                        userManager.updateProfilePic(user);
+                                                                        loggedInUser.setPicture(response.getString("photo"));
+                                                                        userManager.updateProfilePic(loggedInUser);
                                                                     }
                                                                 } else {
                                                                     getCenesActivity().showRequestTimeoutDialog();
                                                                 }
 
-                                                                userId = Long.parseLong(user.getUserId() + "");
                                                                 getContacts();
                                                             } catch (Exception e) {
                                                                 e.printStackTrace();
@@ -304,7 +275,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
                                                         }
                                                     }).execute(file);
                                                 } else {
-                                                    userId = Long.parseLong(user.getUserId() + "");
                                                     getContacts();
                                                 }
                                             } else {
@@ -330,117 +300,70 @@ public class SignupStepSuccessFragment extends CenesFragment {
                         }).execute(jsonObject);
                     }
                 break;
-                case R.id.avatar:
+                case R.id.riv_profile_pic:
 
-                    ActionSheet.createBuilder((GuestActivity)getActivity(), getActivity().getSupportFragmentManager())
-                            .setCancelButtonTitle("Cancel")
-                            .setOtherButtonTitles("Take Photo", "Upload Photo")
-                            .setCancelableOnTouchOutside(true)
-                            .setListener(sheetListener).show();
+                    rlPhotoActionSheet.setVisibility(View.VISIBLE);
                     break;
-               /* case R.id.avatar_uploaded:
-                    ActionSheet.createBuilder((GuestActivity)getActivity(), getActivity().getSupportFragmentManager())
-                            .setCancelButtonTitle("Cancel")
-                            .setOtherButtonTitles("Take Photo", "Upload Photo")
-                            .setCancelableOnTouchOutside(true)
-                            .setListener(sheetListener).show();
-                    break;*/
-                case R.id.bt_fb_join:
-                    disconnectFromFacebook();
-                    buttonJoinFB.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-                        @Override
-                        public void onSuccess(LoginResult loginResult) {
-                            Log.e("Fb status : ", "Facebook Id : " + loginResult.getAccessToken().getUserId() + ",Access Token : " + loginResult.getAccessToken().getToken());
-                            facebookId = loginResult.getAccessToken().getUserId();
-                            facebookToken = loginResult.getAccessToken().getToken();
 
-                            GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-                                @Override
-                                public void onCompleted(JSONObject object, GraphResponse response) {
-                                    try {
-                                        String id = object.getString("id");
-                                        String first_name = object.getString("first_name");
-                                        String last_name = object.getString("last_name");
-
-                                        etSignupSuccessName.setText(first_name+" "+last_name);
-
-                                        //gender = object.getString("gender");
-                                        //String birthday = object.getString("birthday");
-                                        if (object.has("picture")) {
-                                            JSONObject dataObj = object.getJSONObject("picture");
-                                            photo = dataObj.getJSONObject("data").getString("url");
-                                        }
-
-                                        String email;
-                                        if (object.has("email")) {
-                                            email = object.getString("email");
-                                            etSignupSuccessEmail.setText(email);
-                                        }
-
-                                        if (object.has("gender")) {
-                                            gender = object.getString("gender");
-                                        }
-
-                                        if (photo != null) {
-                                            ivDefaultImg.setVisibility(View.GONE);
-                                            new ProfileAsyncTask.DownloadFacebookImage(new ProfileAsyncTask.DownloadFacebookImage.AsyncResponse() {
-                                                @Override
-                                                public void processFinish(Bitmap response) {
-                                                    rivProfileRoundedImg.setVisibility(View.VISIBLE);
-                                                    rivProfileRoundedImg.setImageBitmap(response);
-                                                }
-                                            }).execute(photo);
-                                        }
-
-                                        Log.i("RESULTS : ", object.getString("email"));
-
-                                        tvSyncWithFb.setBackground(getResources().getDrawable(R.drawable.xml_circle_facebook_blue_white_border));
-                                    }catch (Exception e){
-                                        e.printStackTrace();
-                                    }
-                                }
-                            });
-                            Bundle parameters = new Bundle();
-                            parameters.putString("fields", "id,first_name,last_name,email,gender,birthday,cover,picture.type(large)");
-                            request.setParameters(parameters);
-                            request.executeAsync();
-                        }
-
-                        @Override
-                        public void onCancel() {
-                            Log.e("Cancelled", "User cancelled dialog");
-                        }
-
-                        @Override
-                        public void onError(FacebookException e) {
-                            Log.e("Error : ", e.getMessage());
-                        }
-
-                    });
-                    break;
-                case R.id.tv_sync_with_fb:
-                    buttonJoinFB.performClick();
-                    break;
                 case R.id.et_signup_success_birthday:
                     Calendar cal = Calendar.getInstance();
                     new DatePickerDialog(getActivity(), datePickerListener, cal
                             .get(Calendar.YEAR), cal.get(Calendar.MONTH),
                             cal.get(Calendar.DAY_OF_MONTH)).show();
                     break;
-                case R.id.btn_male:
-                    btnMale.setBackground(getResources().getDrawable(R.drawable.xml_curved_corner_orange_fill_white_border));
-                    btnMale.setTextColor(getResources().getColor(R.color.white));
-                    btnFemale.setBackground(getResources().getDrawable(R.drawable.xml_curved_corner_lightgrey_border));
-                    btnFemale.setTextColor(Color.parseColor("#FFD8D8D8"));
-                    gender = "Male";
+
+                case R.id.tv_signup_success_gender:
+
+                    rlGenderActionSheet.setVisibility(View.VISIBLE);
                     break;
-                case R.id.btn_female:
-                    btnFemale.setBackground(getResources().getDrawable(R.drawable.xml_curved_corner_orange_fill_white_border));
-                    btnFemale.setTextColor(getResources().getColor(R.color.white));
-                    btnMale.setBackground(getResources().getDrawable(R.drawable.xml_curved_corner_lightgrey_border));
-                    btnMale.setTextColor(Color.parseColor("#FFD8D8D8"));
-                    gender = "Female";
+                case R.id.tv_gender_male:
+
+                    rlGenderActionSheet.setVisibility(View.GONE);
+                    loggedInUser.setGender("Male");
+                    tvSignupSuccessGender.setText(loggedInUser.getGender());
                     break;
+                case R.id.tv_gender_female:
+
+                    rlGenderActionSheet.setVisibility(View.GONE);
+                    loggedInUser.setGender("Female");
+                    tvSignupSuccessGender.setText(loggedInUser.getGender());
+                    break;
+
+                case R.id.tv_gender_other:
+
+                    rlGenderActionSheet.setVisibility(View.GONE);
+                    loggedInUser.setGender("Other");
+                    tvSignupSuccessGender.setText(loggedInUser.getGender());
+                    break;
+
+                case R.id.tv_gender_cancel:
+                    rlGenderActionSheet.setVisibility(View.GONE);
+                    break;
+
+                case R.id.tv_take_photo:
+                    isTakeOrUpload = "take_picture";
+                    if (ContextCompat.checkSelfPermission(getCenesActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                    } else {
+                        firePictureIntent();
+                    }
+                    rlPhotoActionSheet.setVisibility(View.GONE);
+                    break;
+
+                case R.id.tv_choose_library:
+                    isTakeOrUpload = "upload_picture";
+                    if (ContextCompat.checkSelfPermission(getCenesActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                    } else {
+                        firePictureIntent();
+                    }
+                    rlPhotoActionSheet.setVisibility(View.GONE);
+                    break;
+
+                case R.id.tv_photo_cancel:
+                    rlPhotoActionSheet.setVisibility(View.GONE);
+                    break;
+
                 case R.id.iv_report_instabug:
                     break;
 
@@ -458,37 +381,9 @@ public class SignupStepSuccessFragment extends CenesFragment {
             yesCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             yesCalendar.set(Calendar.MONTH, monthOfYear);
             yesCalendar.set(Calendar.YEAR, year);
-            birthDate = yesCalendar.getTimeInMillis();
-            String birthDateStrTemp = CenesUtils.ddMMMYYYY.format(yesCalendar.getTime());
 
-            birthDayStr = birthDateStrTemp;
-            etSignupSuccessBirthday.setText(birthDateStrTemp);
-        }
-    };
-    ActionSheet.ActionSheetListener sheetListener = new ActionSheet.ActionSheetListener() {
-        @Override
-        public void onDismiss(ActionSheet actionSheet, boolean isCancel) {
-            //Toast.makeText(getContext(),"Cancel", Toast.LENGTH_LONG).show();
-        }
-
-        @Override
-        public void onOtherButtonClick(ActionSheet actionSheet, int index) {
-            //Toast.makeText(getContext(),index+"", Toast.LENGTH_LONG).show();
-            if (index == 0) {
-                isTakeOrUpload = "take_picture";
-                if (ContextCompat.checkSelfPermission(getCenesActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
-                } else {
-                    firePictureIntent();
-                }
-            } else if (index == 1) {
-                isTakeOrUpload = "upload_picture";
-                if (ContextCompat.checkSelfPermission(getCenesActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
-                } else {
-                    firePictureIntent();
-                }
-            }
+            loggedInUser.setBirthDateStr(CenesUtils.ddMMMYYYY.format(yesCalendar.getTime()));
+            etSignupSuccessBirthday.setText(loggedInUser.getBirthDateStr());
         }
     };
 
@@ -504,28 +399,30 @@ public class SignupStepSuccessFragment extends CenesFragment {
             }
             missingFields.append("Email");
         }
-        /*if (!validationManager.isValidEmail(etSignupSuccessEmail.getText().toString())) {
-            alertManager.getAlert((GuestActivity)getActivity(), "Invalid Email", "Alert", null, false, "OK");
-            return false;
-        }*/
-        if (etSignupSuccessPassword.getText().toString().length() == 0) {
-            if (missingFields.length() > 0) {
-                missingFields.append(", ");
+
+        if (CenesUtils.isEmpty(loggedInUser.getAuthType())) {
+
+            if (etSignupSuccessPassword.getText().toString().length() == 0) {
+                if (missingFields.length() > 0) {
+                    missingFields.append(", ");
+                }
+                missingFields.append("Password");
             }
-            missingFields.append("Password");
-        }
-        if (birthDate == null) {
-            if (missingFields.length() > 0) {
-                missingFields.append(", ");
-            }
-            missingFields.append("BirthDay");
         }
 
-        if (gender == null) {
+        if (CenesUtils.isEmpty(loggedInUser.getGender())) {
             if (missingFields.length() > 0) {
                 missingFields.append(", ");
             }
             missingFields.append("Gender");
+        }
+
+
+        if (CenesUtils.isEmpty(loggedInUser.getBirthDateStr())) {
+            if (missingFields.length() > 0) {
+                missingFields.append(", ");
+            }
+            missingFields.append("BirthDay");
         }
 
         if (missingFields.length() > 0) {
@@ -573,8 +470,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
                 getContacts();
             } else {
                 Toast.makeText(getActivity(), "Until you grant the permission, we cannot show your friendList", Toast.LENGTH_SHORT).show();
-                //startActivity(new Intent(getActivity(), CompleteYourProfileActivity.class));
-                //getActivity().finish();
                 ((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
 
             }
@@ -627,18 +522,10 @@ public class SignupStepSuccessFragment extends CenesFragment {
 
                     RoundedDrawable drawable = new RoundedDrawable(ImageUtils.getRotatedBitmap(rotatedBitmap, filePath));
 
-                    //avatar.setVisibility(View.GONE);
-                    //rImageView.setVisibility(View.VISIBLE);
-                    //avatar.setBackground(drawable);
-                    //rivProfileRoundedImg.setImageBitmap(imageBitmap);
-                    rivProfileRoundedImg.setVisibility(View.VISIBLE);
                     rivProfileRoundedImg.setImageBitmap(rotatedBitmap  );
-                    ivDefaultImg.setVisibility(View.GONE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } else {
-                callbackManager.onActivityResult(requestCode, resultCode, data);
             }
         }
     }
@@ -721,7 +608,7 @@ public class SignupStepSuccessFragment extends CenesFragment {
 
         JSONObject userContact = new JSONObject();
         try {
-            userContact.put("userId",user.getUserId());
+            userContact.put("userId",loggedInUser.getUserId());
             userContact.put("contacts",contactsArray);
         } catch (Exception e) {
             e.printStackTrace();
@@ -731,9 +618,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
         new ProfileAsyncTask.PhoneContactSync(new ProfileAsyncTask.PhoneContactSync.AsyncResponse() {
             @Override
             public void processFinish(Object response) {
-
-                //startActivity(new Intent((GuestActivity)getActivity(), CompleteYourProfileActivity.class));
-                //getActivity().finish();
 
                 ((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
             }
@@ -749,16 +633,8 @@ public class SignupStepSuccessFragment extends CenesFragment {
         @Override
         protected Object doInBackground(JSONObject... objects) {
             JSONObject deviceTokenInfo = objects[0];
-            return userApiManager.syncDeviceToken(deviceTokenInfo, user.getAuthToken());
+            return userApiManager.syncDeviceToken(deviceTokenInfo, loggedInUser.getAuthToken());
         }
-    }
-
-    public void disconnectFromFacebook() {
-
-        if (AccessToken.getCurrentAccessToken() == null) {
-            return; // already logged out
-        }
-        LoginManager.getInstance().logOut();
     }
 
     public static Bitmap rotateImage(Bitmap source, float angle) {
@@ -767,4 +643,5 @@ public class SignupStepSuccessFragment extends CenesFragment {
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
     }
+
 }

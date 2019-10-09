@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.AlertManager;
 import com.deploy.R;
 import com.deploy.activity.GuestActivity;
@@ -140,8 +141,37 @@ public class SignupStep1Fragment extends CenesFragment {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        btSignupStep1Continue.setClickable(false);
+                        new ProfileAsyncTask(cenesApplication, getActivity());
+                        new ProfileAsyncTask.SendVerrificationTask(new ProfileAsyncTask.SendVerrificationTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
 
-                        new sendVerrificationNumber().execute(postData);
+                                try {
+                                    btSignupStep1Continue.setClickable(true);
+
+                                    boolean success = response.getBoolean("success");
+
+                                    if (success) {
+                                        System.out.println("countryCodeStr : "+countryCodeStr);
+
+                                        SignupStep2Fragment ss2Fragment = new SignupStep2Fragment();
+                                        Bundle bundle = new Bundle();
+                                        bundle.putString("countryCodeStr", countryCodeStr);
+                                        bundle.putString("countryCode", countryCode);
+                                        bundle.putString("phoneNumber", etPhoneNumberStr.replaceAll("\\s","").replaceAll("-",""));
+                                        ss2Fragment.setArguments(bundle);
+
+                                        ((GuestActivity) getActivity()).replaceFragment(ss2Fragment, null);
+
+                                    } else {
+                                        alertManager.getAlert((GuestActivity)getActivity(), response.getString("message"), "Alert", null, false, "OK");
+                                    }
+                            } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                        }
+                        }).execute(postData);
                     }
                     break;
                 case R.id.ll_country_code_dropdown:
@@ -172,55 +202,6 @@ public class SignupStep1Fragment extends CenesFragment {
             }, 500);
 
 
-        }
-    }
-
-    class sendVerrificationNumber extends AsyncTask<JSONObject, JSONObject, JSONObject> {
-
-        ProgressDialog sendCodeDialog;
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            sendCodeDialog = new ProgressDialog((GuestActivity)getActivity());
-            sendCodeDialog.setMessage("Sending Verification Code");
-            sendCodeDialog.setIndeterminate(false);
-            sendCodeDialog.setCanceledOnTouchOutside(false);
-            sendCodeDialog.setCancelable(false);
-            sendCodeDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(JSONObject... jsons) {
-
-            JSONObject postDta = jsons[0];
-            return userApiManager.sentVerificationCode(postDta);
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject jsonObject) {
-            super.onPostExecute(jsonObject);
-            sendCodeDialog.dismiss();
-            sendCodeDialog = null;
-            try {
-                if (jsonObject.getBoolean("success")) {
-                    System.out.println("countryCodeStr : "+countryCodeStr);
-
-                    SignupStep2Fragment ss2Fragment = new SignupStep2Fragment();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("countryCodeStr", countryCodeStr);
-                    bundle.putString("countryCode", countryCode);
-                    bundle.putString("phoneNumber", etPhoneNumberStr.replaceAll("\\s","").replaceAll("-",""));
-                    ss2Fragment.setArguments(bundle);
-
-                    ((GuestActivity) getActivity()).replaceFragment(ss2Fragment, null);
-
-                } else {
-                    alertManager.getAlert((GuestActivity)getActivity(), jsonObject.getString("message"), "Alert", null, false, "OK");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 

@@ -88,7 +88,8 @@ public class NotificationAdapter extends BaseAdapter {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        int daysDiff = CenesUtils.daysBetween(notification.getNotificationTime(), new Date().getTime());
+        long daysDiff  = (new Date().getTime() - notification.getNotificationTime())/(1000*3600*24);
+        System.out.println("Diffrent in Days : "+daysDiff/(1000*3600*24)+"   -----   "+daysDiff);
         if (daysDiff > 0) {
             holder.notificationDay.setText(daysDiff +" Days Ago");
         } else {
@@ -120,6 +121,14 @@ public class NotificationAdapter extends BaseAdapter {
         holder.llContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                new NotificationAsyncTask(((CenesBaseActivity)activity).getCenesApplication(), activity);
+                new NotificationAsyncTask.MarkNotificationReadTask(new NotificationAsyncTask.MarkNotificationReadTask.AsyncResponse() {
+                    @Override
+                    public void processFinish(JSONObject response) {
+                        System.out.println(response.toString());
+                    }
+                }).execute(notification.getNotificationTypeId());
 
 
                 GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();

@@ -28,7 +28,6 @@ import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
 import com.deploy.activity.CenesActivity;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.ChoiceActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
@@ -112,9 +111,10 @@ public class CalenderSyncFragment extends CenesFragment implements GoogleApiClie
 
         isFirstLogin = ((CenesActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true);
 
-        if (getActivity() instanceof ChoiceActivity) {
-            isFirstLogin = ((ChoiceActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true);
-        } else if (getActivity() instanceof CenesBaseActivity) {
+        //if (getActivity() instanceof ChoiceActivity) {
+          //  isFirstLogin = ((ChoiceActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true);
+        //} else
+            if (getActivity() instanceof CenesBaseActivity) {
             isFirstLogin = ((CenesBaseActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true);
         } else if (getActivity() instanceof GuestActivity) {
             isFirstLogin = ((GuestActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true);

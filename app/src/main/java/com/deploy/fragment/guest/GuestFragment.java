@@ -56,7 +56,7 @@ public class GuestFragment extends CenesFragment {
 
             switch (view.getId()) {
                 case R.id.bt_signup_mobile:
-                    ((GuestActivity) getActivity()).replaceFragment(new SignupStep1Fragment(), SignupStep1Fragment.TAG);
+                    ((GuestActivity) getActivity()).replaceFragment(new SignupStep1Fragment(), GuestFragment.TAG);
                     //((GuestActivity) getActivity()).replaceFragment(new SignupStepSuccessFragment(), null);
                    // ((GuestActivity) getActivity()).replaceFragment(new CalenderSyncFragment(), HolidaySyncFragment.TAG);
                     break;
