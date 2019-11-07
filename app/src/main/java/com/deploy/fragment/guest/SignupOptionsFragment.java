@@ -1,8 +1,16 @@
 package com.deploy.fragment.guest;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.Html;
@@ -14,7 +22,9 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GuestActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
@@ -22,6 +32,7 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.util.CenesConstants;
+import com.deploy.util.CenesUtils;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -40,13 +51,20 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignupOptionsFragment extends CenesFragment {
 
     private static String TAG = "SignupOptionsFragment";
     private static int  GOOGLE_SIGN_IN = 101;
+    private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+
 
     private RelativeLayout rlFacebookBtn, rlGoogleBtn, rlEmailBtn;
     private TextView tvTandCText;
@@ -116,8 +134,8 @@ public class SignupOptionsFragment extends CenesFragment {
 
                 case R.id.rl_email_btn:
 
-                    SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
-                    ((GuestActivity)getActivity()).replaceFragment(signupStepSuccessFragment, SignupOptionsFragment.TAG);
+                    EmailSignupFragment emailSignupFragment = new EmailSignupFragment();
+                    ((GuestActivity)getActivity()).replaceFragment(emailSignupFragment, SignupOptionsFragment.TAG);
                     break;
 
                     default:
@@ -151,7 +169,7 @@ public class SignupOptionsFragment extends CenesFragment {
             String facebookId = loginResult.getAccessToken().getUserId();
             String facebookToken = loginResult.getAccessToken().getToken();
 
-            loggedInUser.setAuthType("facebook");
+            loggedInUser.setAuthType(User.AuthenticateType.facebook);
             loggedInUser.setFacebookId(facebookId);
             loggedInUser.setFacebookAuthToken(facebookToken);
             GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
@@ -189,11 +207,12 @@ public class SignupOptionsFragment extends CenesFragment {
                             }).execute(photo);
                         }*/
 
-                        userManager.deleteAll();
+                        /*userManager.deleteAll();
                         userManager.addUser(loggedInUser);
 
                         SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
-                        ((GuestActivity)getActivity()).replaceFragment(signupStepSuccessFragment,  SignupOptionsFragment.TAG);
+                        ((GuestActivity)getActivity()).replaceFragment(signupStepSuccessFragment,  SignupOptionsFragment.TAG);*/
+                        socialSignupRequest(loggedInUser);
                         Log.i("RESULTS : ", object.getString("email"));
                     }catch (Exception e){
                         e.printStackTrace();
@@ -227,6 +246,68 @@ public class SignupOptionsFragment extends CenesFragment {
         LoginManager.getInstance().logOut();
     }
 
+    public void socialSignupRequest(User user) {
+
+        try {
+
+            JSONObject postData = new JSONObject(new Gson().toJson(user));
+            new ProfileAsyncTask(cenesApplication, getActivity());
+            new ProfileAsyncTask.SignupStepOneSuccessTask(new ProfileAsyncTask.SignupStepOneSuccessTask.AsyncResponse() {
+                @Override
+                public void processFinish(JSONObject response) {
+
+                    try {
+                        boolean success = response.getBoolean("success");
+                        if (success) {
+
+                            User user = new Gson().fromJson(response.getString("data"), User.class);
+                            userManager.deleteAll();
+                            userManager.addUser(user);
+                            loggedInUser = userManager.getUser();
+                            SharedPreferences prefs = getActivity().getSharedPreferences("CenesPrefs", Context.MODE_PRIVATE);
+                            String token = prefs.getString("FcmToken", null);
+
+                            if (token != null) {
+                                JSONObject registerDeviceObj = new JSONObject();
+                                registerDeviceObj.put("deviceToken", token);
+                                registerDeviceObj.put("deviceType", "android");
+                                registerDeviceObj.put("model", CenesUtils.getDeviceModel());
+                                registerDeviceObj.put("manufacturer", CenesUtils.getDeviceManufacturer());
+                                registerDeviceObj.put("version", CenesUtils.getDeviceVersion());
+                                registerDeviceObj.put("deviceType", "android");
+                                registerDeviceObj.put("userId", loggedInUser.getUserId());
+                                new ProfileAsyncTask.DeviceTokenSyncTask(new ProfileAsyncTask.DeviceTokenSyncTask.AsyncResponse() {
+                                        @Override
+                                    public void processFinish(JSONObject response) {
+
+                                    }
+                                }).execute(registerDeviceObj);
+                            }
+
+                            if (user.isNew()) {
+                                SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
+                                ((GuestActivity)getActivity()).clearFragmentsAndOpen(signupStepSuccessFragment);
+                            } else {
+                                startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
+                                getActivity().finish();
+                            }
+
+                        } else {
+
+                            String message = response.getString("message");
+                            showAlert("Alert", message);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }).execute(postData);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private void signInGoogleAccount() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -252,6 +333,102 @@ public class SignupOptionsFragment extends CenesFragment {
         }
     }
 
+    public void getContacts() {
+        // Check the SDK version and whether the permission is already granted or not.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity().checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager
+                .PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
+            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+        } else {
+            // Android version is lesser than 6.0 or the permission is already granted.
+            fetchDeviceContactList();
+        }
+    }
+
+    public void fetchDeviceContactList() {
+
+        Map<String, String> contactsArrayMap = new HashMap<>();
+
+        ContentResolver cr = getActivity().getContentResolver();
+        Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
+                null, null, null, null);
+
+        if ((cur != null ? cur.getCount() : 0) > 0) {
+            while (cur != null && cur.moveToNext()) {
+                String id = cur.getString(
+                        cur.getColumnIndex(ContactsContract.Contacts._ID));
+                String name = cur.getString(cur.getColumnIndex(
+                        ContactsContract.Contacts.DISPLAY_NAME));
+
+                if (cur.getInt(cur.getColumnIndex(
+                        ContactsContract.Contacts.HAS_PHONE_NUMBER)) > 0) {
+                    Cursor pCur = cr.query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            new String[]{id}, null);
+
+                    while (pCur.moveToNext()) {
+                        String phoneNo = pCur.getString(pCur.getColumnIndex(
+                                ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+                        //Log.e("phoneNo : "+phoneNo , "Name : "+name);
+
+                        if (phoneNo.indexOf("\\*") != -1 || phoneNo.indexOf("\\#") != -1 || phoneNo.length() < 7) {
+                            continue;
+                        }
+                        try {
+                            String parsedPhone = phoneNo.replaceAll(" ","").replaceAll("-","").replaceAll("\\(","").replaceAll("\\)","");
+                            if (parsedPhone.indexOf("+") == -1) {
+                                parsedPhone = "+"+parsedPhone;
+                            }
+                            //contactObject.put(parsedPhone, name);
+                            //contactsArray.put(contactObject);
+                            if (!contactsArrayMap.containsKey(parsedPhone)) {
+                                contactsArrayMap.put(parsedPhone, name);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    pCur.close();
+                }
+            }
+        }
+        if(cur!=null){
+            cur.close();
+        }
+        JSONArray contactsArray = new JSONArray();
+        for (Map.Entry<String, String> entryMap: contactsArrayMap.entrySet()) {
+            JSONObject contactObject = new JSONObject();
+            try {
+                contactObject.put(entryMap.getKey(), entryMap.getValue());
+                contactsArray.put(contactObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        JSONObject userContact = new JSONObject();
+        try {
+            userContact.put("userId",loggedInUser.getUserId());
+            userContact.put("contacts",contactsArray);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //Making Phone Sync Call
+        new ProfileAsyncTask.PhoneContactSync(new ProfileAsyncTask.PhoneContactSync.AsyncResponse() {
+            @Override
+            public void processFinish(Object response) {
+
+                //((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
+                startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
+                getActivity().finish();
+            }
+        }).execute(userContact);
+    }
+
     private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
@@ -259,16 +436,11 @@ public class SignupOptionsFragment extends CenesFragment {
             // Signed in successfully, show authenticated UI.
             System.out.println(account.getId());
             System.out.println(account.getIdToken());
-            loggedInUser.setAuthType("google");
+            loggedInUser.setAuthType(User.AuthenticateType.google);
             loggedInUser.setName(account.getDisplayName());
             loggedInUser.setEmail(account.getEmail());
             loggedInUser.setGoogleId(account.getId());
-
-            userManager.deleteAll();
-            userManager.addUser(loggedInUser);
-
-            SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
-            ((GuestActivity)getActivity()).replaceFragment(signupStepSuccessFragment,  SignupOptionsFragment.TAG);
+            socialSignupRequest(loggedInUser);
 
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.

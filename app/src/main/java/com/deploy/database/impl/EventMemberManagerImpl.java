@@ -90,6 +90,32 @@ public class EventMemberManagerImpl  {
         return eventMembers;
     }
 
+    public List<EventMember> fetchEventMembersByEventAtScreen(String displayAtScreen) {
+
+        List<EventMember> eventMembers = new ArrayList<>();
+
+        String query = "select * from event_members where event_id in (select event_id from events where display_at_screen = '"+displayAtScreen+"' )";
+        Cursor cursor = db.rawQuery(query, null);
+
+        while (cursor.moveToNext()) {
+
+            EventMember eventMember = new EventMember();
+            eventMember.setEventId(cursor.getLong(cursor.getColumnIndex("event_id")));
+            eventMember.setEventMemberId(cursor.getLong(cursor.getColumnIndex("event_member_id")));
+            eventMember.setName(cursor.getString(cursor.getColumnIndex("name")));
+            eventMember.setUserId(cursor.getInt(cursor.getColumnIndex("user_id")));
+            eventMember.setUserContactId(cursor.getInt(cursor.getColumnIndex("user_contact_id")));
+            eventMember.setPicture(cursor.getString(cursor.getColumnIndex("picture")));
+
+            if (eventMember.getUserId() != null) {
+                User user = this.cenesUserManagerImpl.fetchCenesUserByUserId(eventMember.getUserId());
+                eventMember.setUser(user);
+            }
+            eventMembers.add(eventMember);
+        }
+        cursor.close();
+        return eventMembers;
+    }
 
     public void deleteAllFromEventMembers() {
         String deleteQuery = "delete from event_members";

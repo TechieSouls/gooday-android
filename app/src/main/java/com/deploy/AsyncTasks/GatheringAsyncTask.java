@@ -55,11 +55,11 @@ public class GatheringAsyncTask {
         this.activity = activity;
     }
 
-    public static class GatheringsTask extends AsyncTask<String, String, Map<String, Object>> {
+    public static class GatheringsTask extends AsyncTask<String, String, JSONObject> {
 
         // you may separate this or combined to caller class.
         public interface AsyncResponse {
-            void processFinish(Map<String, Object> response);
+            void processFinish(JSONObject response);
         }
         public AsyncResponse delegate = null;
 
@@ -68,7 +68,7 @@ public class GatheringAsyncTask {
         }
 
         @Override
-        protected Map<String, Object> doInBackground(String... strings) {
+        protected JSONObject doInBackground(String... strings) {
 
             if (!isCancelled()) {
                 String status = strings[0];
@@ -80,59 +80,15 @@ public class GatheringAsyncTask {
                 User user = userManager.getUser();
 
                 String queryStr = "user_id=" + user.getUserId() + "&status=" + status;
-                JSONObject gatheringObj = gatheringApiManager.getUserGatherings(queryStr, user.getAuthToken());
+                return gatheringApiManager.getUserGatherings(queryStr, user.getAuthToken());
 
-                Map<String, Object> responseMap =  null;
-                try {
-                    if (gatheringObj.getJSONArray("data") == null || gatheringObj.getJSONArray("data").length() == 0) {
-                        responseMap = null;
-                        //homeNoEvents.setVisibility(View.VISIBLE);
-                        //homeNoEvents.setText("No Event Exists For This Date");
-                    } else {
-
-                        JSONArray gatherings = gatheringObj.getJSONArray("data");
-                        List<String> headers = new ArrayList<>();
-                        Map<String, List<Event>> eventMap = new HashMap<>();
-
-                        Type listType = new TypeToken<List<Event>>() {}.getType();
-                        List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
-
-                        for (Event event: events) {
-
-                            Date startDate = new Date(event.getStartTime());
-                            String dateKey = CenesUtils.ddMMM.format(startDate).toUpperCase() + "<b>"+CenesUtils.EEEE.format(startDate).toUpperCase()+"</b>";
-                            Calendar cal = Calendar.getInstance();
-                            cal.setTime(new Date());
-                            cal.add(Calendar.DATE, 1);
-                            if (!headers.contains(dateKey)) {
-                                headers.add(dateKey);
-                            }
-                            if (eventMap.containsKey(dateKey)) {
-                                events = eventMap.get(dateKey);
-                            } else {
-                                events = new ArrayList<>();
-                            }
-                            events.add(event);
-                            eventMap.put(dateKey, events);
-
-                        }
-
-                        Collections.sort(headers);
-                        responseMap = new HashMap<>();
-                        responseMap.put("headers", headers);
-                        responseMap.put("eventMap", eventMap);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return responseMap;
             } else {
                 return null;
             }
         }
 
         @Override
-        protected void onPostExecute(Map<String, Object> dataExists) {
+        protected void onPostExecute(JSONObject dataExists) {
             super.onPostExecute(dataExists);
             delegate.processFinish(dataExists);
         }

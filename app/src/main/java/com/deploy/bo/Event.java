@@ -10,6 +10,9 @@ import java.util.List;
  */
 
 public class Event {
+
+    public enum EventDisplayScreen {HOME, ACCEPTED, PENDING, DECLINED};
+
     private Long eventId;
     private String logo;
     private String title;
@@ -42,6 +45,7 @@ public class Event {
     private Boolean isPredictiveOn = false;
     private String timezone;
     private String fullDayStartTime;
+    private String displayAtScreen;
     private boolean isEditMode;
 
     @SerializedName("expired")
@@ -325,6 +329,14 @@ public class Event {
 
     public void setEditMode(boolean editMode) {
         isEditMode = editMode;
+    }
+
+    public String getDisplayAtScreen() {
+        return displayAtScreen;
+    }
+
+    public void setDisplayAtScreen(String displayAtScreen) {
+        this.displayAtScreen = displayAtScreen;
     }
 
     @Override

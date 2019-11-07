@@ -71,9 +71,16 @@ public class GatheringGuestListItemAdapter extends BaseAdapter {
         if (eventMember.getUserId() != null && eventMember.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
             host = " (Host)";
         }
-        viewHolder.tvCenesName.setText(eventMember.getName()+" "+host);
-        if (eventMember.getUser() != null) {
+        if (!CenesUtils.isEmpty(eventMember.getName())) {
+            viewHolder.tvCenesName.setText(eventMember.getName()+" "+host);
+        } else {
+            viewHolder.tvCenesName.setText("  "+host);
+        }
+
+        if (eventMember.getUser() != null && !CenesUtils.isEmpty(eventMember.getUser().getName()) && gatheringGuestListFragment.loggedInUser.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
             viewHolder.tvPhonebookName.setText(eventMember.getUser().getName());
+        } else {
+            viewHolder.tvPhonebookName.setText("");
         }
 
         viewHolder.ivProfilePic.setImageResource(R.drawable.profile_pic_no_image);

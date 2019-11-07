@@ -54,13 +54,10 @@ public class SigninFragment  extends CenesFragment {
 
     User user = null;
 
-    LinearLayout llSigningBackBtn;
     EditText editTextEmail, editTextPassword;
     Button buttonLogin;
     TextView tvForgotpasswordLink;
     ImageView ivBugReport;
-    //Button buttonFbLogin;
-    //LoginButton facebookLoginBtn;
     ImageView signinBackArrow;
 
     String email, password;
@@ -71,6 +68,7 @@ public class SigninFragment  extends CenesFragment {
         CenesApplication application = (CenesApplication) getActivity().getApplication();
 
         View v = inflater.inflate(R.layout.fragment_signin, container, false);
+
         //FacebookSdk.sdkInitialize(getApplicationContext());
         //callbackManager = CallbackManager.Factory.create();
 
@@ -81,8 +79,6 @@ public class SigninFragment  extends CenesFragment {
     }
 
     public void initilizeComponents(View view) {
-
-        llSigningBackBtn = (LinearLayout) view.findViewById(R.id.ll_signin_back);
 
         editTextEmail = (EditText) view.findViewById(R.id.et_email);
         editTextPassword = (EditText) view.findViewById(R.id.et_password);
@@ -96,8 +92,8 @@ public class SigninFragment  extends CenesFragment {
         tvForgotpasswordLink.setOnClickListener(onClickListener);
 
         ivBugReport.setOnClickListener(onClickListener);
-        //signinBackArrow = (ImageView) findViewById(R.id.signin_back_arrow);
-        //signinBackArrow.setOnClickListener(onClickListener);
+        signinBackArrow = (ImageView) view.findViewById(R.id.iv_back_button);
+        signinBackArrow.setOnClickListener(onClickListener);
 
         //buttonFbLogin = (Button) findViewById(R.id.bt_fb_login);
         //buttonFbLogin.setOnClickListener(onClickListener);
@@ -130,14 +126,15 @@ public class SigninFragment  extends CenesFragment {
                 case R.id.bt_login:
                     startSignInProcess();
                     break;
-                case R.id.ll_signin_back:
-                    startActivity(new Intent((SignInActivity)getActivity(),GuestActivity.class));
-                    getActivity().finish();
-                    break;
+
                 case R.id.iv_bug_report:
                     break;
+
+                case R.id.iv_back_button:
+                    ((GuestActivity)getActivity()).onBackPressed();
+                    break;
                 case R.id.tv_forget_password:
-                    ((SignInActivity) getActivity()).replaceFragment(new ForgotPasswordFragment(), "ForgotPasswordFragment");
+                    ((GuestActivity) getActivity()).replaceFragment(new ForgotPasswordFragment(), SigninFragment.TAG);
                     break;
             }
 
@@ -149,7 +146,7 @@ public class SigninFragment  extends CenesFragment {
          callbackManager.onActivityResult(requestCode, resultCode, data);
      }*/
     public void startSignInProcess() {
-        deviceManager.hideKeyBoard(editTextEmail, (SignInActivity)getActivity());
+        deviceManager.hideKeyBoard(editTextEmail, (GuestActivity)getActivity());
         user = null;
         user = new User();
         email = editTextEmail.getText().toString();
@@ -180,11 +177,11 @@ public class SigninFragment  extends CenesFragment {
     }
 
     public void networkProcess() {
-        if (internetManager.isInternetConnection((SignInActivity)getActivity())) {
+        if (internetManager.isInternetConnection((GuestActivity)getActivity())) {
             user.setEmail(email);
             user.setPassword(password);
             user.setApiUrl(urlManager.getApiUrl(email));
-            user.setAuthType("email");
+            user.setAuthType(User.AuthenticateType.email);
             JSONObject postData = null;
             try {
 
@@ -220,13 +217,13 @@ public class SigninFragment  extends CenesFragment {
                                     }).execute(registerDeviceObj);
 
                                 }
-                                startActivity(new Intent((SignInActivity)getActivity(), CenesBaseActivity.class));
+                                startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
                                 getActivity().finish();
                             } else {
                                 if (response.has("errorDetail")) {
-                                    alertManager.getAlert((SignInActivity)getActivity(), response.getString("errorDetail"), "Error", null, false, "OK");
+                                    alertManager.getAlert((GuestActivity)getActivity(), response.getString("errorDetail"), "Error", null, false, "OK");
                                 } else {
-                                    alertManager.getAlert((SignInActivity)getActivity(), "Some thing is going wrong", "Error", null, false, "OK");
+                                    alertManager.getAlert((GuestActivity)getActivity(), "Some thing is going wrong", "Error", null, false, "OK");
                                 }
                             }
                         } catch (Exception e) {
@@ -239,7 +236,7 @@ public class SigninFragment  extends CenesFragment {
                 e.printStackTrace();
             }
         } else {
-            alertManager.getAlert((SignInActivity)getActivity(), "No Internet Connection!", "Info", null, false, "OK");
+            alertManager.getAlert((GuestActivity)getActivity(), "No Internet Connection!", "Info", null, false, "OK");
         }
     }
 

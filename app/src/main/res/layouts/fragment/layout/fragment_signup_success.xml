@@ -60,26 +60,6 @@
                 android:layout_marginLeft="30dp"
                 android:layout_marginRight="30dp">
 
-                <EditText
-                    android:id="@+id/et_signup_success_email"
-                    android:layout_width="match_parent"
-                    android:layout_height="35dp"
-                    android:layout_weight="3"
-                    android:hint="Email"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:gravity="center"
-                    android:layout_marginRight="10dp"
-                    android:textColor="@color/cenes_textfield_color"
-                    android:singleLine="true"
-                    android:imeOptions="actionNext"
-                    android:background="@color/transparent"
-                    />
-                <View
-                    android:id="@+id/view_email_divider"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@drawable/xml_gradient_multicolors"/>
 
                 <EditText
                     android:id="@+id/et_signup_success_name"
@@ -87,7 +67,7 @@
                     android:layout_height="35dp"
                     android:layout_weight="3"
                     android:textSize="16sp"
-                    android:hint="Name"
+                    android:hint="Username"
                     android:textAlignment="center"
                     android:gravity="center"
                     android:layout_marginRight="10dp"
@@ -98,28 +78,6 @@
                     android:layout_marginTop="30dp"/>
                 <View
                     android:id="@+id/view_name_divider"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@drawable/xml_gradient_multicolors"/>
-
-
-                <EditText
-                    android:id="@+id/et_signup_success_password"
-                    android:layout_width="match_parent"
-                    android:layout_height="35dp"
-                    android:layout_weight="3"
-                    android:hint="Password"
-                    android:textSize="16sp"
-                    android:textAlignment="center"
-                    android:gravity="center"
-                    android:layout_marginRight="10dp"
-                    android:inputType="textPassword"
-                    android:textColor="@color/cenes_textfield_color"
-                    android:singleLine="true"
-                    android:background="@color/transparent"
-                    android:layout_marginTop="30dp"/>
-                <View
-                    android:id="@+id/view_password_divider"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:background="@drawable/xml_gradient_multicolors"/>

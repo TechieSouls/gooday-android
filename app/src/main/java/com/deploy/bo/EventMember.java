@@ -17,7 +17,7 @@ public class EventMember {
 
     //@SerializedName("memberId")
     private Integer userId;
-    private int userContactId;
+    private Integer userContactId;
     private String phone;
     private boolean owner;
     private User user;
@@ -84,11 +84,11 @@ public class EventMember {
         this.user = user;
     }
 
-    public int getUserContactId() {
+    public Integer getUserContactId() {
         return userContactId;
     }
 
-    public void setUserContactId(int userContactId) {
+    public void setUserContactId(Integer userContactId) {
         this.userContactId = userContactId;
     }
 

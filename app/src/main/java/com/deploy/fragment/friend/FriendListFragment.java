@@ -24,6 +24,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.deploy.AsyncTasks.FriendAsyncTask;
+import com.deploy.Manager.InternetManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.adapter.AllContactsExpandableAdapter;
@@ -66,6 +67,7 @@ public class FriendListFragment  extends CenesFragment {
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
     private UserManager userManager;
+    private InternetManager internetManager;
 
     private FriendListAdapter searchFriendAdapter;
     private AllContactsExpandableAdapter allContactsExpandableAdapter;
@@ -102,6 +104,7 @@ public class FriendListFragment  extends CenesFragment {
         cenesApplication = ((CenesBaseActivity) getActivity()).getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
         userManager = coreManager.getUserManager();
+        internetManager = coreManager.getInternetManager();
 
         loggedInUser = userManager.getUser();
 
@@ -168,25 +171,26 @@ public class FriendListFragment  extends CenesFragment {
                         if (allFriends.size() > 0) {
 
                             cenesFriendsVisible = true;
-                            gathSearchFriendListView.setVisibility(View.VISIBLE);
-                            expandableFriendListView.setVisibility(View.GONE);
-
+                            //gathSearchFriendListView.setVisibility(View.VISIBLE);
+                            //expandableFriendListView.setVisibility(View.GONE);
                             tvSelectBarTitle.setText("All Contacts (" + allFriends.size() + ")");
-                            searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
-                            gathSearchFriendListView.setAdapter(searchFriendAdapter);
+                            //searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
+
+                            List<String> cenesContactHeaders = prepareListHeadersForCenesContacts();
+                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, cenesContactHeaders, headerFriendsMap);
+                            expandableFriendListView.setAdapter(allContactsExpandableAdapter);
                         }
                     } else {
                         if (cenesFriends.size() > 0) {
 
                             cenesFriendsVisible = false;
-
-                            gathSearchFriendListView.setVisibility(View.GONE);
-                            expandableFriendListView.setVisibility(View.VISIBLE);
-
+                            //gathSearchFriendListView.setVisibility(View.GONE);
+                            //expandableFriendListView.setVisibility(View.VISIBLE);
                             tvSelectBarTitle.setText("Cenes Contacts ("+cenesFriends.size()+")");
-                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, headers, headerFriendsMap);
-                            expandableFriendListView.setAdapter(allContactsExpandableAdapter);
 
+                            List<String> allContactHeaders = prepareListHeadersForAllContacts();
+                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, allContactHeaders, headerFriendsMap);
+                            expandableFriendListView.setAdapter(allContactsExpandableAdapter);
                         }
                     }
                     break;
@@ -227,24 +231,11 @@ public class FriendListFragment  extends CenesFragment {
         public void afterTextChanged(Editable editable) {
             //new SearchLocationTask().execute(editable.toString());
             searchedFriends = new ArrayList<>();
-            if (cenesFriends != null && cenesFriends.size() > 0) {
-                for (EventMember eventMember : cenesFriends) {
-                    try {
-                        if (eventMember.getName().toLowerCase().contains(editable.toString().toLowerCase())) {
-                            searchedFriends.add(eventMember);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
-                gathSearchFriendListView.setAdapter(searchFriendAdapter);
-            }
-
-            List<EventMember> searchedAllFriends = new ArrayList<>();
-            if (allFriends != null && allFriends.size() > 0) {
+            if (cenesFriends != null && cenesFriends.size() > 0 && cenesFriendsVisible) {
+                headers = SearchFriendService.allAphabets();
+                List<EventMember> searchedAllFriends = new ArrayList<>();
                 headerFriendsMap = new HashMap<>();
-                for (EventMember eventMember : allFriends) {
+                for (EventMember eventMember : cenesFriends) {
                     try {
                         if (eventMember.getName().toLowerCase().contains(editable.toString().toLowerCase())) {
                             searchedAllFriends.add(eventMember);
@@ -276,12 +267,53 @@ public class FriendListFragment  extends CenesFragment {
                     filteredHeader.add(header);
                 }
                 headers = filteredHeader;
+                //searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
+                //gathSearchFriendListView.setAdapter(searchFriendAdapter);
+
                 allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, headers, headerFriendsMap);
                 expandableFriendListView.setAdapter(allContactsExpandableAdapter);
+
+            } else {
+                headers = SearchFriendService.allAphabets();
+                List<EventMember> searchedAllFriends = new ArrayList<>();
+                if (allFriends != null && allFriends.size() > 0) {
+                    headerFriendsMap = new HashMap<>();
+                    for (EventMember eventMember : allFriends) {
+                        try {
+                            if (eventMember.getName().toLowerCase().contains(editable.toString().toLowerCase())) {
+                                searchedAllFriends.add(eventMember);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    for (EventMember friend: searchedAllFriends) {
+                        String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
+
+                        System.out.println("Inital ALPHABET "+initialAlphabet);
+                        if (!headers.contains(initialAlphabet)) {
+                            initialAlphabet = "#";
+                        }
+
+                        List<EventMember> members = null;
+                        if (headerFriendsMap.containsKey(initialAlphabet)) {
+                            members = headerFriendsMap.get(initialAlphabet);
+                        } else {
+                            members = new ArrayList<>();
+                        }
+                        members.add(friend);
+                        headerFriendsMap.put(initialAlphabet, members);
+                    }
+                    List<String> filteredHeader = new ArrayList<>();
+                    for (String header: headerFriendsMap.keySet()){
+                        filteredHeader.add(header);
+                    }
+                    headers = filteredHeader;
+                    allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, headers, headerFriendsMap);
+                    expandableFriendListView.setAdapter(allContactsExpandableAdapter);
+                }
             }
-
-
-
         }
     };
 
@@ -300,45 +332,28 @@ public class FriendListFragment  extends CenesFragment {
                         allFriends = gson.fromJson( response.getJSONArray("data").toString(), listType);
                         cenesFriends = SearchFriendService.getCenesContacts(allFriends);
 
-
                         searchedFriends = cenesFriends;
-                        headerFriendsMap = new HashMap<>();
-                        headers = SearchFriendService.allAphabets();
 
-                        for (EventMember friend: allFriends) {
-                            String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
-
-                            System.out.println("Inital ALPHABET "+initialAlphabet);
-                            if (!headers.contains(initialAlphabet)) {
-                                initialAlphabet = "#";
-                            }
-
-                            List<EventMember> members = null;
-                            if (headerFriendsMap.containsKey(initialAlphabet)) {
-                                members = headerFriendsMap.get(initialAlphabet);
-                            } else {
-                                members = new ArrayList<>();
-                            }
-                            members.add(friend);
-                            headerFriendsMap.put(initialAlphabet, members);
-                        }
-
+                        List<String> filteredErrors = prepareListHeadersOnScreenLoad();
                         if (cenesFriends.size() > 0) {
                             cenesFriendsVisible = true;
-                            gathSearchFriendListView.setVisibility(View.VISIBLE);
-                            expandableFriendListView.setVisibility(View.GONE);
+                            //gathSearchFriendListView.setVisibility(View.VISIBLE);
+                            expandableFriendListView.setVisibility(View.VISIBLE);
 
                             tvSelectBarTitle.setText("All Contacts (" + allFriends.size() + ")");
-                            searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
-                            gathSearchFriendListView.setAdapter(searchFriendAdapter);
+                            //searchFriendAdapter = new FriendListAdapter(FriendListFragment.this, searchedFriends);
+                            //gathSearchFriendListView.setAdapter(searchFriendAdapter);
+                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, filteredErrors, headerFriendsMap);
+                            expandableFriendListView.setAdapter(allContactsExpandableAdapter);
                         } else {
+                            cenesNoncenesSelectBar.setVisibility(View.GONE);
                             cenesFriendsVisible = false;
 
-                            gathSearchFriendListView.setVisibility(View.GONE);
+                            //gathSearchFriendListView.setVisibility(View.GONE);
                             expandableFriendListView.setVisibility(View.VISIBLE);
 
                             tvSelectBarTitle.setText("Cenes Contacts (" + cenesFriends.size() + ")");
-                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, headers, headerFriendsMap);
+                            allContactsExpandableAdapter = new AllContactsExpandableAdapter(FriendListFragment.this, filteredErrors, headerFriendsMap);
                             expandableFriendListView.setAdapter(allContactsExpandableAdapter);
                         }
                     }
@@ -370,6 +385,7 @@ public class FriendListFragment  extends CenesFragment {
 
                 EventMember friendObj = new EventMember();
                 friendObj.setUser(loggedInUser);
+                friendObj.setFriendId(loggedInUser.getUserId());
                 friendObj.setUserId(loggedInUser.getUserId());
                 friendObj.setUserContactId(loggedInUser.getUserId());
                 friendObj.setName(loggedInUser.getName());
@@ -387,7 +403,6 @@ public class FriendListFragment  extends CenesFragment {
                 @Override
                 public void run() {
 
-
                     List<EventMember> members = new ArrayList<>(checkboxObjectHolder.values());
                     FriendsCollectionViewAdapter mFriendsCollectionViewAdapter = new FriendsCollectionViewAdapter(FriendListFragment.this, members, recyclerView);
                     mFriendsCollectionViewAdapter.notifyDataSetChanged();
@@ -403,12 +418,131 @@ public class FriendListFragment  extends CenesFragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
+
+    public List<String> prepareListHeadersOnScreenLoad() {
+
+        headerFriendsMap = new HashMap<>();
+        headers = SearchFriendService.allAphabets();
+        List<String> filteredErrors = new ArrayList<>();
+
+        if (cenesFriends.size() > 0) {
+
+            for (EventMember friend : cenesFriends) {
+                String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
+
+                System.out.println("Inital ALPHABET " + initialAlphabet);
+                if (!headers.contains(initialAlphabet)) {
+                    initialAlphabet = "#";
+                }
+
+                List<EventMember> members = null;
+                if (headerFriendsMap.containsKey(initialAlphabet)) {
+                    members = headerFriendsMap.get(initialAlphabet);
+                } else {
+                    members = new ArrayList<>();
+                }
+                members.add(friend);
+                headerFriendsMap.put(initialAlphabet, members);
+                if (!filteredErrors.contains(initialAlphabet)) {
+                    filteredErrors.add(initialAlphabet);
+                }
+            }
+        } else {
+            for (EventMember friend : allFriends) {
+                String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
+
+                System.out.println("Inital ALPHABET " + initialAlphabet);
+                if (!headers.contains(initialAlphabet)) {
+                    initialAlphabet = "#";
+                }
+
+                List<EventMember> members = null;
+                if (headerFriendsMap.containsKey(initialAlphabet)) {
+                    members = headerFriendsMap.get(initialAlphabet);
+                } else {
+                    members = new ArrayList<>();
+                }
+                members.add(friend);
+                headerFriendsMap.put(initialAlphabet, members);
+                if (!filteredErrors.contains(initialAlphabet)) {
+                    filteredErrors.add(initialAlphabet);
+                }
+            }
+        }
+
+        return filteredErrors;
+    }
+
+
+    public List<String> prepareListHeadersForCenesContacts() {
+
+        headerFriendsMap = new HashMap<>();
+        headers = SearchFriendService.allAphabets();
+        List<String> filteredErrors = new ArrayList<>();
+
+        if (cenesFriends.size() > 0) {
+
+            for (EventMember friend : cenesFriends) {
+                String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
+
+                System.out.println("Inital ALPHABET " + initialAlphabet);
+                if (!headers.contains(initialAlphabet)) {
+                    initialAlphabet = "#";
+                }
+
+                List<EventMember> members = null;
+                if (headerFriendsMap.containsKey(initialAlphabet)) {
+                    members = headerFriendsMap.get(initialAlphabet);
+                } else {
+                    members = new ArrayList<>();
+                }
+                members.add(friend);
+                headerFriendsMap.put(initialAlphabet, members);
+                if (!filteredErrors.contains(initialAlphabet)) {
+                    filteredErrors.add(initialAlphabet);
+                }
+
+            }
+        }
+        return filteredErrors;
+    }
+
+
+    public List<String> prepareListHeadersForAllContacts() {
+
+        headerFriendsMap = new HashMap<>();
+        headers = SearchFriendService.allAphabets();
+        List<String> filteredErrors = new ArrayList<>();
+
+        if (allFriends.size() > 0) {
+
+            for (EventMember friend : allFriends) {
+                String initialAlphabet = friend.getName().substring(0, 1).toUpperCase();
+
+                System.out.println("Inital ALPHABET " + initialAlphabet);
+                if (!headers.contains(initialAlphabet)) {
+                    initialAlphabet = "#";
+                }
+
+                List<EventMember> members = null;
+                if (headerFriendsMap.containsKey(initialAlphabet)) {
+                    members = headerFriendsMap.get(initialAlphabet);
+                } else {
+                    members = new ArrayList<>();
+                }
+                members.add(friend);
+                headerFriendsMap.put(initialAlphabet, members);
+                if (!filteredErrors.contains(initialAlphabet)) {
+                    filteredErrors.add(initialAlphabet);
+                }
+
+            }
+        }
+        return filteredErrors;
+    }
+
     public FriendListAdapter getSearchFriendAdapter() {
         return searchFriendAdapter;
     }
-
-
 }

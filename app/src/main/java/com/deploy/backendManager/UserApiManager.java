@@ -40,6 +40,22 @@ public class UserApiManager {
         return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+ UserAPI.post_signupAPI, postData, null);
     }
 
+    public JSONObject emailPostUserDetails(JSONObject postData, String token) {
+        JsonParsing jsonParsing = new JsonParsing();
+        return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+ UserAPI.post_userdetails, postData, token);
+    }
+
+    public JSONObject emailSignupStep1(JSONObject postData) {
+        JsonParsing jsonParsing = new JsonParsing();
+        return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+ UserAPI.post_signup_step1_API, postData, null);
+    }
+
+    public JSONObject emailSignupSignupStep2(JSONObject postData) {
+        JsonParsing jsonParsing = new JsonParsing();
+        return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+ UserAPI.post_signup_step2_API, postData, null);
+    }
+
+
     public JSONObject uploadProfileImage(User user, File file) {
         JsonParsing jsonParsing = new JsonParsing();
         return jsonParsing.httpPostMultipart(UrlManagerImpl.prodAPIUrl+ UserAPI.post_imageUplaodAPI, user, file);

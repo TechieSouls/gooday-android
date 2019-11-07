@@ -246,7 +246,7 @@ public class HomeFragment extends CenesFragment {
 
         if (internetManager.isInternetConnection((CenesBaseActivity) getActivity())) {
 
-            List<Event> events = eventManagerImpl.fetchAllEvents();
+            List<Event> events = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.HOME.toString());
             summarizeEventsForHomeScreen(events);
 
             final String queryStr = "user_id="+loggedInUser.getUserId()+"&date=" + cal.getTimeInMillis();
@@ -275,7 +275,7 @@ public class HomeFragment extends CenesFragment {
             });
         } else {
             //Toast.makeText(getActivity(), "Please check your internet connection", Toast.LENGTH_LONG).show();
-            List<Event> events = eventManagerImpl.fetchAllEvents();
+            List<Event> events = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.HOME.toString());
             System.out.println("All Offline Events : "+events.size());
             summarizeEventsForHomeScreen(events);
         }
@@ -858,8 +858,8 @@ public class HomeFragment extends CenesFragment {
                             Type listType = new TypeToken<List<Event>>(){}.getType();
                             List<Event> events = gson.fromJson(response.getJSONArray("data").toString(), listType);
 
-                            eventManagerImpl.deleteAllEvents();
-                            eventManagerImpl.addEvent(events);
+                            eventManagerImpl.deleteAllEventsByDisplayAtScreen(Event.EventDisplayScreen.HOME.toString());
+                            eventManagerImpl.addEvent(events, Event.EventDisplayScreen.HOME.toString());
                             summarizeEventsForHomeScreen(events);
 
                         } catch (Exception e) {

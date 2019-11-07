@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class Notification {
 
+    private Long notificationId;
     private Long senderId;
 
     @SerializedName("sender")
@@ -27,6 +28,13 @@ public class Notification {
     private Event event;
     private User user;
 
+    public Long getNotificationId() {
+        return notificationId;
+    }
+
+    public void setNotificationId(Long notificationId) {
+        this.notificationId = notificationId;
+    }
 
     public Long getSenderId() {
         return senderId;

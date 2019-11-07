@@ -67,14 +67,14 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
             final EventMember invFrn = jsonObjectArrayList.get(position);
             holder.tvName.setText(invFrn.getName());
 
-            System.out.println("REsult of condition : "+invFrn.getUserId()+", asdfghj : "+(invFrn.getUserId() != null && invFrn.getUserId() == context.loggedInUser.getUserId()));
-            if (invFrn.getUserId() != null && invFrn.getUserId() == context.loggedInUser.getUserId()) {
+            System.out.println("REsult of condition : "+invFrn.getFriendId()+", asdfghj : "+(invFrn.getFriendId() != null && invFrn.getFriendId() == context.loggedInUser.getUserId()));
+            if (invFrn.getFriendId() != null && invFrn.getFriendId() == context.loggedInUser.getUserId()) {
                 holder.ibDeleteMember.setVisibility(View.GONE);
             } else {
                 holder.ibDeleteMember.setVisibility(View.VISIBLE);
             }
 
-            if (invFrn.getUserId() == null || (invFrn.getCenesMember() != null && invFrn.getCenesMember().equals("no"))) {
+            if (invFrn.getFriendId() == null || (invFrn.getCenesMember() != null && invFrn.getCenesMember().equals("no"))) {
 
                 String imageName = "";
                 String[] titleArr = invFrn.getName().split(" ");
@@ -107,21 +107,28 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
                 @Override
                 public void onClick(View v) {
 
-                    EventMember objectToRemove = jsonObjectArrayList.get(position);
-                    context.checkboxStateHolder.remove(objectToRemove.getUserContactId());
-                    context.checkboxObjectHolder.remove(objectToRemove.getUserContactId());
+                    if (context != null) {
 
-                    //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
-                    //checkBoxToUnSelect.setSelected(false);
-                    jsonObjectArrayList.remove(position);
-                    recyclerView.removeViewAt(position);
-                    notifyItemRemoved(position);
-                    notifyItemRangeChanged(position, jsonObjectArrayList.size());
-                    context.getSearchFriendAdapter().notifyDataSetChanged();
+                        EventMember objectToRemove = jsonObjectArrayList.get(position);
+                        context.checkboxStateHolder.remove(objectToRemove.getUserContactId());
+                        context.checkboxObjectHolder.remove(objectToRemove.getUserContactId());
 
-                    if (context.checkboxObjectHolder.size() == 0) {
-                        context.getView().findViewById(R.id.rl_selected_friends_recycler_view).setVisibility(View.GONE);
+                        //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
+                        //checkBoxToUnSelect.setSelected(false);
+                        jsonObjectArrayList.remove(position);
+                        recyclerView.removeViewAt(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, jsonObjectArrayList.size());
+
+                        if (context.getSearchFriendAdapter() != null) {
+                            context.getSearchFriendAdapter().notifyDataSetChanged();
+                        }
+
+                        if (context.checkboxObjectHolder.size() == 0) {
+                            context.getView().findViewById(R.id.rl_selected_friends_recycler_view).setVisibility(View.GONE);
+                        }
                     }
+
 
                 }
             });
@@ -130,21 +137,28 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
                 @Override
                 public void onClick(View v) {
 
-                    EventMember objectToRemove = jsonObjectArrayList.get(position);
-                    context.checkboxStateHolder.remove(objectToRemove.getUserContactId());
-                    context.checkboxObjectHolder.remove(objectToRemove.getUserContactId());
+                    if (context != null) {
 
-                    //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
-                    //checkBoxToUnSelect.setSelected(false);
-                    jsonObjectArrayList.remove(position);
-                    recyclerView.removeViewAt(position);
-                    notifyItemRemoved(position);
-                    notifyItemRangeChanged(position, jsonObjectArrayList.size());
-                    context.getSearchFriendAdapter().notifyDataSetChanged();
+                        EventMember objectToRemove = jsonObjectArrayList.get(position);
+                        context.checkboxStateHolder.remove(objectToRemove.getUserContactId());
+                        context.checkboxObjectHolder.remove(objectToRemove.getUserContactId());
 
-                    if (context.checkboxObjectHolder.size() == 0) {
-                        context.getView().findViewById(R.id.rl_selected_friends_recycler_view).setVisibility(View.GONE);
+                        //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
+                        //checkBoxToUnSelect.setSelected(false);
+                        jsonObjectArrayList.remove(position);
+                        recyclerView.removeViewAt(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, jsonObjectArrayList.size());
+                        if (context.getSearchFriendAdapter() != null) {
+                            context.getSearchFriendAdapter().notifyDataSetChanged();
+                        }
+
+                        if (context.checkboxObjectHolder.size() == 0) {
+                            context.getView().findViewById(R.id.rl_selected_friends_recycler_view).setVisibility(View.GONE);
+                        }
                     }
+
+
 
                 }
             });

@@ -108,12 +108,11 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
         EventMember owner = null;
         try {
             for (EventMember ownerMember: child.getEventMembers()) {
-                if (ownerMember.getUserId() != null &&  ownerMember.getUserId().equals(child.getCreatedById())) {
+                if (ownerMember.getUserId() != null && ownerMember.getUserId() != 0 && ownerMember.getUserId().equals(child.getCreatedById())) {
                     owner = ownerMember;
                 }
             }
 
-            System.out.println(owner.toString());
             if (owner != null && owner.getUser() != null) {
                 Glide.with(context).load(owner.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(viewHolder.ivOwnerImage);
 
@@ -138,19 +137,32 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
             viewHolder.homeEventMemberImages.removeAllViews();
             viewHolder.homeAdapterHorizontalImageScrollView.setVisibility(View.VISIBLE);
 
+            List<EventMember> eventMembersToShow = new ArrayList<>();
             for (int i = 0; i < child.getEventMembers().size(); i++) {
-                EventMember em = child.getEventMembers().get(i);
 
+                EventMember em = child.getEventMembers().get(i);
+                if(em.getUserId() != null && em.getUserId() != 0 && em.getUserId().equals(child.getCreatedById())) {
+                    continue;
+                }
+                if(em.getUserId() == null) {
+                    continue;
+                }
+                eventMembersToShow.add(em);
+            }
+
+            for (int i = 0; i < eventMembersToShow.size(); i++) {
+
+                EventMember em = eventMembersToShow.get(i);
                 System.out.println(em.toString());
                 if (i > 3) {
+
                     viewHolder.homeEventMemberImagesCount.setVisibility(View.VISIBLE);
-                    viewHolder.homeEventMemberImagesCount.setText("+" + (child.getEventMembers().size() - 4));//3 Members and One owner
+                    viewHolder.homeEventMemberImagesCount.setText("+" + (eventMembersToShow.size() - 4));//3 Members and One owner
+
                 } else {
+
                     viewHolder.homeEventMemberImagesCount.setVisibility(View.GONE);
 
-                    if(em.isOwner()) {
-                        continue;
-                    }
                     RelativeLayout rlRoot = new RelativeLayout(context);
                     rlRoot.setLayoutParams(new RelativeLayout.LayoutParams(CenesUtils.dpToPx(60), CenesUtils.dpToPx(60)));
 
@@ -161,8 +173,9 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
                     roundedImageView.setLayoutParams(profileParams);
                     roundedImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     //roundedImageView.setBackgroundDrawable(context.getResources().getDrawable(R.drawable.xml_gradient_border_transparentbg));
+                    rlRoot.addView(roundedImageView);
 
-                    RelativeLayout.LayoutParams starParams = new RelativeLayout.LayoutParams(CenesUtils.dpToPx(30), CenesUtils.dpToPx(30));
+                    /*RelativeLayout.LayoutParams starParams = new RelativeLayout.LayoutParams(CenesUtils.dpToPx(30), CenesUtils.dpToPx(30));
                     starParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
                     starParams.addRule(RelativeLayout.ALIGN_PARENT_END);
 
@@ -171,7 +184,6 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
                     ivStar.setPadding(CenesUtils.dpToPx(4), CenesUtils.dpToPx(4), CenesUtils.dpToPx(8), CenesUtils.dpToPx(8));
                     ivStar.setImageResource(R.drawable.star);
 
-                    rlRoot.addView(roundedImageView);
 
                     try {
                         if(em.isOwner()) {
@@ -179,18 +191,19 @@ public class EventCardExpandableAdapter  extends BaseExpandableListAdapter {
                         }
                     } catch(Exception e) {
                         e.printStackTrace();
-                    }
+                    }*/
 
                     try {
+                        if (em.getUser() != null && !CenesUtils.isEmpty(em.getUser().getPicture())) {
                             Glide.with(context).load(em.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(roundedImageView);
-
-
+                        } else {
+                            roundedImageView.setImageResource(R.drawable.cenes_user_no_image);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-
                     viewHolder.homeEventMemberImages.addView(rlRoot);
+
                 }
             }
         } else {

@@ -72,7 +72,7 @@ public class UserManagerImpl implements UserManager {
         } else {
             insertQuery = insertQuery + ","+user.getAuthToken()+"";
         }
-        if (!CenesUtils.isEmpty(user.getAuthType())) {
+        if (user.getAuthType() != null && !CenesUtils.isEmpty(user.getAuthType().toString())) {
             insertQuery = insertQuery + ",'"+user.getAuthType()+"'";
         } else {
             insertQuery = insertQuery + ","+user.getAuthType()+"";
@@ -143,7 +143,14 @@ public class UserManagerImpl implements UserManager {
             user.setGender(cursor.getString(cursor.getColumnIndex("gender")));
             user.setPhone(cursor.getString(cursor.getColumnIndex("phone")));
             user.setBirthDateStr(cursor.getString(cursor.getColumnIndex("birth_day_str")));
-            user.setAuthType(cursor.getString(cursor.getColumnIndex("auth_type")));
+
+            if (User.AuthenticateType.email.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.email);
+            } else if (User.AuthenticateType.facebook.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.facebook);
+            } else if (User.AuthenticateType.google.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.google);
+            }
             user.setFacebookId(cursor.getString(cursor.getColumnIndex("facebook_id")));
             user.setGoogleId(cursor.getString(cursor.getColumnIndex("google_id")));
             user.setCountry(cursor.getString(cursor.getColumnIndex("country")));
@@ -162,15 +169,20 @@ public class UserManagerImpl implements UserManager {
         if (cursor.moveToFirst()) {
             user = new User();
             user.setUserId(cursor.getInt(cursor.getColumnIndex("user_id")));
-            //user.setUserId(418);
+            //user.setUserId(447);
             user.setEmail(cursor.getString(cursor.getColumnIndex("email")));
             user.setPassword(cursor.getString(cursor.getColumnIndex("password")));
             user.setApiUrl(cursor.getString(cursor.getColumnIndex("api_url")));
             user.setAuthToken(cursor.getString(cursor.getColumnIndex("token")));
             user.setName(cursor.getString(cursor.getColumnIndex("name")));
             user.setPicture(cursor.getString(cursor.getColumnIndex("picture")));
-            user.setAuthType(cursor.getString(cursor.getColumnIndex("auth_type")));
-            user.setGender(cursor.getString(cursor.getColumnIndex("gender")));
+            if (User.AuthenticateType.email.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.email);
+            } else if (User.AuthenticateType.facebook.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.facebook);
+            } else if (User.AuthenticateType.google.toString().equals(cursor.getString(cursor.getColumnIndex("auth_type")))) {
+                user.setAuthType(User.AuthenticateType.google);
+            }            user.setGender(cursor.getString(cursor.getColumnIndex("gender")));
             user.setGoogleId(cursor.getString(cursor.getColumnIndex("google_id")));
             user.setPhone(cursor.getString(cursor.getColumnIndex("phone")));
             user.setFacebookId(cursor.getString(cursor.getColumnIndex("facebook_id")));

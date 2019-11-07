@@ -62,9 +62,15 @@ public class CenesUserManagerImpl  {
             user.setPhone(cursor.getString(cursor.getColumnIndex("phone")));
 
         }
-
+        cursor.close();
         return user;
     }
+
+    public void updateCenesUser(User user) {
+        db.execSQL("update cenes_users set name = '"+user.getName()+"', " +
+                " picture = '"+user.getPicture()+"', phone = '"+user.getPhone()+"' where user_id = "+user.getUserId()+" ");
+    }
+
 
 
     public void deleteAllUsers() {

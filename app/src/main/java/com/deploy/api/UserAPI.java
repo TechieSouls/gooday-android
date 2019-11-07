@@ -9,6 +9,8 @@ public class UserAPI {
     //POST
     public static String post_login_API = "/auth/user/authenticate";
     public static String post_signupAPI= "/api/users/";
+    public static String post_signup_step1_API= "/api/users/signupstep1";
+    public static String post_signup_step2_API= "/api/users/signupstep2";
     public static String post_sendVerificationCodeAPI = "/api/guest/sendVerificationCode";
     public static String post_checkVerificationCodeAPI = "/api/guest/checkVerificationCode";
     public static String post_imageUplaodAPI = "/api/user/profile/upload";
@@ -17,6 +19,8 @@ public class UserAPI {
     public static String post_changePasswordAPI = "/api/user/changePassword";
     public static String post_saveHolidayCalendar = "/api/user/holidayCalendar";
     public static String post_update_profile_data = "/api/user/update/";
+    public static String post_userdetails = "/api/user/updateDetails";
+
     //GET
     public static String get_holidayCalendarByUserId = "/api/user/holidayCalendarByUserId";
     public static String get_forget_password_api = "/auth/forgetPassword";

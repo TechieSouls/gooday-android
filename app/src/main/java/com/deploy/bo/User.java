@@ -8,6 +8,9 @@ import com.google.gson.annotations.SerializedName;
 
 public class User {
 
+    public enum AuthenticateType{
+        email,facebook, google
+    }
     private String name;
     private  String email;
     private String password;
@@ -22,12 +25,13 @@ public class User {
     @SerializedName("photo")
     private String picture;
 
-    private String authType;
+    private AuthenticateType authType;
     private String gender;
     private String phone;
     private String birthDateStr;
     private String googleId;
     private String country;
+    private boolean isNew;
 
     public Integer getUserId() {
         return userId;
@@ -113,11 +117,11 @@ public class User {
         this.picture = picture;
     }
 
-    public String getAuthType() {
+    public AuthenticateType getAuthType() {
         return authType;
     }
 
-    public void setAuthType(String authType) {
+    public void setAuthType(AuthenticateType authType) {
         this.authType = authType;
     }
 
@@ -159,6 +163,14 @@ public class User {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(boolean aNew) {
+        isNew = aNew;
     }
 
     @Override

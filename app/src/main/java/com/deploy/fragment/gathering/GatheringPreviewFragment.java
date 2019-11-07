@@ -6,9 +6,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Telephony;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -28,6 +31,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.deploy.AsyncTasks.GatheringAsyncTask;
+import com.deploy.Manager.InternetManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.application.CenesApplication;
@@ -48,12 +52,14 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class GatheringPreviewFragment extends CenesFragment {
 
     private static String TAG = "GatheringPreviewFragment";
+    private int SMS_COMPOSE_RESULT_CODE = 1001;
 
     private View fragmentView;
     private ImageView ivEventPicture, ivAcceptSendIcon, ivEditRejectIcon, ivDeleteIcon;
@@ -68,6 +74,7 @@ public class GatheringPreviewFragment extends CenesFragment {
     private ImageView invitationAcceptSpinner, invitationRejectSpinner;
 
     private CenesApplication cenesApplication;
+    private InternetManager internetManager;
     private VelocityTracker mVelocityTracker = null;
     private User loggedInUser;
     public Event event;
@@ -84,6 +91,7 @@ public class GatheringPreviewFragment extends CenesFragment {
     boolean ifSwipedLeftToRight, ifSwipedRightToLeft, ifSwipedUp;
     boolean cardSwipedToExtent;
     boolean isLoggedInUserExistsInMemberList = false;
+    private List<EventMember> nonCenesMember;
 
     @Nullable
     @Override
@@ -133,6 +141,7 @@ public class GatheringPreviewFragment extends CenesFragment {
         cenesApplication = getCenesActivity().getCenesApplication();
         CoreManager coreManager = cenesApplication.getCoreManager();
         UserManager userManager = coreManager.getUserManager();
+        internetManager = coreManager.getInternetManager();
         loggedInUser = userManager.getUser();
 
         windowWidth = getActivity().getWindowManager().getDefaultDisplay().getWidth();
@@ -153,6 +162,8 @@ public class GatheringPreviewFragment extends CenesFragment {
 
             populateInvitationCard(event);
         }
+
+
 
         return view;
     }
@@ -608,14 +619,18 @@ public class GatheringPreviewFragment extends CenesFragment {
                                     rotate(360, invitationAcceptSpinner);
 
                                     createGathering();
-                                    new Handler().postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
+                                    if (nonCenesMember.size() == 0) {
 
-                                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                            ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
-                                        }
-                                    }, 1000);
+                                        new Handler().postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                                ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
+                                            }
+                                        }, 1000);
+                                    }
+
 
 
                                 }
@@ -627,24 +642,26 @@ public class GatheringPreviewFragment extends CenesFragment {
                                         invitationAcceptSpinner.setVisibility(View.VISIBLE);
                                         rotate(360, invitationAcceptSpinner);
 
-                                        String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=Going";
-                                        updateAttendingStatus(queryStr);
+                                        if (GatheringPreviewFragment.this.event != null && GatheringPreviewFragment.this.event.getEventId() != null && loggedInUser.getUserId() != null) {
 
-                                        if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+                                            String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=Going";
+                                            updateAttendingStatus(queryStr);
 
-                                            (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
-                                            pendingEventIndex++;
+                                            if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
 
-                                        } else {
+                                                (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                                pendingEventIndex++;
 
-                                            new Handler().postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-                                                }
-                                            }, 500);
+                                            } else {
+
+                                                new Handler().postDelayed(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                                    }
+                                                }, 500);
+                                            }
                                         }
-
                                     }
                             }
 
@@ -733,8 +750,14 @@ public class GatheringPreviewFragment extends CenesFragment {
                             cardSwipedToExtent = true;
 
                             if (!isLoggedInUserExistsInMemberList) {
-                                String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=pending";
-                                updateAttendingStatus(queryStr);
+
+                                if (GatheringPreviewFragment.this.event != null && GatheringPreviewFragment.this.event.getEventId() != null && loggedInUser.getUserId() != null) {
+
+                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=pending";
+                                    updateAttendingStatus(queryStr);
+
+                                }
+
                             }
 
                             if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
@@ -747,7 +770,9 @@ public class GatheringPreviewFragment extends CenesFragment {
                                 new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                        if (getActivity() != null) {
+                                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                        }
                                     }
                                 }, 500);
 
@@ -802,6 +827,21 @@ public class GatheringPreviewFragment extends CenesFragment {
                 @Override
                 public void processFinish(JSONObject response) {
 
+                    try {
+
+                        if (response.getBoolean("success") == true) {
+                            JSONObject data = response.getJSONObject("data");
+                            Event eve = new Gson().fromJson(data.toString(), Event.class);
+
+                            if (nonCenesMember.size() > 0) {
+                                sendSmsToNonCenesMembers(nonCenesMember, eve);
+                            }
+
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }).execute(postata);
 
@@ -919,6 +959,13 @@ public class GatheringPreviewFragment extends CenesFragment {
             }
         }
 
+        nonCenesMember = new ArrayList<>();
+        for (EventMember eventMember: event.getEventMembers()) {
+            if (eventMember.getUserId() == null || eventMember.getUserId() == 0) {
+                nonCenesMember.add(eventMember);
+            }
+        }
+
         if (eventOwner != null) {
 
             if (eventOwner.getUser() != null && !CenesUtils.isEmpty(eventOwner.getUser().getPicture())) {
@@ -940,6 +987,7 @@ public class GatheringPreviewFragment extends CenesFragment {
             enableLeftToRightSwipe = true;
             enableRightToLeftSwipe = true;
             isNewOrEditMode = true;
+            ivDeleteIcon.setVisibility(View.GONE);
 
         } else {
 
@@ -994,8 +1042,93 @@ public class GatheringPreviewFragment extends CenesFragment {
         ivAcceptSendIcon.setVisibility(View.VISIBLE);
         ivEditRejectIcon.setVisibility(View.VISIBLE);
 
+
+        //Stopping Card from swipe cases
+        //Case 1  - Offline
+        if (event.getEventId() != null && event.getEventId() != 0 && !internetManager.isInternetConnection(getCenesActivity())) {
+            enableLeftToRightSwipe = false;
+            enableRightToLeftSwipe = false;
+        }
+        //Case 2 - Expired Event
+        if ((event.getExpired() != null && event.getExpired() == true) || event.getEndTime() < new Date().getTime()) {
+            enableLeftToRightSwipe = false;
+            enableRightToLeftSwipe = false;
+        }
+
+
     }
 
+    public void sendSmsToNonCenesMembers(List<EventMember> nonCenesMemberList, Event event) {
+        if (nonCenesMemberList.size() > 0) {
+            String phoneNumbers = "";
+            String separator = "; ";
+            if(android.os.Build.MANUFACTURER.equalsIgnoreCase("samsung")){
+                separator = ", ";
+            }
+
+            for (int i=0; i < nonCenesMemberList.size(); i++) {
+                try {
+                    EventMember jsonObject = nonCenesMemberList.get(i);
+                    phoneNumbers += jsonObject.getPhone()+separator;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            ((CenesBaseActivity) getActivity()).clearBackStackInclusive(null);
+            ((CenesBaseActivity) getActivity()).replaceFragment(new GatheringsFragment(), null);
+
+            String clipHostName = "";
+            if (eventOwner != null) {
+                clipHostName = eventOwner.getName();
+            } else {
+                clipHostName = loggedInUser.getName();
+            }
+            String message  = CenesConstants.shareInvitationMessage.replaceAll("\\[Host\\]", clipHostName).replaceAll("\\[Title\\]",event.getTitle());
+            message += "\n"+CenesConstants.webDomainEventUrl+event.getKey();
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // Greater than Nugget
+                {
+                    try {
+                        Intent sendIntent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:"+ phoneNumbers.substring(0, phoneNumbers.length()-1)));
+                        sendIntent.putExtra("sms_body", message);
+                        startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) // At least KitKat And Upto MarshMallow
+                {
+                    String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(getActivity()); // Need to change the build to API 19
+
+                    Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                    sendIntent.setType("text/plain");
+
+                    if (defaultSmsPackageName != null)// Can be null in case that there is no default, then the user would be able to choose
+                    // any app that support this intent.
+                    {
+                        sendIntent.setPackage(defaultSmsPackageName);
+                    }
+                    //sendIntent.setData(Uri.parse("sms:"+phoneNumbers.substring(0, phoneNumbers.length()-1)));
+                    sendIntent.putExtra("address",phoneNumbers.substring(0, phoneNumbers.length()-1));
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+                    startActivityForResult(sendIntent, SMS_COMPOSE_RESULT_CODE);
+
+                }
+                else // For early versions, do what worked for you before.
+                {
+                    Intent smsIntent = new Intent(android.content.Intent.ACTION_VIEW);
+                    smsIntent.setType("vnd.android-dir/mms-sms");
+                    smsIntent.putExtra("address",phoneNumbers.substring(0, phoneNumbers.length()-1));
+                    smsIntent.putExtra("sms_body",message);
+                    startActivityForResult(smsIntent, SMS_COMPOSE_RESULT_CODE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
     public static Bitmap getBitmapFromURL(String src) {
         try {
             URL url = new URL(src);

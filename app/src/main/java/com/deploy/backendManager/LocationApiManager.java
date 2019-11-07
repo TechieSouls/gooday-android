@@ -29,14 +29,21 @@ public class LocationApiManager {
     }
 
     public List<Location> fetchRecentEvents(String params, String authToken) {
-        String url = UrlManagerImpl.prodAPIUrl+ LocationAPI.get_recentLocations+"?"+params;
-        System.out.println("Loaction API : "+url);
-        JsonParsing jsonParsing = new JsonParsing();
-        JSONArray locationArray = jsonParsing.httpGet(url, authToken);
 
-        Gson gson = new GsonBuilder().create();
-        Type listType = new TypeToken<List<Location>>(){}.getType();
-        return gson.fromJson( locationArray.toString(), listType);
+        try {
+            String url = UrlManagerImpl.prodAPIUrl+ LocationAPI.get_recentLocations+"?"+params;
+            System.out.println("Loaction API : "+url);
+            JsonParsing jsonParsing = new JsonParsing();
+            JSONArray locationArray = jsonParsing.httpGet(url, authToken);
+
+            Gson gson = new GsonBuilder().create();
+            Type listType = new TypeToken<List<Location>>(){}.getType();
+            return gson.fromJson( locationArray.toString(), listType);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<Location>();
     }
 
     public JSONObject nearByLocationSearch(String queryString) {

@@ -31,13 +31,13 @@ import java.util.List;
 public class NotificationAdapter extends BaseAdapter {
 
     private List<Notification> notifications;
-    private Activity activity;
+    private NotificationFragment notificationFragment;
     private LayoutInflater inflter;
 
-    public NotificationAdapter(Activity activity, List<Notification> notifications) {
-        this.activity = activity;
+    public NotificationAdapter(NotificationFragment notificationFragment, List<Notification> notifications) {
+        this.notificationFragment = notificationFragment;
         this.notifications = notifications;
-        this.inflter = (LayoutInflater.from(activity));
+        this.inflter = (LayoutInflater.from(notificationFragment.getActivity()));
     }
 
     @Override
@@ -84,20 +84,31 @@ public class NotificationAdapter extends BaseAdapter {
         //}
 
         try {
-            Glide.with(activity).load(notification.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(holder.senderPic);
+            if (notification.getUser() != null && notification.getUser().getPicture() != null && notification.getUser().getPicture().length() != 0) {
+                Glide.with(notificationFragment.getActivity()).load(notification.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(holder.senderPic);
+            } else {
+                holder.senderPic.setImageResource(R.drawable.default_profile_icon);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
         long daysDiff  = (new Date().getTime() - notification.getNotificationTime())/(1000*3600*24);
-        System.out.println("Diffrent in Days : "+daysDiff/(1000*3600*24)+"   -----   "+daysDiff);
+        System.out.println("Different in Days : "+daysDiff/(1000*3600*24)+"   -----   "+daysDiff);
         if (daysDiff > 0) {
             holder.notificationDay.setText(daysDiff +" Days Ago");
         } else {
 
-            int hours = CenesUtils.differenceInHours(notification.getNotificationTime(), new Date().getTime());
+            //int hours = CenesUtils.differenceInHours(notification.getNotificationTime(), new Date().getTime());
+            int hours = Math.round((new Date().getTime() - notification.getNotificationTime())/(1000*3600));
             System.out.println("Hours Diff : "+hours);
             if (hours == 0) {
-                holder.notificationDay.setText("Just Now");
+
+                int minutes = Math.round((new Date().getTime() - notification.getNotificationTime())/(1000*60));
+                if (minutes == 0) {
+                    holder.notificationDay.setText("Just Now");
+                } else {
+                    holder.notificationDay.setText(minutes+" Minutes Ago");
+                }
             } else if (hours == 1) {
                 holder.notificationDay.setText(hours+" Hour Ago");
             } else {
@@ -105,35 +116,37 @@ public class NotificationAdapter extends BaseAdapter {
             }
         }
         if (notification.getReadStatus().equals("Read")) {
-            holder.llContainer.setBackground(activity.getResources().getDrawable(R.drawable.xml_curved_corner_markread_fill));
-            holder.notificationTime.setTextColor(activity.getResources().getColor(R.color.cenes_markread_color));
-            holder.notificationDay.setTextColor(activity.getResources().getColor(R.color.cenes_markread_color));
+            holder.llContainer.setBackground(notificationFragment.getActivity().getResources().getDrawable(R.drawable.xml_curved_corner_markread_fill));
+            holder.notificationTime.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_markread_color));
+            holder.notificationDay.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_markread_color));
             holder.notifcationReadStatus.setVisibility(View.VISIBLE);
         } else {
-            holder.llContainer.setBackground(activity.getResources().getDrawable(R.drawable.xml_curved_corner_blue_fill));
-            holder.notificationTime.setTextColor(activity.getResources().getColor(R.color.cenes_selectedText_color));
-            holder.notificationDay.setTextColor(activity.getResources().getColor(R.color.cenes_selectedText_color));
+            holder.llContainer.setBackground(notificationFragment.getActivity().getResources().getDrawable(R.drawable.xml_curved_corner_blue_fill));
+            holder.notificationTime.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_selectedText_color));
+            holder.notificationDay.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_selectedText_color));
             holder.notifcationReadStatus.setVisibility(View.GONE);
         }
-
-
 
         holder.llContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                new NotificationAsyncTask(((CenesBaseActivity)activity).getCenesApplication(), activity);
-                new NotificationAsyncTask.MarkNotificationReadTask(new NotificationAsyncTask.MarkNotificationReadTask.AsyncResponse() {
-                    @Override
-                    public void processFinish(JSONObject response) {
-                        System.out.println(response.toString());
-                    }
-                }).execute(notification.getNotificationTypeId());
+                notificationFragment.notificationManagerImpl.updateNotificationReadStatus(notification);
+                if (notificationFragment.internetManager.isInternetConnection(notificationFragment.getCenesActivity())) {
 
+                    new NotificationAsyncTask(((CenesBaseActivity)notificationFragment.getActivity()).getCenesApplication(), notificationFragment.getActivity());
+                    new NotificationAsyncTask.MarkNotificationReadTask(new NotificationAsyncTask.MarkNotificationReadTask.AsyncResponse() {
+                        @Override
+                        public void processFinish(JSONObject response) {
+                            System.out.println(response);
+                        }
+                    }).execute(notification.getNotificationTypeId());
+
+                }
 
                 GatheringPreviewFragment gatheringPreviewFragment = new GatheringPreviewFragment();
                 gatheringPreviewFragment.event = notification.getEvent();
-                ((CenesBaseActivity)activity).replaceFragment(gatheringPreviewFragment, NotificationFragment.TAG);
+                ((CenesBaseActivity)notificationFragment.getActivity()).replaceFragment(gatheringPreviewFragment, NotificationFragment.TAG);
 
                /* if (notification.getType().equals("Gathering")) {
 

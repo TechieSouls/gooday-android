@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
+import android.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,15 +30,25 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.Event;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.InvitationFragment;
 import com.deploy.fragment.NavigationFragment;
 import com.deploy.fragment.friend.FriendListFragment;
+import com.deploy.util.CenesUtils;
 import com.deploy.util.RoundedImageView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +82,7 @@ public class GatheringsFragment extends CenesFragment {
     private RoundedImageView homePageProfilePic;
     private TextView confirmedBtn, maybeBtn, declinedBtn;
     private ImageView createGatheringBtn;
+    private EventManagerImpl eventManagerImpl;
 
     private GatheringAsyncTask gatheringAsyncTasks;
     private GatheringAsyncTask gatheringsTask;
@@ -82,6 +94,8 @@ public class GatheringsFragment extends CenesFragment {
         View view = inflater.inflate(R.layout.fragment_gatherings, container, false);
         fragmentView = view;
         init(view);
+
+        eventManagerImpl = new EventManagerImpl(cenesApplication);
         User user = userManager.getUser();
         if (user != null && user.getPicture() != null && user.getPicture() != "null") {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
@@ -104,20 +118,43 @@ public class GatheringsFragment extends CenesFragment {
             ((CenesBaseActivity) getActivity()).replaceFragment(gatheringPreviewFragmentBkup, "GatheringPreviewFragmentBkup");
 
         } else {
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    //TODO your background code
-                    new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
-                        @Override
-                        public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response, false);
-                        }
-                    }).execute("Going");
+
+            List<Event> events = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.ACCEPTED.toString());
+            Map<String, Object> parsedResponse = processGatheringApiResult(events);
+            updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.ACCEPTED.toString());
+
+            if (internetManager.isInternetConnection(getCenesActivity())) {
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO your background code
+                        new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+
+                                try {
+
+                                    JSONArray gatherings = response.getJSONArray("data");
+                                    Type listType = new TypeToken<List<Event>>() {
+                                    }.getType();
+                                    List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
+
+                                    eventManagerImpl.deleteAllEventsByDisplayAtScreen(Event.EventDisplayScreen.ACCEPTED.toString());
+                                    eventManagerImpl.addEvent(events, Event.EventDisplayScreen.ACCEPTED.toString());
+
+                                    Map<String, Object> parsedResponse = processGatheringApiResult(events);
+                                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.ACCEPTED.toString());
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute("Going");
 
 
-                }
-            });
+                    }
+                });
+            }
         }
 
         return view;
@@ -157,7 +194,7 @@ public class GatheringsFragment extends CenesFragment {
         homePageProfilePic.setOnClickListener(onClickListener);
     }
 
-    public void updateUIAfterGatheringAsyncTask(Map<String, Object> response, boolean isInvitation) {
+    public void updateUIAfterGatheringAsyncTask(Map<String, Object> response, boolean isInvitation, String displayAtScreen) {
         if (getActivity() == null) {
             return;
         }
@@ -190,34 +227,95 @@ public class GatheringsFragment extends CenesFragment {
                     selectTab(confirmedBtn);
                     gatheringsText.setText("Your Gatherings");
                     //new GatheringsTask().execute("Going");
-                    new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
-                        @Override
-                        public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response, false);
-                        }
-                    }).execute("Going");
+
+                    List<Event> events = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.ACCEPTED.toString());
+                    Map<String, Object> parsedResponse = processGatheringApiResult(events);
+                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.ACCEPTED.toString());
+
+                    if (internetManager.isInternetConnection(getCenesActivity())) {
+                        new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+                                try {
+                                    JSONArray gatherings = response.getJSONArray("data");
+                                    Type listType = new TypeToken<List<Event>>() {}.getType();
+                                    List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
+
+                                    eventManagerImpl.deleteAllEventsByDisplayAtScreen(Event.EventDisplayScreen.ACCEPTED.toString());
+                                    eventManagerImpl.addEvent(events, Event.EventDisplayScreen.ACCEPTED.toString());
+
+                                    Map<String, Object> parsedResponse = processGatheringApiResult(events);
+                                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.ACCEPTED.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute("Going");
+                    }
+
                     break;
                 case R.id.maybe_btn:
                     selectTab(maybeBtn);
                     gatheringsText.setText("Your Invitations");
                     //new GatheringsTask().execute("pending");
-                    new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
-                        @Override
-                        public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response, true);
-                        }
-                    }).execute("pending");
+
+                    List<Event> pendingEvents = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.PENDING.toString());
+                    Map<String, Object> parsedPendingResponse = processGatheringApiResult(pendingEvents);
+                    updateUIAfterGatheringAsyncTask(parsedPendingResponse, false, Event.EventDisplayScreen.PENDING.toString());
+
+                    if (internetManager.isInternetConnection(getCenesActivity())) {
+                        new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+
+                                try {
+                                    JSONArray gatherings = response.getJSONArray("data");
+                                    Type listType = new TypeToken<List<Event>>() {
+                                    }.getType();
+                                    List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
+
+                                    eventManagerImpl.deleteAllEventsByDisplayAtScreen(Event.EventDisplayScreen.PENDING.toString());
+                                    eventManagerImpl.addEvent(events, Event.EventDisplayScreen.PENDING.toString());
+
+                                    Map<String, Object> parsedResponse = processGatheringApiResult(events);
+                                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.PENDING.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute("pending");
+                    }
                     break;
                 case R.id.declined_btn:
                     selectTab(declinedBtn);
                     gatheringsText.setText("Your Invitations");
                     //new GatheringsTask().execute("NotGoing");
-                    new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
-                        @Override
-                        public void processFinish(Map<String, Object> response) {
-                            updateUIAfterGatheringAsyncTask(response, false);
-                        }
-                    }).execute("NotGoing");
+
+                    List<Event> declinedEvents = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.DECLINED.toString());
+                    Map<String, Object> parsedDeclinedResponse = processGatheringApiResult(declinedEvents);
+                    updateUIAfterGatheringAsyncTask(parsedDeclinedResponse, false, Event.EventDisplayScreen.DECLINED.toString());
+
+                    if (internetManager.isInternetConnection(getCenesActivity())) {
+                        new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
+                            @Override
+                            public void processFinish(JSONObject response) {
+
+                                try {
+                                    JSONArray gatherings = response.getJSONArray("data");
+                                    Type listType = new TypeToken<List<Event>>() {}.getType();
+                                    List<Event> events = new Gson().fromJson(gatherings.toString(), listType);
+
+                                    eventManagerImpl.deleteAllEventsByDisplayAtScreen(Event.EventDisplayScreen.DECLINED.toString());
+                                    eventManagerImpl.addEvent(events, Event.EventDisplayScreen.DECLINED.toString());
+
+                                    Map<String, Object> parsedResponse = processGatheringApiResult(events);
+                                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.DECLINED.toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).execute("NotGoing");
+                    }
                     break;
 
                 case R.id.create_gath_btn:
@@ -254,6 +352,45 @@ public class GatheringsFragment extends CenesFragment {
         selection.setTypeface(Typeface.DEFAULT_BOLD);
     }
 
+    public Map<String, Object> processGatheringApiResult(List<Event> events) {
+        Map<String, Object> responseMap =  null;
+        try {
+            if (events.size() == 0) {
+                responseMap = null;
+            } else {
+
+                List<String> headers = new ArrayList<>();
+                Map<String, List<Event>> eventMap = new ArrayMap<>();
+
+                for (Event event: events) {
+
+                    Date startDate = new Date(event.getStartTime());
+                    String dateKey = CenesUtils.ddMMM.format(startDate).toUpperCase() + "<b>"+CenesUtils.EEEE.format(startDate).toUpperCase()+"</b>";
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(new Date());
+                    cal.add(Calendar.DATE, 1);
+                    if (!headers.contains(dateKey)) {
+                        headers.add(dateKey);
+                    }
+                    if (eventMap.containsKey(dateKey)) {
+                        events = eventMap.get(dateKey);
+                    } else {
+                        events = new ArrayList<>();
+                    }
+                    events.add(event);
+                    eventMap.put(dateKey, events);
+                }
+
+                Collections.sort(headers);
+                responseMap = new HashMap<>();
+                responseMap.put("headers", headers);
+                responseMap.put("eventMap", eventMap);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return responseMap;
+    }
 
     class FetchGatheringTask extends AsyncTask<Bundle, Map<String,Object>, Map<String,Object>> {
         ProgressDialog fetchingGathDialog;

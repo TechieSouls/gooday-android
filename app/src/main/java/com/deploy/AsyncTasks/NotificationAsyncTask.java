@@ -36,14 +36,14 @@ public class NotificationAsyncTask {
 
         private CoreManager coreManager = cenesApplication.getCoreManager();
 
-        ProgressDialog processDialog;
+        //ProgressDialog processDialog;
 
         // you may separate this or combined to caller class.
         public interface AsyncResponse {
             void processFinish(JSONObject response);
         }
         public AsyncResponse delegate = null;
-        ProgressDialog progressDialog;
+        //ProgressDialog progressDialog;
 
         public NotificationListTask(AsyncResponse delegate) {
             this.delegate = delegate;
@@ -51,12 +51,12 @@ public class NotificationAsyncTask {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progressDialog = new ProgressDialog(activity);
+            /*progressDialog = new ProgressDialog(activity);
             progressDialog.setMessage("Loading...");
             progressDialog.setIndeterminate(false);
             progressDialog.setCanceledOnTouchOutside(false);
             progressDialog.setCancelable(false);
-            progressDialog.show();
+            progressDialog.show();*/
         }
 
         @Override
@@ -72,10 +72,10 @@ public class NotificationAsyncTask {
         @Override
         protected void onPostExecute(JSONObject response) {
             super.onPostExecute(response);
-            if (progressDialog != null) {
+            /*if (progressDialog != null) {
                 progressDialog.dismiss();
                 progressDialog = null;
-            }
+            }*/
             delegate.processFinish(response);
         }
 

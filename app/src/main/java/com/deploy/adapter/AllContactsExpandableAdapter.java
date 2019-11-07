@@ -21,6 +21,8 @@ import com.deploy.fragment.friend.FriendListFragment;
 import com.deploy.util.RoundedImageView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +41,12 @@ public class AllContactsExpandableAdapter extends BaseExpandableListAdapter {
         this.friendListFragment = friendListFragment;
         this.inflter = (LayoutInflater.from(friendListFragment.getContext()));
         this.headers = headers;
+        Collections.sort(this.headers, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        });
         this.eventMembersMap = eventMembersMap;
         recyclerView = (RecyclerView) (this.friendListFragment).getView().findViewById(R.id.recycler_view);
         recyclerView.setVisibility(View.VISIBLE);
@@ -96,12 +104,12 @@ public class AllContactsExpandableAdapter extends BaseExpandableListAdapter {
         }
 
         String headerLetter = getGroup(groupPosition);
-        if (friendListFragment.cenesFriendsVisible == true) {
+        /*if (friendListFragment.cenesFriendsVisible == true) {
             holder.lblListHeader.setVisibility(View.GONE);
         } else {
-            holder.lblListHeader.setVisibility(View.VISIBLE);
-            holder.lblListHeader.setText(headerLetter);
-        }
+            holder.lblListHeader.setVisibility(View.VISIBLE);*/
+        holder.lblListHeader.setText(headerLetter);
+        //}
         return convertView;
     }
 
@@ -201,8 +209,6 @@ public class AllContactsExpandableAdapter extends BaseExpandableListAdapter {
                         } else {
                             viewHolder.ivHostCircleMember.setVisibility(View.VISIBLE);
                         }
-
-
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

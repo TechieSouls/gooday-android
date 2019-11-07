@@ -46,9 +46,9 @@ public class GuestActivity extends CenesActivity {
         userManager = coreManager.getUserManager();
         User user = userManager.getUser();
 
-        if (user == null) {
+        /*if (user == null) {
             replaceFragment(new GuestFragment(), null);
-        } else if (user != null && CenesUtils.isEmpty(user.getPhone())) {
+        } else */if (user == null) {
             replaceFragment(new SignupStep1Fragment(), null);
         } else {
             replaceFragment(new SignupOptionsFragment(), null);
@@ -95,10 +95,10 @@ public class GuestActivity extends CenesActivity {
         return null;
     }
 
-    @Override
-    public void onBackPressed() {
-        this.moveTaskToBack(true);
-    }
+    //@Override
+    //public void onBackPressed() {
+      //  this.moveTaskToBack(true);
+    //}
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

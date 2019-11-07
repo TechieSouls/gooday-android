@@ -40,7 +40,7 @@
                 android:id="@+id/tv_phonebook_name"
                 android:layout_width="match_parent"
                 android:layout_height="21dp"
-                android:text="Mandy"
+                android:text=""
                 />
 
             <View

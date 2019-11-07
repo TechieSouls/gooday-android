@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.NotificationAsyncTask;
+import com.deploy.Manager.InternetManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
@@ -23,6 +24,7 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.Notification;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.impl.NotificationManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.util.RoundedImageView;
@@ -51,52 +53,76 @@ public class NotificationFragment extends CenesFragment {
     private ImageView homeIcon;
 
     private TextView noNotificationsText;
-
-    final int MILLI_TO_HOUR = 1000 * 60 * 60;
+    private View fragmentView;
 
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
     private UserManager userManager;
+    public InternetManager internetManager;
 
     private User loggedInUser;
+    public NotificationManagerImpl notificationManagerImpl;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if (fragmentView != null) {
+
+            //Fetching All Offline notifications and showing them.
+            List<Notification> notifications = notificationManagerImpl.fetchAllNotifications();
+            notificationAdapter = new NotificationAdapter(this, notifications);
+            notificationExpandablelv.setAdapter(notificationAdapter);
+
+            return fragmentView;
+        }
+
         View v = inflater.inflate(R.layout.activity_notifications, container, false);
+        fragmentView = v;
         init(v);
+
         if (loggedInUser != null && loggedInUser.getPicture() != null && loggedInUser.getPicture() != "null") {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
             Glide.with(NotificationFragment.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
         }
 
-        new NotificationAsyncTask(cenesApplication, getActivity());
-        new NotificationAsyncTask.NotificationListTask(new NotificationAsyncTask.NotificationListTask.AsyncResponse() {
-            @Override
-            public void processFinish(JSONObject response) {
-                try {
-                    JSONObject notificationResponse = response;
-                    if (notificationResponse != null && notificationResponse.getBoolean("success")) {
-                        JSONArray notificationArray = notificationResponse.getJSONArray("data");
-                        if (notificationArray.length() == 0) {
-                            noNotificationsText.setVisibility(View.VISIBLE);
-                        } else {
-                            noNotificationsText.setVisibility(View.GONE);
+        notificationManagerImpl = new NotificationManagerImpl(cenesApplication);
 
-                            Gson gson = new Gson();
+        //Fetching All Offline notifications and showing them.
+        List<Notification> notifications = notificationManagerImpl.fetchAllNotifications();
+        notificationAdapter = new NotificationAdapter(this, notifications);
+        notificationExpandablelv.setAdapter(notificationAdapter);
 
-                            Type listType = new TypeToken<List<Notification>>() {}.getType();
-                            List<Notification> notifications = new Gson().fromJson(response.getJSONArray("data").toString(), listType);
-                            notificationAdapter = new NotificationAdapter(getActivity(), notifications);
-                            notificationExpandablelv.setAdapter(notificationAdapter);
+        if (internetManager.isInternetConnection(getCenesActivity())) {
+
+            new NotificationAsyncTask(cenesApplication, getActivity());
+            new NotificationAsyncTask.NotificationListTask(new NotificationAsyncTask.NotificationListTask.AsyncResponse() {
+                @Override
+                public void processFinish(JSONObject response) {
+                    try {
+                        JSONObject notificationResponse = response;
+                        if (notificationResponse != null && notificationResponse.getBoolean("success")) {
+                            JSONArray notificationArray = notificationResponse.getJSONArray("data");
+                            if (notificationArray.length() == 0) {
+                                noNotificationsText.setVisibility(View.VISIBLE);
+                            } else {
+                                noNotificationsText.setVisibility(View.GONE);
+
+                                Type listType = new TypeToken<List<Notification>>() {}.getType();
+                                List<Notification> notificationsTemp = new Gson().fromJson(response.getJSONArray("data").toString(), listType);
+                                notificationManagerImpl.deleteAllNotifications();
+                                notificationManagerImpl.addNotification(notificationsTemp);
+                                notificationAdapter = new NotificationAdapter(NotificationFragment.this, notificationsTemp);
+                                notificationExpandablelv.setAdapter(notificationAdapter);
+                            }
                         }
-                    }
 
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }).execute();
+            }).execute();
+        }
 
         ((CenesBaseActivity)getActivity()).ivNotificationFloatingIcon.setVisibility(View.GONE);
         return v;
@@ -124,6 +150,7 @@ public class NotificationFragment extends CenesFragment {
         cenesApplication = getCenesActivity().getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
         userManager = coreManager.getUserManager();
+        internetManager = coreManager.getInternetManager();
 
         loggedInUser = userManager.getUser();
 

@@ -66,6 +66,7 @@ import com.deploy.bo.EventMember;
 import com.deploy.bo.Location;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
+import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.dto.CreateGatheringDto;
 import com.deploy.fragment.CenesFragment;
@@ -454,7 +455,22 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         if (event.getEventMembers() == null) {
                             event.setEventMembers(new ArrayList<EventMember>());
                         }
-                        event.setEventMembers(membersSelected);
+
+
+                        List<EventMember> eventMemberList = new ArrayList<>();
+                        for (EventMember eventMember: membersSelected) {
+
+                            EventMember eventMemberToAdd = eventMember;
+                            if (eventMember.getFriendId() != null && !eventMember.getFriendId().equals(loggedInUser.getUserId())) {
+                                eventMemberToAdd.setUserId(eventMember.getFriendId());
+                            }
+                            if (eventMember.getFriendId() == null && eventMember.getUserContactId() != null && !eventMember.getUserContactId().equals(loggedInUser.getUserId())) {
+                                eventMemberToAdd.setUserId(null);
+                            }
+
+                            eventMemberList.add(eventMemberToAdd);
+                        }
+                        event.setEventMembers(eventMemberList);
                         event.setCreatedById(loggedInUser.getUserId());
                         Log.v("Event Memebrs Size : ",event.getEventMembers().size()+"");
                         event.setTitle(gathEventTitleEditView.getText().toString());
@@ -947,8 +963,15 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
-                event.setPredictiveOn(true);
-                showPredictions();
+
+                if (createGatheringDto.isStartTime() && createGatheringDto.isEndTime()) {
+
+                    event.setPredictiveOn(true);
+                    showPredictions();
+
+                } else {
+                    showAlert("Alert","Please select Start and End Time.");
+                }
             } else {
                 event.setPredictiveOn(false);
                 Set<CalendarDay> drawableDates = CenesUtils.getDrawableMonthDateList(currentMonth);

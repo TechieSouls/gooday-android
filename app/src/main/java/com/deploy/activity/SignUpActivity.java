@@ -182,7 +182,7 @@ public class SignUpActivity extends CenesActivity{
             user.setEmail(email);
             user.setName(name);
             user.setPassword(password);
-            user.setAuthType("email");
+            user.setAuthType(User.AuthenticateType.email);
             user.setPhone(phone);
             user.setApiUrl(urlManager.getApiUrl(name));
             new SignUpProcess().execute();

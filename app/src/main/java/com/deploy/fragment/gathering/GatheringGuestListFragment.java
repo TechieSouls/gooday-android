@@ -87,31 +87,59 @@ public class GatheringGuestListFragment extends CenesFragment {
                 invitedMembers.add(member);
             }
         }
-        for (EventMember member: eventMembers) {
-            if (member.getUserId() != null) {
-                if (!member.getUserId().equals(event.getCreatedById())) {
+
+        //If its the event of logged in user then we will show names of all the members
+        //Else we will show others
+        if (event.getCreatedById().equals(loggedInUser.getUserId())) {
+
+            for (EventMember member: eventMembers) {
+                if (member.getUserId() != null && member.getUserId() != 0) {
+                    if (!member.getUserId().equals(event.getCreatedById())) {
+                        invitedMembers.add(member);
+                    }
+                }
+            }
+
+            for (EventMember member: eventMembers) {
+                if (member.getUserId() == null || member.getUserId() == 0) {
                     invitedMembers.add(member);
                 }
-            } else {
-                nonCenesCounts++;
+            }
+
+        } else {
+            for (EventMember member: eventMembers) {
+                if (member.getUserId() != null && member.getUserId() != 0) {
+                    if (!member.getUserId().equals(event.getCreatedById())) {
+                        invitedMembers.add(member);
+                    }
+                } else {
+                    nonCenesCounts++;
+                }
+            }
+            if (nonCenesCounts > 0) {
+                EventMember nonCenesMember = new EventMember();
+                if (nonCenesCounts == 1) {
+                    nonCenesMember.setName("and "+nonCenesCounts+" Other");
+                } else {
+                    nonCenesMember.setName("and "+nonCenesCounts+" Others");
+                }
+                invitedMembers.add(nonCenesMember);
             }
         }
-        if (nonCenesCounts > 0) {
-            EventMember nonCenesMember = new EventMember();
-            if (nonCenesCounts == 1) {
-                nonCenesMember.setName("and "+nonCenesCounts+" Other");
-            } else {
-                nonCenesMember.setName("and "+nonCenesCounts+" Others");
-            }
-            invitedMembers.add(nonCenesMember);
-        }
+
         tvInvitedBubbleText.setText(eventMembers.size()+"");
         gatheringGuestListItemAdapter = new GatheringGuestListItemAdapter(this, invitedMembers);
         lvGuestListView.setAdapter(gatheringGuestListItemAdapter);
 
         acceptedMembers = new ArrayList<>();
+        //Checking for host which should be at the top
         for (EventMember member: eventMembers) {
-            if (member.getStatus() != null && member.getStatus().equals("Going")) {
+            if (member.getUserId() != null && member.getUserId().equals(event.getCreatedById())) {
+                acceptedMembers.add(member);
+            }
+        }
+        for (EventMember member: eventMembers) {
+            if (member.getStatus() != null && member.getStatus().equals("Going") && !member.getUserId().equals(event.getCreatedById())) {
                 acceptedMembers.add(member);
             }
         }

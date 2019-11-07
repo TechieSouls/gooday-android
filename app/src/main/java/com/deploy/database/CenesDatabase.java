@@ -8,6 +8,9 @@ import com.deploy.application.CenesApplication;
 import com.deploy.database.impl.CenesUserManagerImpl;
 import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.impl.EventMemberManagerImpl;
+import com.deploy.database.impl.MeTimeManagerImpl;
+import com.deploy.database.impl.MeTimePatternManagerImpl;
+import com.deploy.database.impl.NotificationManagerImpl;
 import com.deploy.database.impl.UserManagerImpl;
 
 /**
@@ -45,11 +48,12 @@ public class CenesDatabase {
         public void onCreate(SQLiteDatabase db) {
             // TODO Auto-generated method stub
             db.execSQL(UserManagerImpl.CreateTableQuery);
-            db.execSQL("CREATE TABLE alarms (alarm_id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT, repeat TEXT, sound TEXT,alarm_time LONG, is_on INTEGER)");
-            //db.execSQL("CREATE TABLE reminders (reminder_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT,reminder_time LONG, location TEXT,created_by_id LONG, status TEXT)");
             db.execSQL(EventManagerImpl.createTableQuery);
             db.execSQL(EventMemberManagerImpl.createTableQuery);
             db.execSQL(CenesUserManagerImpl.createTableQuery);
+            db.execSQL(NotificationManagerImpl.CreateTableQuery);
+            db.execSQL(MeTimeManagerImpl.CreateTableQuery);
+            db.execSQL(MeTimePatternManagerImpl.CreateTableQuery);
 
         }
 

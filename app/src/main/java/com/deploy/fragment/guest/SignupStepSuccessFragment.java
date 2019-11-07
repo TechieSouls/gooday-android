@@ -4,13 +4,10 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -34,13 +31,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baoyz.actionsheet.ActionSheet;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.AsyncTasks.ProfileAsyncTask;
 import com.deploy.Manager.AlertManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.GuestActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.UserApiManager;
@@ -48,7 +45,6 @@ import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
-import com.deploy.fragment.HolidaySyncFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedDrawable;
@@ -98,7 +94,7 @@ public class SignupStepSuccessFragment extends CenesFragment {
     private Uri cameraFileUri;
     private User loggedInUser = null;
 
-    private EditText etSignupSuccessName, etSignupSuccessEmail, etSignupSuccessPassword;
+    private EditText etSignupSuccessName;
     private TextView etSignupSuccessBirthday, tvSignupSuccessGender, tvGenderMale, tvGenderFemale, tvGenderOther, tvGenderCancel;
     private TextView tvTakePhoto, tvUploadGallery, tvPhotoCancel;
     private RelativeLayout rlGenderActionSheet, rlPhotoActionSheet;
@@ -119,17 +115,10 @@ public class SignupStepSuccessFragment extends CenesFragment {
         }
 
         initializeLayoutComponents(v);
-        if (loggedInUser.getAuthType() != null) {
-
-            etSignupSuccessPassword.setVisibility(View.GONE);
-        }
-
 
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        etSignupSuccessName.setNextFocusDownId(R.id.et_signup_success_email);
-        etSignupSuccessEmail.setNextFocusDownId(R.id.et_signup_success_password);
-        etSignupSuccessPassword.setNextFocusDownId(R.id.et_signup_success_birthday);
+        etSignupSuccessName.setNextFocusDownId(R.id.et_signup_success_birthday);
         etSignupSuccessBirthday.setNextFocusDownId(R.id.tv_signup_success_gender);
         return v;
     }
@@ -148,8 +137,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
     public void initializeLayoutComponents(View v) {
 
         etSignupSuccessName = (EditText) v.findViewById(R.id.et_signup_success_name);
-        etSignupSuccessEmail = (EditText) v.findViewById(R.id.et_signup_success_email);
-        etSignupSuccessPassword = (EditText) v.findViewById(R.id.et_signup_success_password);
         etSignupSuccessBirthday = (TextView) v.findViewById(R.id.et_signup_success_birthday);
         tvSignupSuccessGender = (TextView) v.findViewById(R.id.tv_signup_success_gender);
 
@@ -189,10 +176,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
                 etSignupSuccessName.setText(loggedInUser.getName());
             }
 
-            if (!CenesUtils.isEmpty(loggedInUser.getEmail())) {
-                etSignupSuccessEmail.setText(loggedInUser.getEmail());
-            }
-
             if (loggedInUser.getPicture() != null) {
 
                 Glide.with(getContext()).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(rivProfileRoundedImg);
@@ -210,14 +193,8 @@ public class SignupStepSuccessFragment extends CenesFragment {
 
                         JSONObject jsonObject = new JSONObject();
                         try {
-                            if (CenesUtils.isEmpty(loggedInUser.getAuthType())) {
 
-                                loggedInUser.setAuthType("email");
-                                loggedInUser.setPassword(etSignupSuccessPassword.getText().toString());
-
-                            }
                             loggedInUser.setName(etSignupSuccessName.getText().toString());
-                            loggedInUser.setEmail(etSignupSuccessEmail.getText().toString());
 
                             Gson gson = new Gson();
                             jsonObject = new JSONObject(gson.toJson(loggedInUser));
@@ -225,40 +202,20 @@ public class SignupStepSuccessFragment extends CenesFragment {
                             e.printStackTrace();
                         }
 
-                        new ProfileAsyncTask.SignupStepSuccessTask(new ProfileAsyncTask.SignupStepSuccessTask.AsyncResponse() {
+                        new ProfileAsyncTask.SignupProfileUpdateTask(new ProfileAsyncTask.SignupProfileUpdateTask.AsyncResponse() {
                             @Override
-                            public void processFinish(JSONObject jsonObject) {
-                                if (jsonObject != null) {
-                                    if (jsonObject.has("errorCode")) {
+                            public void processFinish(JSONObject response) {
                                         try {
-                                            if (jsonObject.getInt("errorCode") == 0) {
 
-                                                Gson gson = new Gson();
-                                                loggedInUser = gson.fromJson(jsonObject.toString(), User.class);
-                                                userManager.deleteAll();
-                                                userManager.addUser(loggedInUser);
-                                                System.out.println(userManager.getUser().toString());
-                                                System.out.println(loggedInUser);
-                                                SharedPreferences prefs = getActivity().getSharedPreferences("CenesPrefs", Context.MODE_PRIVATE);
-                                                String token = prefs.getString("FcmToken", null);
-
-                                                if (token != null) {
-                                                    JSONObject registerDeviceObj = new JSONObject();
-                                                    registerDeviceObj.put("deviceToken", token);
-                                                    registerDeviceObj.put("deviceType", "android");
-                                                    registerDeviceObj.put("model", CenesUtils.getDeviceModel());
-                                                    registerDeviceObj.put("manufacturer", CenesUtils.getDeviceManufacturer());
-                                                    registerDeviceObj.put("version", CenesUtils.getDeviceVersion());
-                                                    registerDeviceObj.put("deviceType", "android");
-                                                    registerDeviceObj.put("userId", loggedInUser.getUserId());
-                                                    new DeviceTokenSync().execute(registerDeviceObj);
-                                                }
+                                            boolean success = response.getBoolean("success");
+                                            if (success) {
+                                                userManager.updateUser(loggedInUser);
 
                                                 if (file != null) {
                                                     new ProfileAsyncTask.UploadProfilePhoto(new ProfileAsyncTask.UploadProfilePhoto.AsyncResponse() {
                                                         @Override
                                                         public void processFinish(JSONObject response) {
-                                                            try {
+                                                              try {
                                                                 if (response != null && response.getInt("errorCode") == 0) {
                                                                     if (response.has("photo")) {
                                                                         loggedInUser.setPicture(response.getString("photo"));
@@ -278,25 +235,14 @@ public class SignupStepSuccessFragment extends CenesFragment {
                                                     getContacts();
                                                 }
                                             } else {
-                                                if (jsonObject.has("errorDetail")) {
-                                                    alertManager.getAlert((GuestActivity) getActivity(), jsonObject.getString("errorDetail"), "Error", null, false, "OK");
-                                                    //startActivity(new Intent((GuestActivity)getActivity(), SignInActivity.class));
-                                                    //finish();
-                                                } else {
-                                                    alertManager.getAlert((GuestActivity) getActivity(), "Some thing is going wrong", "Error", null, false, "OK");
-                                                }
+
+                                                //String message = response.getString("message");
+                                                //showAlert("Alert", message);
                                             }
                                         } catch (Exception e) {
                                             e.printStackTrace();
                                         }
-                                    } else {
-                                        alertManager.getAlert((GuestActivity) getActivity(), "Server Error", "Error", null, false, "OK");
-                                    }
-
-                                } else {
-                                    getCenesActivity().showRequestTimeoutDialog();
                                 }
-                            }
                         }).execute(jsonObject);
                     }
                 break;
@@ -393,22 +339,6 @@ public class SignupStepSuccessFragment extends CenesFragment {
         if (etSignupSuccessName.getText().toString().length() == 0) {
             missingFields.append("Name");
         }
-        if (etSignupSuccessEmail.getText().toString().length() == 0) {
-            if (missingFields.length() > 0) {
-                missingFields.append(", ");
-            }
-            missingFields.append("Email");
-        }
-
-        if (CenesUtils.isEmpty(loggedInUser.getAuthType())) {
-
-            if (etSignupSuccessPassword.getText().toString().length() == 0) {
-                if (missingFields.length() > 0) {
-                    missingFields.append(", ");
-                }
-                missingFields.append("Password");
-            }
-        }
 
         if (CenesUtils.isEmpty(loggedInUser.getGender())) {
             if (missingFields.length() > 0) {
@@ -470,8 +400,9 @@ public class SignupStepSuccessFragment extends CenesFragment {
                 getContacts();
             } else {
                 Toast.makeText(getActivity(), "Until you grant the permission, we cannot show your friendList", Toast.LENGTH_SHORT).show();
-                ((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
-
+                //((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
+                startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
+                getActivity().finish();
             }
         }
     }
@@ -619,7 +550,9 @@ public class SignupStepSuccessFragment extends CenesFragment {
             @Override
             public void processFinish(Object response) {
 
-                ((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
+                //((GuestActivity)getActivity()).replaceFragment(new HolidaySyncFragment(), null);
+                startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
+                getActivity().finish();
             }
         }).execute(userContact);
     }

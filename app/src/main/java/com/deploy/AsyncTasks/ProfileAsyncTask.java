@@ -305,6 +305,152 @@ public class ProfileAsyncTask {
         }
     }
 
+    public static class SignupStepOneSuccessTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        ProgressDialog scanSuccessDialog;
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public SignupStepOneSuccessTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            scanSuccessDialog = new ProgressDialog(activity);
+            scanSuccessDialog.setMessage("Signing Up..");
+            scanSuccessDialog.setIndeterminate(false);
+            scanSuccessDialog.setCanceledOnTouchOutside(false);
+            scanSuccessDialog.setCancelable(false);
+            scanSuccessDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsonObjects) {
+
+            UserManager userManager = coreManager.getUserManager();
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            User user = userManager.getUser();
+
+            JSONObject postSignupData = jsonObjects[0];
+            return userApiManager.emailSignupStep1(postSignupData);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            if (scanSuccessDialog != null) {
+                scanSuccessDialog.dismiss();
+            }
+            scanSuccessDialog = null;
+            delegate.processFinish(jsonObject);
+        }
+    }
+
+    public static class SignupStepTwoSuccessTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        ProgressDialog scanSuccessDialog;
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public SignupStepTwoSuccessTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            scanSuccessDialog = new ProgressDialog(activity);
+            scanSuccessDialog.setMessage("Updating..");
+            scanSuccessDialog.setIndeterminate(false);
+            scanSuccessDialog.setCanceledOnTouchOutside(false);
+            scanSuccessDialog.setCancelable(false);
+            scanSuccessDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsonObjects) {
+
+            UserManager userManager = coreManager.getUserManager();
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            User user = userManager.getUser();
+
+            JSONObject postSignupData = jsonObjects[0];
+            return userApiManager.emailSignupSignupStep2(postSignupData);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            if (scanSuccessDialog != null) {
+                scanSuccessDialog.dismiss();
+            }
+            scanSuccessDialog = null;
+            delegate.processFinish(jsonObject);
+        }
+    }
+
+    public static class SignupProfileUpdateTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        ProgressDialog scanSuccessDialog;
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public SignupProfileUpdateTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            scanSuccessDialog = new ProgressDialog(activity);
+            scanSuccessDialog.setMessage("Updating..");
+            scanSuccessDialog.setIndeterminate(false);
+            scanSuccessDialog.setCanceledOnTouchOutside(false);
+            scanSuccessDialog.setCancelable(false);
+            scanSuccessDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... jsonObjects) {
+
+            UserManager userManager = coreManager.getUserManager();
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            User user = userManager.getUser();
+
+            JSONObject postSignupData = jsonObjects[0];
+            return userApiManager.emailPostUserDetails(postSignupData, user.getAuthToken());
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            super.onPostExecute(jsonObject);
+            if (scanSuccessDialog != null) {
+                scanSuccessDialog.dismiss();
+            }
+            scanSuccessDialog = null;
+            delegate.processFinish(jsonObject);
+        }
+    }
     public static class HolidaySyncTask extends AsyncTask<HolidayCalendar, JSONObject, JSONObject> {
 
         private CoreManager coreManager = cenesApplication.getCoreManager();
