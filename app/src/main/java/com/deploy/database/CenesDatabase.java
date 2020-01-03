@@ -11,6 +11,7 @@ import com.deploy.database.impl.EventMemberManagerImpl;
 import com.deploy.database.impl.MeTimeManagerImpl;
 import com.deploy.database.impl.MeTimePatternManagerImpl;
 import com.deploy.database.impl.NotificationManagerImpl;
+import com.deploy.database.impl.UserContactManagerImpl;
 import com.deploy.database.impl.UserManagerImpl;
 
 /**
@@ -51,6 +52,7 @@ public class CenesDatabase {
             db.execSQL(EventManagerImpl.createTableQuery);
             db.execSQL(EventMemberManagerImpl.createTableQuery);
             db.execSQL(CenesUserManagerImpl.createTableQuery);
+            db.execSQL(UserContactManagerImpl.createUserContactTableQuery);
             db.execSQL(NotificationManagerImpl.CreateTableQuery);
             db.execSQL(MeTimeManagerImpl.CreateTableQuery);
             db.execSQL(MeTimePatternManagerImpl.CreateTableQuery);

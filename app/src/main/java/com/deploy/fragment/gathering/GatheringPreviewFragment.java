@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.provider.Telephony;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.util.Log;
@@ -23,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -62,17 +62,21 @@ public class GatheringPreviewFragment extends CenesFragment {
     private int SMS_COMPOSE_RESULT_CODE = 1001;
 
     private View fragmentView;
-    private ImageView ivEventPicture, ivAcceptSendIcon, ivEditRejectIcon, ivDeleteIcon;
+    private ImageView ivEventPicture, ivAcceptSendIcon, ivEditRejectIcon, ivDeleteIcon, ivCardSwipeArrow;
     private TextView tvEventTitle, tvEventDate, tvEventDescriptionDialogText;
     private RelativeLayout rlGuestListBubble, rlLocationBubble, rlDescriptionBubble, rlShareBubble;
     private RelativeLayout rvEventDescriptionDialog;
     private RelativeLayout rlDescriptionBubbleBackground;
     private ImageView ivDescriptionBubbleIcon;
+    private RoundedImageView ivDescProfilePic;
     private CardView tinderCardView;
     private RelativeLayout rlParentVew, rlSkipText;
+    private RelativeLayout rlInvitationView, rlWelcomeInvitation;
     private RoundedImageView ivProfilePicView;
     private ImageView invitationAcceptSpinner, invitationRejectSpinner;
+    private LinearLayout llBottomButtons, llEventDetails;
 
+    public Fragment sourceFragment;
     private CenesApplication cenesApplication;
     private InternetManager internetManager;
     private VelocityTracker mVelocityTracker = null;
@@ -92,6 +96,7 @@ public class GatheringPreviewFragment extends CenesFragment {
     boolean cardSwipedToExtent;
     boolean isLoggedInUserExistsInMemberList = false;
     private List<EventMember> nonCenesMember;
+    private boolean isNewEvent = false;
 
     @Nullable
     @Override
@@ -118,16 +123,24 @@ public class GatheringPreviewFragment extends CenesFragment {
         rvEventDescriptionDialog = (RelativeLayout) view.findViewById(R.id.rv_event_description_dialog);
         rlDescriptionBubbleBackground = (RelativeLayout) view.findViewById(R.id.rl_description_bubble_background);
         ivDescriptionBubbleIcon = (ImageView) view.findViewById(R.id.iv_description_bubble_icon);
+        ivDescProfilePic = (RoundedImageView) view.findViewById(R.id.iv_desc_profile_pic);
 
         ivAcceptSendIcon = (ImageView) view.findViewById(R.id.iv_accept_icon);
         ivEditRejectIcon = (ImageView) view.findViewById(R.id.iv_edit_reject_icon);
         ivDeleteIcon = (ImageView) view.findViewById(R.id.iv_delete_icon);
         invitationAcceptSpinner = (ImageView) view.findViewById(R.id.iv_invitation_accept_spinner);
         invitationRejectSpinner = (ImageView) view.findViewById(R.id.iv_invitation_decline_spinner);
+        ivCardSwipeArrow = (ImageView) view.findViewById(R.id.iv_card_swipe_arrow);
 
         tinderCardView = (CardView) view.findViewById(R.id.tinderCardView);
         rlParentVew = (RelativeLayout) view.findViewById(R.id.rl_parent_vew);
+        rlWelcomeInvitation = (RelativeLayout) view.findViewById(R.id.rl_welcome_invitation);
+        rlInvitationView = (RelativeLayout) view.findViewById(R.id.rl_invitation_view);
 
+        llBottomButtons = (LinearLayout) view.findViewById(R.id.ll_bottom_buttons);
+        llEventDetails = (LinearLayout) view.findViewById(R.id.ll_event_details);
+
+        ivCardSwipeArrow.setOnClickListener(onClickListener);
         rlGuestListBubble.setOnClickListener(onClickListener);
         rlLocationBubble.setOnClickListener(onClickListener);
         rlDescriptionBubble.setOnClickListener(onClickListener);
@@ -160,11 +173,11 @@ public class GatheringPreviewFragment extends CenesFragment {
 
         if (event != null) {
 
+            if (event.getEventId() == null || event.getEventId().equals(0l)) {
+                rlShareBubble.setVisibility(View.GONE);
+            }
             populateInvitationCard(event);
         }
-
-
-
         return view;
     }
 
@@ -243,6 +256,14 @@ public class GatheringPreviewFragment extends CenesFragment {
                             rlDescriptionBubbleBackground.setBackground(getResources().getDrawable(R.drawable.xml_circle_white));
                             tvEventDescriptionDialogText.setText(event.getDescription());
                             rvEventDescriptionDialog.setVisibility(View.VISIBLE);
+
+                            RequestOptions requestOptions = new RequestOptions();
+                            requestOptions.circleCrop();
+                            requestOptions.placeholder(R.drawable.profile_pic_no_image);
+                            if (eventOwner.getUser() != null) {
+                                Glide.with(getContext()).load(eventOwner.getUser().getPicture()).apply(requestOptions).into(ivDescProfilePic);
+                            }
+
                         } else {
                             hideDescriptionMessage();
                         }
@@ -301,6 +322,61 @@ public class GatheringPreviewFragment extends CenesFragment {
                     ((CenesBaseActivity)getActivity()).replaceFragment(createGatheringFragment, null);
                     break;
 
+                case R.id.iv_card_swipe_arrow:
+
+                    if ((GatheringPreviewFragment.this).event.getScheduleAs() != null && (GatheringPreviewFragment.this).event.getScheduleAs().equals("Notification")) {
+
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                            }
+                        }, 500);
+                    } else {
+
+                        if (!isLoggedInUserExistsInMemberList) {
+
+                            if (GatheringPreviewFragment.this.event != null && GatheringPreviewFragment.this.event.getEventId() != null && loggedInUser.getUserId() != null) {
+
+                                String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=pending";
+                                updateAttendingStatus(queryStr);
+
+                            }
+
+                        }
+
+                        if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+
+                            (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                            pendingEventIndex++;
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    cardSwipedToExtent = false;
+                                    tinderCardView.setX(0);
+                                    tinderCardView.setY(0);
+                                    tinderCardView.setRotation(0.0f);
+                                    populateInvitationCard((GatheringPreviewFragment.this).event);
+                                }
+                            }, 500);
+
+                        } else {
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (getActivity() != null) {
+                                        ((CenesBaseActivity) getActivity()).onBackPressed();
+                                        tinderCardView.setY(0);
+
+                                    }
+                                }
+                            }, 500);
+
+                        }
+                    }
+
+                    break;
                     default:
                         System.out.println("Heyyy you did it.");
             }
@@ -437,7 +513,7 @@ public class GatheringPreviewFragment extends CenesFragment {
                         //ifSwipedRightToLeft = false;
                         ifSwipedUp = false;
                         tinderCardView.setRotation(0);
-                        tinderCardView.setY(-300);
+                        tinderCardView.setY(-500);
 
                         if (cardSwipedToExtent) {
 
@@ -445,11 +521,11 @@ public class GatheringPreviewFragment extends CenesFragment {
                                 @Override
                                 public void run() {
                                     tinderCardView.setX(0);
-                                    tinderCardView.setY(-windowHeight + 400);
+                                    //tinderCardView.setY(-windowHeight + 400);
                                 }
                             }, 500);
 
-                            if (pendingEvents != null && pendingEvents.size() > 0) {
+                            /*if (pendingEvents != null && pendingEvents.size() > 0) {
                                 new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
@@ -459,7 +535,7 @@ public class GatheringPreviewFragment extends CenesFragment {
                                         populateInvitationCard((GatheringPreviewFragment.this).event);
                                     }
                                 }, 500);
-                            }
+                            }*/
 
                         } else {
 
@@ -625,14 +701,11 @@ public class GatheringPreviewFragment extends CenesFragment {
                                             @Override
                                             public void run() {
 
-                                                ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                                ((CenesBaseActivity) getActivity()).clearAllFragmentsInBackstack();
                                                 ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
                                             }
                                         }, 1000);
                                     }
-
-
-
                                 }
                             } else {
 
@@ -657,6 +730,13 @@ public class GatheringPreviewFragment extends CenesFragment {
                                                 new Handler().postDelayed(new Runnable() {
                                                     @Override
                                                     public void run() {
+                                                        if (sourceFragment != null) {
+                                                            if (sourceFragment instanceof HomeFragment) {
+                                                                ((HomeFragment) sourceFragment).initialSync();
+                                                            } else if (sourceFragment instanceof GatheringsFragment) {
+                                                                ((GatheringsFragment) sourceFragment).refreshSelectedTabData();
+                                                            }
+                                                        }
                                                         ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
                                                     }
                                                 }, 500);
@@ -695,15 +775,7 @@ public class GatheringPreviewFragment extends CenesFragment {
                                     invitationRejectSpinner.setVisibility(View.VISIBLE);
                                     rotate(360, invitationRejectSpinner);
 
-                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=NotGoing";
-                                    updateAttendingStatus(queryStr);
-
-                                    if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
-
-                                        (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
-                                        pendingEventIndex++;
-
-                                    } else {
+                                    if ((GatheringPreviewFragment.this).event.getScheduleAs() != null && (GatheringPreviewFragment.this).event.getScheduleAs().equals("Notification")) {
 
                                         new Handler().postDelayed(new Runnable() {
                                             @Override
@@ -711,8 +783,34 @@ public class GatheringPreviewFragment extends CenesFragment {
                                                 ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
                                             }
                                         }, 500);
+                                    } else {
+                                        String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=NotGoing";
+                                        updateAttendingStatus(queryStr);
 
+                                        if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+
+                                            (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                            pendingEventIndex++;
+
+                                        } else {
+
+                                            new Handler().postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (sourceFragment != null) {
+                                                        if (sourceFragment instanceof HomeFragment) {
+                                                            ((HomeFragment) sourceFragment).initialSync();
+                                                        } else if (sourceFragment instanceof GatheringsFragment) {
+                                                            ((GatheringsFragment) sourceFragment).refreshSelectedTabData();
+                                                        }
+                                                    }
+                                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
+                                                }
+                                            }, 500);
+
+                                        }
                                     }
+
 
                                 }
 
@@ -742,47 +840,60 @@ public class GatheringPreviewFragment extends CenesFragment {
 
                     }
                     if ((yCord - y) < -300) {
-                        //ivAcceptSendIcon.setAlpha(0.0f);
-                        //rlSkipText.setAlpha(1.0f)
+
+
                         Log.e("Skip Text : ", "SWipppppeedddddd uuppppppppppppppp "+rlSkipText.getScaleX()+"");
                         ifSwipedUp = true;
                         if (!cardSwipedToExtent) {
                             cardSwipedToExtent = true;
+                            tinderCardView.setY(-300);
+                           /*
 
-                            if (!isLoggedInUserExistsInMemberList) {
-
-                                if (GatheringPreviewFragment.this.event != null && GatheringPreviewFragment.this.event.getEventId() != null && loggedInUser.getUserId() != null) {
-
-                                    String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=pending";
-                                    updateAttendingStatus(queryStr);
-
-                                }
-
-                            }
-
-                            if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
-
-                                (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
-                                pendingEventIndex++;
-
-                            } else {
+                            if ((GatheringPreviewFragment.this).event.getScheduleAs() != null && (GatheringPreviewFragment.this).event.getScheduleAs().equals("Notification")) {
 
                                 new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        if (getActivity() != null) {
-                                            ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
-                                        }
+                                        ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack();
                                     }
                                 }, 500);
+                            } else {
 
+                                if (!isLoggedInUserExistsInMemberList) {
+
+                                    if (GatheringPreviewFragment.this.event != null && GatheringPreviewFragment.this.event.getEventId() != null && loggedInUser.getUserId() != null) {
+
+                                        String queryStr = "eventId="+GatheringPreviewFragment.this.event.getEventId()+"&userId="+loggedInUser.getUserId()+"&status=pending";
+                                        updateAttendingStatus(queryStr);
+
+                                    }
+
+                                }
+
+                                if (pendingEvents != null && pendingEvents.size() > 0 && pendingEventIndex < pendingEvents.size()) {
+
+                                    (GatheringPreviewFragment.this).event = pendingEvents.get(pendingEventIndex);
+                                    pendingEventIndex++;
+
+                                } else {
+
+                                    new Handler().postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (getActivity() != null) {
+                                                ((CenesBaseActivity) getActivity()).onBackPressed();
+
+                                            }
+                                        }
+                                    }, 500);
+
+                                }
                             }
 
-                        }
+                        */}
+
 
                     } else {
-                        //ifSwipedUp = false;
-                        //rlSkipText.setAlpha(0.0f);
                     }
 
                     break;
@@ -888,32 +999,45 @@ public class GatheringPreviewFragment extends CenesFragment {
 
         final String eventDate = CenesUtils.EEEMMMMdd.format(new Date(event.getStartTime())) + "," + CenesUtils.hmmaa.format(new Date(event.getStartTime())) + "-" + CenesUtils.hmmaa.format(new Date(event.getEndTime()));
         tvEventDate.setText(eventDate);
-        if (!CenesUtils.isEmpty(event.getEventPicture())) {
-            if (((CenesBaseActivity)getActivity()) != null) {
 
-                Glide.with(getContext())
-                        .load(event.getThumbnail())
-                        .into(new SimpleTarget<Drawable>() {
-                            @Override
-                            public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+        if (event.getScheduleAs() != null && event.getScheduleAs().equals("Notification")) {
 
-                                ivEventPicture.setImageDrawable(resource);
+            ///ivEventPicture.setImageDrawable(getResources().getDrawable(R.drawable.welcome_invitation_card));
+            rlInvitationView.setVisibility(View.GONE);
+            rlWelcomeInvitation.setVisibility(View.VISIBLE);
 
-                                Glide.with(getContext())
-                                        .load(event.getEventPicture()).into(new SimpleTarget<Drawable>() {
-                                    @Override
-                                    public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
-                                        ivEventPicture.setImageDrawable(resource);
-                                    }
-                                });
+        } else {
+            rlInvitationView.setVisibility(View.VISIBLE);
+            rlWelcomeInvitation.setVisibility(View.GONE);
 
-                            }
-                        });
+            if (!CenesUtils.isEmpty(event.getEventPicture())) {
+                if (((CenesBaseActivity)getActivity()) != null) {
+
+                    Glide.with(getContext())
+                            .load(event.getThumbnail())
+                            .into(new SimpleTarget<Drawable>() {
+                                @Override
+                                public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+
+                                    ivEventPicture.setImageDrawable(resource);
+
+                                    Glide.with(getContext())
+                                            .load(event.getEventPicture()).into(new SimpleTarget<Drawable>() {
+                                        @Override
+                                        public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+                                            ivEventPicture.setImageDrawable(resource);
+                                        }
+                                    });
+
+                                }
+                            });
 
 
 
+                }
             }
         }
+
 
         if (event.getEventId() != null) {
             if (event.isEditMode()) {
@@ -922,6 +1046,7 @@ public class GatheringPreviewFragment extends CenesFragment {
                 ivAcceptSendIcon.setImageResource(R.drawable.invitation_accept_button);
             }
         } else {
+            isNewEvent = true;
             ivAcceptSendIcon.setImageResource(R.drawable.invitation_send_button);
         }
 
@@ -959,9 +1084,10 @@ public class GatheringPreviewFragment extends CenesFragment {
             }
         }
 
+        //We will only filter thoses messages whose event_member_id not generated yet.
         nonCenesMember = new ArrayList<>();
         for (EventMember eventMember: event.getEventMembers()) {
-            if (eventMember.getUserId() == null || eventMember.getUserId() == 0) {
+            if ((eventMember.getUserId() == null || eventMember.getUserId() == 0) && (eventMember.getEventMemberId() == null || eventMember.getEventMemberId() == 0)) {
                 nonCenesMember.add(eventMember);
             }
         }
@@ -992,7 +1118,7 @@ public class GatheringPreviewFragment extends CenesFragment {
         } else {
 
             //If Logged In User is the owner of the event
-            if (eventOwner != null && eventOwner.getUserId() != null && eventOwner.getUser().getUserId().equals(loggedInUser.getUserId())) {
+            if (eventOwner != null && eventOwner.getUserId() != null && eventOwner.getUserId().equals(loggedInUser.getUserId())) {
 
                 isNewOrEditMode = true;
                 if (event.isEditMode()) {
@@ -1045,7 +1171,7 @@ public class GatheringPreviewFragment extends CenesFragment {
 
         //Stopping Card from swipe cases
         //Case 1  - Offline
-        if (event.getEventId() != null && event.getEventId() != 0 && !internetManager.isInternetConnection(getCenesActivity())) {
+        if (getCenesActivity() != null && event.getEventId() != null && event.getEventId() != 0 && !internetManager.isInternetConnection(getCenesActivity())) {
             enableLeftToRightSwipe = false;
             enableRightToLeftSwipe = false;
         }
@@ -1055,7 +1181,13 @@ public class GatheringPreviewFragment extends CenesFragment {
             enableRightToLeftSwipe = false;
         }
 
-
+        if (event.getScheduleAs() != null && event.getScheduleAs().equals("Notification")) {
+            enableLeftToRightSwipe = true;
+            enableRightToLeftSwipe = true;
+            ivEditRejectIcon.setImageResource(R.drawable.invitation_decline_button);
+            ivDeleteIcon.setVisibility(View.GONE);
+            isNewOrEditMode = false;
+        }
     }
 
     public void sendSmsToNonCenesMembers(List<EventMember> nonCenesMemberList, Event event) {

@@ -1,5 +1,6 @@
 package com.deploy.adapter;
 
+import android.media.Image;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +35,7 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
         TextView tvName, tvNonCenesLabel;
         RelativeLayout container;
         ImageView ibDeleteMember, ivDeleteNonCenesMember;
+        ImageView ivHostCircleMember;
 
         public MyViewHolder(View view) {
             super(view);
@@ -43,6 +45,7 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
             container = (RelativeLayout) view.findViewById(R.id.container);
             ibDeleteMember = (ImageView) view.findViewById(R.id.ib_delete_member);
             ivDeleteNonCenesMember = (ImageView) view.findViewById(R.id.ib_delete_nonmember);
+            ivHostCircleMember = (ImageView) view.findViewById(R.id.iv_host_circle_member);
 
             rvNonCenesLayout = (RelativeLayout) view.findViewById(R.id.rv_non_cenes_layout);
             rvCenesLayout = (RelativeLayout) view.findViewById(R.id.rv_cenes_layout);
@@ -65,19 +68,57 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
     public void onBindViewHolder(final FriendsCollectionViewAdapter.MyViewHolder holder, final int position) {
         try {
             final EventMember invFrn = jsonObjectArrayList.get(position);
-            holder.tvName.setText(invFrn.getName());
 
             System.out.println("REsult of condition : "+invFrn.getFriendId()+", asdfghj : "+(invFrn.getFriendId() != null && invFrn.getFriendId() == context.loggedInUser.getUserId()));
-            if (invFrn.getFriendId() != null && invFrn.getFriendId() == context.loggedInUser.getUserId()) {
+            if (invFrn.getFriendId() != null && invFrn.getFriendId().equals(context.loggedInUser.getUserId()) || (invFrn.getFriendId() == null && invFrn.getUserId() != null &&  invFrn.getUserId().equals(context.loggedInUser.getUserId()) && invFrn.getUser() != null) ) {
                 holder.ibDeleteMember.setVisibility(View.GONE);
+                holder.ivHostCircleMember.setVisibility(View.GONE);
             } else {
                 holder.ibDeleteMember.setVisibility(View.VISIBLE);
+                holder.ivHostCircleMember.setVisibility(View.VISIBLE);
             }
 
-            if (invFrn.getFriendId() == null || (invFrn.getCenesMember() != null && invFrn.getCenesMember().equals("no"))) {
+            //lets first check the condition for LoggediN User
+            if (invFrn.getFriendId() != null && invFrn.getFriendId().equals(context.loggedInUser.getUserId()) || (invFrn.getFriendId() == null && invFrn.getUserId() != null &&  invFrn.getUserId().equals(context.loggedInUser.getUserId()) && invFrn.getUser() != null))  {
+                holder.rvNonCenesLayout.setVisibility(View.GONE);
+                holder.rvCenesLayout.setVisibility(View.VISIBLE);
+
+                if (invFrn.getUser() != null && invFrn.getUser().getName() != null) {
+                    holder.tvName.setText(invFrn.getUser().getName());
+                } else if (invFrn.getName() != null) {
+                    holder.tvName.setText(invFrn.getName());
+                }
+                if (invFrn.getUser() != null && invFrn.getUser().getPicture() != null) {
+                    Glide.with(context).load(invFrn.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(holder.ivFriend);
+                } else {
+                    holder.ivFriend.setImageResource(R.drawable.profile_pic_no_image);
+                }
+            } else if ((invFrn.getFriendId() != null || invFrn.getUserId() != null) && invFrn.getUser() != null) {
+
+                holder.rvNonCenesLayout.setVisibility(View.GONE);
+                holder.rvCenesLayout.setVisibility(View.VISIBLE);
+                if (invFrn.getUser() != null && invFrn.getUser().getName() != null) {
+                    holder.tvName.setText(invFrn.getUser().getName());
+                } else if (invFrn.getName() != null) {
+                    holder.tvName.setText(invFrn.getName());
+                }
+                if (invFrn.getUser() != null && invFrn.getUser().getPicture() != null) {
+                    Glide.with(context).load(invFrn.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(holder.ivFriend);
+                } else {
+                    holder.ivFriend.setImageResource(R.drawable.profile_pic_no_image);
+                }
+
+            } else {
 
                 String imageName = "";
-                String[] titleArr = invFrn.getName().split(" ");
+                String userName = "";
+                if (invFrn.getUserContact() != null && invFrn.getUserContact().getName() != null) {
+                    userName = invFrn.getUserContact().getName();
+                } else if (invFrn.getName() != null) {
+                    userName = invFrn.getName();
+                }
+                holder.tvName.setText(userName);
+                String[] titleArr = userName.split(" ");
                 int i=0;
                 for (String str: titleArr) {
                     if (i > 1) {
@@ -90,19 +131,8 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
                 holder.tvNonCenesLabel.setText(imageName);
                 holder.rvCenesLayout.setVisibility(View.GONE);
                 holder.rvNonCenesLayout.setVisibility(View.VISIBLE);
-
-
-            } else {
-
-                holder.rvNonCenesLayout.setVisibility(View.GONE);
-                holder.rvCenesLayout.setVisibility(View.VISIBLE);
-
-                if (invFrn.getUser() != null && invFrn.getUser().getPicture() != null) {
-                    Glide.with(context).load(invFrn.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(holder.ivFriend);
-                } else {
-                    holder.ivFriend.setImageResource(R.drawable.profile_pic_no_image);
-                }
             }
+
             holder.ibDeleteMember.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -116,12 +146,12 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
                         //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
                         //checkBoxToUnSelect.setSelected(false);
                         jsonObjectArrayList.remove(position);
-                        recyclerView.removeViewAt(position);
+                        //recyclerView.removeViewAt(position);
                         notifyItemRemoved(position);
                         notifyItemRangeChanged(position, jsonObjectArrayList.size());
 
-                        if (context.getSearchFriendAdapter() != null) {
-                            context.getSearchFriendAdapter().notifyDataSetChanged();
+                        if (context.getAllContactsExpandableAdapter() != null) {
+                            context.getAllContactsExpandableAdapter().notifyDataSetChanged();
                         }
 
                         if (context.checkboxObjectHolder.size() == 0) {
@@ -146,11 +176,11 @@ public class FriendsCollectionViewAdapter extends RecyclerView.Adapter<FriendsCo
                         //CheckBox checkBoxToUnSelect = context.checkboxButtonHolder.get(objectToRemove.getUserContactId());
                         //checkBoxToUnSelect.setSelected(false);
                         jsonObjectArrayList.remove(position);
-                        recyclerView.removeViewAt(position);
+                        //recyclerView.removeViewAt(position);
                         notifyItemRemoved(position);
                         notifyItemRangeChanged(position, jsonObjectArrayList.size());
-                        if (context.getSearchFriendAdapter() != null) {
-                            context.getSearchFriendAdapter().notifyDataSetChanged();
+                        if (context.getAllContactsExpandableAdapter() != null) {
+                            context.getAllContactsExpandableAdapter().notifyDataSetChanged();
                         }
 
                         if (context.checkboxObjectHolder.size() == 0) {

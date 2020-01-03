@@ -20,9 +20,18 @@ public class UserAPI {
     public static String post_saveHolidayCalendar = "/api/user/holidayCalendar";
     public static String post_update_profile_data = "/api/user/update/";
     public static String post_userdetails = "/api/user/updateDetails";
+    public static String post_update_password = "/auth/updatePassword";
+    public static String post_delete_user_by_phone_password = "/api/deleteUserByPhonePassword";
 
     //GET
+    public static String get_user_ip = "https://api6.ipify.org/?format=json";
+    public static String get_country_by_ip_address = "/auth/getCountryByIpAddress";
+
     public static String get_holidayCalendarByUserId = "/api/user/holidayCalendarByUserId";
     public static String get_forget_password_api = "/auth/forgetPassword";
+
+    public static String get_forget_password_email_api = "/auth/forgetPassword/v2";
+    public static String get_forget_password_send_email = "/auth/forgetPassword/v2/sendEmail";
+
 
 }

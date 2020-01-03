@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -15,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +33,7 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
+import com.deploy.dto.AsyncTaskDto;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.util.CenesConstants;
 import com.deploy.util.CenesUtils;
@@ -48,7 +52,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.plus.People;
+import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
@@ -77,6 +86,7 @@ public class SignupOptionsFragment extends CenesFragment {
     private User loggedInUser;
     private CallbackManager callbackManager;
     private GoogleSignInClient mGoogleSignInClient;
+    private String signupType = "Facebook";
 
     @Nullable
     @Override
@@ -115,6 +125,8 @@ public class SignupOptionsFragment extends CenesFragment {
 
         Spanned htmlAsSpanned = Html.fromHtml(getString(R.string.tandc_text)); // used by TextView
         tvTandCText.setText(htmlAsSpanned);
+        tvTandCText.setMovementMethod(LinkMovementMethod.getInstance());
+
         return  view;
     }
 
@@ -188,8 +200,9 @@ public class SignupOptionsFragment extends CenesFragment {
                             loggedInUser.setPicture(dataObj.getJSONObject("data").getString("url"));
                         }
 
-                        String email;
+                        String email = "";
                         if (object.has("email")) {
+                            email = object.getString("email");
                             loggedInUser.setEmail(object.getString("email"));
                         }
 
@@ -212,7 +225,8 @@ public class SignupOptionsFragment extends CenesFragment {
 
                         SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
                         ((GuestActivity)getActivity()).replaceFragment(signupStepSuccessFragment,  SignupOptionsFragment.TAG);*/
-                        socialSignupRequest(loggedInUser);
+                        signupType = "Facebook";                        
+			socialSignupRequest(loggedInUser);
                         Log.i("RESULTS : ", object.getString("email"));
                     }catch (Exception e){
                         e.printStackTrace();
@@ -288,6 +302,7 @@ public class SignupOptionsFragment extends CenesFragment {
                                 SignupStepSuccessFragment signupStepSuccessFragment = new SignupStepSuccessFragment();
                                 ((GuestActivity)getActivity()).clearFragmentsAndOpen(signupStepSuccessFragment);
                             } else {
+                                getContacts();
                                 startActivity(new Intent((GuestActivity)getActivity(), CenesBaseActivity.class));
                                 getActivity().finish();
                             }
@@ -317,8 +332,7 @@ public class SignupOptionsFragment extends CenesFragment {
     public void googleSignInCall() {
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail().
-                        requestServerAuthCode(CenesConstants.GoogleWebClientid, true).build();
+                .requestEmail().requestProfile().requestIdToken(CenesConstants.GoogleWebClientid).requestServerAuthCode(CenesConstants.GoogleWebClientid, true).requestScopes(new Scope(Scopes.PROFILE)).build();
 
         try {
             mGoogleSignInClient = GoogleSignIn.getClient(getCenesActivity(), gso);
@@ -433,13 +447,17 @@ public class SignupOptionsFragment extends CenesFragment {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
 
+            Uri photoUri = account.getPhotoUrl();
+            if (photoUri != null) {
+                loggedInUser.setPicture(account.getPhotoUrl().toString());
+            }
             // Signed in successfully, show authenticated UI.
-            System.out.println(account.getId());
-            System.out.println(account.getIdToken());
             loggedInUser.setAuthType(User.AuthenticateType.google);
             loggedInUser.setName(account.getDisplayName());
             loggedInUser.setEmail(account.getEmail());
             loggedInUser.setGoogleId(account.getId());
+
+            signupType = "Google";
             socialSignupRequest(loggedInUser);
 
         } catch (ApiException e) {

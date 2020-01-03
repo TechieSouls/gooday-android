@@ -167,7 +167,7 @@ public class InviteesFragment extends CenesFragment {
                 RoundedImageView profileImage = new RoundedImageView(getActivity());
                 profileImage.setLayoutParams(roundedImageViewParams);
 
-                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(profileImage);
+                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(profileImage);
                 guestLinearLayout.addView(profileImage);
             }
             LinearLayout.LayoutParams textViewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -229,7 +229,7 @@ public class InviteesFragment extends CenesFragment {
                 RoundedImageView profileImage = new RoundedImageView(getActivity());
                 profileImage.setLayoutParams(roundedImageViewParams);
 
-                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(profileImage);
+                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(profileImage);
                 guestLinearLayout.addView(profileImage);
             }
             LinearLayout.LayoutParams textViewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -291,7 +291,7 @@ public class InviteesFragment extends CenesFragment {
                 RoundedImageView profileImage = new RoundedImageView(getActivity());
                 profileImage.setLayoutParams(roundedImageViewParams);
 
-                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.cenes_user_no_image)).into(profileImage);
+                Glide.with(this).load(eventMember.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(profileImage);
                 guestLinearLayout.addView(profileImage);
             }
             LinearLayout.LayoutParams textViewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);

@@ -1,7 +1,5 @@
 package com.deploy.bo;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
  * Created by mandeep on 30/8/17.
  */
@@ -21,6 +19,9 @@ public class EventMember {
     private String phone;
     private boolean owner;
     private User user;
+
+    private UserContact userContact;
+
     private Integer friendId;
     private String cenesMember;
 
@@ -118,6 +119,14 @@ public class EventMember {
 
     public Integer getFriendId() {
         return friendId;
+    }
+
+    public UserContact getUserContact() {
+        return userContact;
+    }
+
+    public void setUserContact(UserContact userContact) {
+        this.userContact = userContact;
     }
 
     public void setFriendId(Integer friendId) {

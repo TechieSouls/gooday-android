@@ -22,7 +22,6 @@ import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.HolidayCalendar;
 import com.deploy.bo.User;
@@ -162,7 +161,7 @@ public class HolidaySyncFragment extends CenesFragment {
 
             if (user != null && !CenesUtils.isEmpty(user.getPicture())) {
                 // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
-                Glide.with(HolidaySyncFragment.this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
+                Glide.with(HolidaySyncFragment.this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homeProfilePic);
             }
             /*user = userManager.getUser();
             if (user != null && user.getPicture() != null && user.getPicture() != "null") {
@@ -334,9 +333,7 @@ public class HolidaySyncFragment extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof ReminderActivity) {
-                ((ReminderActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof GatheringScreenActivity) {
+             if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();

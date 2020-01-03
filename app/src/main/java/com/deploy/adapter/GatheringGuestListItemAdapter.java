@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.deploy.R;
+import com.deploy.activity.CenesBaseActivity;
 import com.deploy.bo.EventMember;
 import com.deploy.fragment.gathering.GatheringGuestListFragment;
 import com.deploy.fragment.gathering.GatheringPreviewFragment;
@@ -64,34 +65,70 @@ public class GatheringGuestListItemAdapter extends BaseAdapter {
             viewHolder = (ViewHolder)convertView.getTag();
         }
 
-        EventMember eventMember = getItem(position);
+        final EventMember eventMember = getItem(position);
 
         System.out.println(eventMember.toString());
         String host = "";
         if (eventMember.getUserId() != null && eventMember.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
             host = " (Host)";
         }
-        if (!CenesUtils.isEmpty(eventMember.getName())) {
+        if (eventMember.getUser() != null && !CenesUtils.isEmpty(eventMember.getUser().getName())) {
+            viewHolder.tvCenesName.setText(eventMember.getUser().getName()+" "+host);
+        } else if (!CenesUtils.isEmpty(eventMember.getName())) {
             viewHolder.tvCenesName.setText(eventMember.getName()+" "+host);
+        } else if (eventMember.getUserContact() != null && eventMember.getUserContact().getName() != null) {
+            viewHolder.tvCenesName.setText(eventMember.getUserContact().getName()+" "+host);
         } else {
             viewHolder.tvCenesName.setText("  "+host);
         }
 
-        if (eventMember.getUser() != null && !CenesUtils.isEmpty(eventMember.getUser().getName()) && gatheringGuestListFragment.loggedInUser.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
-            viewHolder.tvPhonebookName.setText(eventMember.getUser().getName());
-        } else {
-            viewHolder.tvPhonebookName.setText("");
-        }
+        //if (this.gatheringGuestListFragment.event.getCreatedById().equals(this.gatheringGuestListFragment.loggedInUser.getUserId())) {
 
-        viewHolder.ivProfilePic.setImageResource(R.drawable.profile_pic_no_image);
+           // if (eventMember.getUserId() != null && eventMember.getUserId() != 0 && eventMember.getUser() != null && !CenesUtils.isEmpty(eventMember.getUser().getName())) {
+                if (eventMember.getUserId() != null && eventMember.getUserId() != 0 && !eventMember.getUserId().equals(gatheringGuestListFragment.loggedInUser.getUserId()) && eventMember.getUserContact() != null && eventMember.getUserContact().getName() != null) {
+                    viewHolder.tvPhonebookName.setText(eventMember.getUserContact().getName());
+                } else if (eventMember.getUserId() != null && eventMember.getUserId() != 0 && eventMember.getUserId().equals(gatheringGuestListFragment.loggedInUser.getUserId())) {
+                    viewHolder.tvPhonebookName.setText("You");
+                } //else if (eventMember.getName() != null && !gatheringGuestListFragment.loggedInUser.getUserId().equals(gatheringGuestListFragment.event.getCreatedById())) {
+                 //   viewHolder.tvPhonebookName.setText(eventMember.getName());
+                //}
+                else {
+                    viewHolder.tvPhonebookName.setText("");
+                }
+            //}
+        //} else {
+        //    viewHolder.tvPhonebookName.setText("");
+        //}
+
+
+        String profilePic = "";
+        viewHolder.ivProfilePic.setImageDrawable(gatheringGuestListFragment.getResources().getDrawable(R.drawable.profile_pic_no_image));
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.placeholder(R.drawable.profile_pic_no_image);
         requestOptions.circleCrop();
         if (!CenesUtils.isEmpty(eventMember.getPicture())) {
+
+            profilePic = eventMember.getPicture();
             Glide.with(gatheringGuestListFragment.getContext()).load(eventMember.getPicture()).apply(requestOptions).into(viewHolder.ivProfilePic);
+
         } else if (eventMember.getUser() != null && !CenesUtils.isEmpty(eventMember.getUser().getPicture())) {
+
+            profilePic = eventMember.getUser().getPicture();
             Glide.with(gatheringGuestListFragment.getContext()).load(eventMember.getUser().getPicture()).apply(requestOptions).into(viewHolder.ivProfilePic);
+
+        } else {
+
+            viewHolder.ivProfilePic.setImageDrawable(gatheringGuestListFragment.getResources().getDrawable(R.drawable.profile_pic_no_image));
         }
+
+        final String profilePicTemp = profilePic;
+        viewHolder.ivProfilePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((CenesBaseActivity)gatheringGuestListFragment.getActivity()).zoomImageFromThumb(viewHolder.ivProfilePic, profilePicTemp);
+
+            }
+        });
 
 
         return convertView;

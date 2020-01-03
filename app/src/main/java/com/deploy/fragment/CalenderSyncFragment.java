@@ -260,7 +260,7 @@ public class CalenderSyncFragment extends CenesFragment implements GoogleApiClie
             if (loggedInUser != null && loggedInUser.getPicture() != null && loggedInUser.getPicture() != "null") {
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.circleCrop();
-                requestOptions.placeholder(R.drawable.default_profile_icon);
+                requestOptions.placeholder(R.drawable.profile_pic_no_image);
                 Glide.with(getActivity()).load(loggedInUser.getPicture()).apply(requestOptions).into(ivProfile);
             }
 

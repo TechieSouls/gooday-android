@@ -14,7 +14,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="45dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/profile_icon" />
+        android:src="@drawable/profile_pic_no_image" />
 
     <com.deploy.util.CenesTextView
         android:id="@+id/editText"

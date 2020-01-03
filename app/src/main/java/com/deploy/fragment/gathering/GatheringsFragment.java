@@ -60,6 +60,8 @@ import java.util.Map;
 public class GatheringsFragment extends CenesFragment {
 
     public final static String TAG = "GatheringsFragment";
+    public enum TabSeleted {Accepted, Pending, Declined};
+    private TabSeleted tabSeleted = TabSeleted.Accepted;
 
     private int CREATE_GATHERING_RESULT_CODE = 1001;
 
@@ -91,6 +93,9 @@ public class GatheringsFragment extends CenesFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
+        if (fragmentView != null) {
+            return fragmentView;
+        }
         View view = inflater.inflate(R.layout.fragment_gatherings, container, false);
         fragmentView = view;
         init(view);
@@ -99,7 +104,7 @@ public class GatheringsFragment extends CenesFragment {
         User user = userManager.getUser();
         if (user != null && user.getPicture() != null && user.getPicture() != "null") {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
-            Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homePageProfilePic);
+            Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homePageProfilePic);
         }
 
         ((CenesBaseActivity)getActivity()).rlLoadingBlock.setVisibility(View.GONE);
@@ -199,10 +204,10 @@ public class GatheringsFragment extends CenesFragment {
             return;
         }
         if (response != null) {
-
+            gatheringsEventsList.invalidate();
             List<String> headers = (List<String>) response.get("headers");
             Map<String, List<Event>> eventMap = (Map<String, List<Event>>) response.get("eventMap");
-            listAdapter = new EventCardExpandableAdapter((CenesBaseActivity)getActivity(), fragmentManager,  headers, eventMap, isInvitation);
+            listAdapter = new EventCardExpandableAdapter(GatheringsFragment.this, fragmentManager,  headers, eventMap, isInvitation);
 
             gatheringsEventsList.setVisibility(View.VISIBLE);
             gatheringsEventsList.setAdapter(listAdapter);
@@ -224,6 +229,7 @@ public class GatheringsFragment extends CenesFragment {
                     ((CenesBaseActivity)getActivity()).mDrawerLayout.openDrawer(GravityCompat.START);
                     break;
                 case R.id.confirmed_btn:
+                    tabSeleted = TabSeleted.Accepted;
                     selectTab(confirmedBtn);
                     gatheringsText.setText("Your Gatherings");
                     //new GatheringsTask().execute("Going");
@@ -231,7 +237,6 @@ public class GatheringsFragment extends CenesFragment {
                     List<Event> events = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.ACCEPTED.toString());
                     Map<String, Object> parsedResponse = processGatheringApiResult(events);
                     updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.ACCEPTED.toString());
-
                     if (internetManager.isInternetConnection(getCenesActivity())) {
                         new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
                             @Override
@@ -255,13 +260,14 @@ public class GatheringsFragment extends CenesFragment {
 
                     break;
                 case R.id.maybe_btn:
+                    tabSeleted = TabSeleted.Pending;
                     selectTab(maybeBtn);
                     gatheringsText.setText("Your Invitations");
                     //new GatheringsTask().execute("pending");
 
                     List<Event> pendingEvents = eventManagerImpl.fetchAllEventsByScreen(Event.EventDisplayScreen.PENDING.toString());
                     Map<String, Object> parsedPendingResponse = processGatheringApiResult(pendingEvents);
-                    updateUIAfterGatheringAsyncTask(parsedPendingResponse, false, Event.EventDisplayScreen.PENDING.toString());
+                    updateUIAfterGatheringAsyncTask(parsedPendingResponse, true, Event.EventDisplayScreen.PENDING.toString());
 
                     if (internetManager.isInternetConnection(getCenesActivity())) {
                         new GatheringAsyncTask.GatheringsTask(new GatheringAsyncTask.GatheringsTask.AsyncResponse() {
@@ -278,7 +284,7 @@ public class GatheringsFragment extends CenesFragment {
                                     eventManagerImpl.addEvent(events, Event.EventDisplayScreen.PENDING.toString());
 
                                     Map<String, Object> parsedResponse = processGatheringApiResult(events);
-                                    updateUIAfterGatheringAsyncTask(parsedResponse, false, Event.EventDisplayScreen.PENDING.toString());
+                                    updateUIAfterGatheringAsyncTask(parsedResponse, true, Event.EventDisplayScreen.PENDING.toString());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -287,6 +293,7 @@ public class GatheringsFragment extends CenesFragment {
                     }
                     break;
                 case R.id.declined_btn:
+                    tabSeleted = TabSeleted.Declined;
                     selectTab(declinedBtn);
                     gatheringsText.setText("Your Invitations");
                     //new GatheringsTask().execute("NotGoing");
@@ -346,6 +353,38 @@ public class GatheringsFragment extends CenesFragment {
         declinedBtn.setBackground(getResources().getDrawable(R.drawable.border_bottom_gray));
         declinedBtn.setTextColor(getResources().getColor(R.color.font_grey_color));
         declinedBtn.setTypeface(Typeface.DEFAULT);
+
+        selection.setBackground(getResources().getDrawable(R.drawable.border_bottom_orange));
+        selection.setTextColor(getResources().getColor(R.color.cenes_new_orange));
+        selection.setTypeface(Typeface.DEFAULT_BOLD);
+    }
+
+    public void refreshSelectedTabData() {
+        TextView selection = null;
+        confirmedBtn.setBackground(getResources().getDrawable(R.drawable.border_bottom_gray));
+        confirmedBtn.setTextColor(getResources().getColor(R.color.font_grey_color));
+        confirmedBtn.setTypeface(Typeface.DEFAULT);
+
+        maybeBtn.setBackground(getResources().getDrawable(R.drawable.border_bottom_gray));
+        maybeBtn.setTextColor(getResources().getColor(R.color.font_grey_color));
+        maybeBtn.setTypeface(Typeface.DEFAULT);
+
+        declinedBtn.setBackground(getResources().getDrawable(R.drawable.border_bottom_gray));
+        declinedBtn.setTextColor(getResources().getColor(R.color.font_grey_color));
+        declinedBtn.setTypeface(Typeface.DEFAULT);
+
+        if (tabSeleted.equals(TabSeleted.Accepted)) {
+            selection = confirmedBtn;
+            confirmedBtn.performClick();
+        } else if (tabSeleted.equals(TabSeleted.Pending)) {
+            selection = maybeBtn;
+            maybeBtn.performClick();
+
+        } else if (tabSeleted.equals(TabSeleted.Declined)) {
+            selection = declinedBtn;
+            declinedBtn.performClick();
+
+        }
 
         selection.setBackground(getResources().getDrawable(R.drawable.border_bottom_orange));
         selection.setTextColor(getResources().getColor(R.color.cenes_new_orange));

@@ -21,6 +21,7 @@ import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.Manager.ValidationManager;
 import com.deploy.R;
+import com.deploy.activity.GuestActivity;
 import com.deploy.activity.SignInActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.coremanager.CoreManager;
@@ -38,10 +39,8 @@ public class ForgotPasswordFragment extends CenesFragment {
     public final static String TAG = "ForgotPasswordFragment";
 
     Button buttonForgotPasswordSubmit;
-    LinearLayout llSigningBackBtn;
     EditText editForgotPasswordEmail;
-    ImageView ivBugReport;
-    TextView tvLoginBackAgain;
+    ImageView ivBackButton;
 
     CenesApplication cenesApplication;
     CoreManager coreManager;
@@ -82,16 +81,12 @@ public class ForgotPasswordFragment extends CenesFragment {
 
     public void initializeComponents(View view) {
 
-        llSigningBackBtn = (LinearLayout) view.findViewById(R.id.ll_signin_back);
+        ivBackButton = (ImageView) view.findViewById(R.id.iv_back_button);
         buttonForgotPasswordSubmit = (Button) view.findViewById(R.id.bt_fp_submit);
         editForgotPasswordEmail = (EditText) view.findViewById(R.id.et_fp_email);
-        ivBugReport = (ImageView) view.findViewById(R.id.iv_bug_report);
-        tvLoginBackAgain = (TextView) view.findViewById(R.id.tv_login_back_again);
 
-        llSigningBackBtn.setOnClickListener(onClickListener);
+        ivBackButton.setOnClickListener(onClickListener);
         buttonForgotPasswordSubmit.setOnClickListener(onClickListener);
-        ivBugReport.setOnClickListener(onClickListener);
-        tvLoginBackAgain.setOnClickListener(onClickListener);
 
     }
 
@@ -104,7 +99,7 @@ public class ForgotPasswordFragment extends CenesFragment {
                     if (editForgotPasswordEmail.getText().toString() == null || editForgotPasswordEmail.getText().toString() == "" || editForgotPasswordEmail.getText().toString().length() == 0) {
                         Toast.makeText(getActivity(), "Email Field Cannot be left Empty", Toast.LENGTH_SHORT).show();
                     } else {
-                        String email = editForgotPasswordEmail.getText().toString();
+                        final String email = editForgotPasswordEmail.getText().toString();
                         new ProfileAsyncTask(cenesApplication, getActivity());
                         new ProfileAsyncTask.ForgotPasswordRequest(new ProfileAsyncTask.ForgotPasswordRequest.AsyncResponse() {
                             @Override
@@ -112,11 +107,19 @@ public class ForgotPasswordFragment extends CenesFragment {
                                 try {
                                     if (response.getBoolean("success")) {
 
-                                        ForgotPasswordSuccessFragment forgotPasswordSuccessFragment = new ForgotPasswordSuccessFragment();
-                                        Bundle bundle = new Bundle();
-                                        bundle.putString("email", editForgotPasswordEmail.getText().toString());
-                                        forgotPasswordSuccessFragment.setArguments(bundle);
-                                        ((SignInActivity)getActivity()).replaceFragment(forgotPasswordSuccessFragment, ForgotPasswordSuccessFragment.TAG);
+                                        System.out.println(response.toString());
+                                        new ProfileAsyncTask.ForgotPasswordSendEmailRequest(new ProfileAsyncTask.ForgotPasswordSendEmailRequest.AsyncResponse() {
+                                            @Override
+                                            public void processFinish(JSONObject response) {
+
+                                                ForgotPasswordSuccessFragment forgotPasswordSuccessFragment = new ForgotPasswordSuccessFragment();
+                                                Bundle bundle = new Bundle();
+                                                bundle.putString("email", editForgotPasswordEmail.getText().toString());
+                                                forgotPasswordSuccessFragment.setArguments(bundle);
+                                                ((GuestActivity)getActivity()).replaceFragment(forgotPasswordSuccessFragment, ForgotPasswordSuccessFragment.TAG);
+
+                                            }
+                                        }).execute(email);
 
                                     } else {
                                         //Toast.makeText(getActivity().getApplicationContext(),"Invalid Email Address",Toast.LENGTH_LONG).show();
@@ -138,16 +141,13 @@ public class ForgotPasswordFragment extends CenesFragment {
                         }).execute(email);
                     }
                     break;
-                case R.id.ll_signin_back:
+                case R.id.iv_back_button:
                     getActivity().onBackPressed();
                     break;
 
                 case R.id.iv_bug_report:
                     break;
 
-                case R.id.tv_login_back_again:
-                    getActivity().onBackPressed();
-                    break;
             }
         }
     };

@@ -624,10 +624,10 @@ public class GatheringPreviewFragmentBkup extends CenesFragment {
             try {
                 //This means it is an parentEvent being created by App User
                 if (eventOwner == null) {
-                    Glide.with(GatheringPreviewFragmentBkup.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(rivOwnerImage);
+                    Glide.with(GatheringPreviewFragmentBkup.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(rivOwnerImage);
                     ownerName.setText(loggedInUser.getName());
                 } else {
-                    Glide.with(GatheringPreviewFragmentBkup.this).load(eventOwner.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(rivOwnerImage);
+                    Glide.with(GatheringPreviewFragmentBkup.this).load(eventOwner.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(rivOwnerImage);
                     ownerName.setText(eventOwner.getName());
                 }
             } catch (Exception e) {

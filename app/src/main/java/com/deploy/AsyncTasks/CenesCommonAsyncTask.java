@@ -46,9 +46,20 @@ public class CenesCommonAsyncTask {
             UserManager userManager = coreManager.getUserManager();
             User user = userManager.getUser();
             CenesCommonAPIManager cenesCommonAPIManager = coreManager.getCenesCommonAPIManager();
+            int userId = 0;
+            String token = "";
 
-            String queryStr = "userId="+user.getUserId();
-            return  cenesCommonAPIManager.getBadgeCounts(queryStr, user.getAuthToken());
+            if (user != null) {
+                if (user.getUserId() != null) {
+                    userId = user.getUserId();
+                }
+                if (user.getAuthToken() != null) {
+                    token = user.getAuthToken();
+                }
+            }
+
+            String queryStr = "userId="+userId;
+            return  cenesCommonAPIManager.getBadgeCounts(queryStr, token);
         }
 
         @Override

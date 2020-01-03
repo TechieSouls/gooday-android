@@ -13,7 +13,6 @@ import android.util.Log;
 
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.leolin.shortcurtbadger.ShortcutBadger;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;

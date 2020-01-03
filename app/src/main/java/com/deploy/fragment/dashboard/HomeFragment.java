@@ -1,5 +1,9 @@
 package com.deploy.fragment.dashboard;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
@@ -8,6 +12,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -20,6 +26,7 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -34,7 +41,6 @@ import com.deploy.Manager.InternetManager;
 import com.deploy.Manager.UrlManager;
 import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
-import com.deploy.activity.CreateReminderActivity;
 import com.deploy.adapter.HomeScreenAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.backendManager.HomeScreenApiManager;
@@ -88,7 +94,7 @@ public class HomeFragment extends CenesFragment {
 
     public final static String TAG = "HomeFragment";
 
-    private int GATHERING_SUMMARY_RESULT_CODE = 1001, CREATE_GATHERING_RESULT_CODE = 1002, CREATE_REMINDER_RESULT_CODE = 1003, NOTIFICATION_RESULT_CODE = 1004;
+    private int GATHERING_SUMMARY_RESULT_CODE = 1001, CREATE_REMINDER_RESULT_CODE = 1003;
     // Array of strings...
     ExpandableListView homeScreenEventsList;
     RoundedImageView homePageProfilePic;
@@ -96,7 +102,6 @@ public class HomeFragment extends CenesFragment {
     TextView gatheringBtn, homeNoEvents, tvCalendarSwitcher;
     ImageView homeCalenderSearchViewIcon;
     MaterialCalendarView homeCalSearchView;
-    //private ImageView footerHomeIcon, footerGatheringIcon, footerReminderIcon, footerAlarmIcon, footerDiaryIcon, footerMeTimeIcon;
     private FloatingActionButton fab, closeFabMenuBtn, gatheringFabMenuBtn, reminderFabMenuBtn, alarmFabMenuBtn;
     HomeScreenAdapter listAdapter;
     RelativeLayout rlFabMenu;
@@ -113,12 +118,12 @@ public class HomeFragment extends CenesFragment {
     User loggedInUser;
     Tracker mTracker;
     private EventManagerImpl eventManagerImpl;
+    private View fragmentView;
 
     private Map<String, Set<CalendarDay>> calendarHighlights;
 
     boolean calModeMonth;
 
-    private ProgressDialog mProgressDialog;
     private GatheringAsyncTask eventsTask;
     private HolidayCalendarTask holidayCalendarTask;
     private CurrentDateDecorator currentDateDecorator;
@@ -130,8 +135,12 @@ public class HomeFragment extends CenesFragment {
         CenesApplication application = (CenesApplication) getActivity().getApplication();
         mTracker = application.getDefaultTracker();
 
-        View v = inflater.inflate(R.layout.fragment_home, container, false);
+        if (fragmentView != null) {
+            return fragmentView;
+        }
 
+        View v = inflater.inflate(R.layout.fragment_home, container, false);
+        fragmentView = v;
         if (((CenesBaseActivity) getActivity()).sharedPrefs.getBoolean("isFirstLogin", true)) {
             ((CenesBaseActivity) getActivity()).sharedPrefs.edit().putBoolean("isFirstLogin", false).commit();
         }
@@ -446,17 +455,7 @@ public class HomeFragment extends CenesFragment {
                     CreateGatheringFragment createGatheringFragment = new CreateGatheringFragment();
                     ((CenesBaseActivity)getActivity()).replaceFragment(createGatheringFragment, CreateGatheringFragment.TAG);
                     break;
-                case R.id.reminder_fab_menu_btn:
-                    /*rlFabMenu.setVisibility(View.GONE);
-                    fab.setVisibility(View.VISIBLE);
-                    startActivityForResult(new Intent((CenesBaseActivity) getActivity(), CreateReminderActivity.class), CREATE_REMINDER_RESULT_CODE);
-                    //finish();*/
-                    rlFabMenu.setVisibility(View.GONE);
-                    fab.setVisibility(View.VISIBLE);
-                    Intent data = new Intent(new Intent((CenesBaseActivity) getActivity(), CreateReminderActivity.class));
-                    data.putExtra("dataFrom", "fabButton");
-                    startActivityForResult(data,CREATE_REMINDER_RESULT_CODE);
-                    break;
+
             }
         }
     };
@@ -582,7 +581,7 @@ public class HomeFragment extends CenesFragment {
                        }
 
                        Collections.sort(headers);
-                       listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
+                       listAdapter = new HomeScreenAdapter(HomeFragment.this, headers, eventMap);
 
                        if (events.size() == 0) {
                            homeScreenEventsList.setVisibility(View.GONE);
@@ -904,7 +903,7 @@ public class HomeFragment extends CenesFragment {
         }
 
         Collections.sort(headers);
-        listAdapter = new HomeScreenAdapter((CenesBaseActivity) getActivity(), headers, eventMap);
+        listAdapter = new HomeScreenAdapter(HomeFragment.this, headers, eventMap);
 
         if (events.size() == 0) {
             homeScreenEventsList.setVisibility(View.GONE);
@@ -916,6 +915,7 @@ public class HomeFragment extends CenesFragment {
             homeScreenEventsList.setAdapter(listAdapter);
         }
     }
+
     private class ContactsSyncTask extends AsyncTask<String, Void, String> {
         private ProgressDialog pd;
 

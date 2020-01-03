@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 
+import com.deploy.Manager.JsonParsing;
 import com.deploy.activity.GuestActivity;
 import com.deploy.activity.SignInActivity;
 import com.deploy.application.CenesApplication;
@@ -18,6 +19,7 @@ import com.deploy.bo.HolidayCalendar;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
+import com.deploy.dto.AsyncTaskDto;
 import com.deploy.fragment.CalenderSyncFragment;
 import com.deploy.fragment.guest.ForgotPasswordSuccessFragment;
 import com.google.gson.Gson;
@@ -653,6 +655,55 @@ public class ProfileAsyncTask {
         }
     }
 
+    public static class ForgotPasswordSendEmailRequest extends AsyncTask<String,JSONObject,JSONObject> {
+        ProgressDialog progressDialog;
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public ForgotPasswordSendEmailRequest(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            progressDialog = new ProgressDialog(activity);
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.setCancelable(false);
+            progressDialog.setMessage("Loading...");
+            progressDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... strings) {
+            String email = strings[0];
+
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+
+
+            String queryStr = "email="+email;
+            JSONObject userResp = userApiManager.sendForgetPasswordEmail(queryStr);
+            return userResp;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject response) {
+            super.onPostExecute(response);
+            if (progressDialog != null) {
+                progressDialog.dismiss();
+                progressDialog = null;
+            }
+
+            delegate.processFinish(response);
+        }
+    }
+
     public static class SendVerrificationTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
 
         private CoreManager coreManager = cenesApplication.getCoreManager();
@@ -818,4 +869,138 @@ public class ProfileAsyncTask {
             delegate.processFinish(response);
         }
     }
+
+    public static class UpdatePasswordTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        ProgressDialog processDialog;
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public UpdatePasswordTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            processDialog = new ProgressDialog(activity);
+            processDialog.setMessage("Updating..");
+            processDialog.setIndeterminate(false);
+            processDialog.setCanceledOnTouchOutside(false);
+            processDialog.setCancelable(false);
+            processDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... objects) {
+
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            UserManager userManager = coreManager.getUserManager();
+            User user = userManager.getUser();
+
+            JSONObject postDataObj = objects[0];
+            JSONObject response = userApiManager.updatePassword(postDataObj, user.getAuthToken());
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject stringObjectMap) {
+            super.onPostExecute(stringObjectMap);
+            if (processDialog != null) {
+                processDialog.dismiss();
+                processDialog = null;
+            }
+            delegate.processFinish(stringObjectMap);
+        }
+    }
+
+
+    public static class DeleteAccountTask extends AsyncTask<JSONObject, JSONObject, JSONObject> {
+
+        private CoreManager coreManager = cenesApplication.getCoreManager();
+
+        ProgressDialog processDialog;
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public DeleteAccountTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            processDialog = new ProgressDialog(activity);
+            processDialog.setMessage("Deleting..");
+            processDialog.setIndeterminate(false);
+            processDialog.setCanceledOnTouchOutside(false);
+            processDialog.setCancelable(false);
+            processDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(JSONObject... objects) {
+
+            UserApiManager userApiManager = coreManager.getUserAppiManager();
+            UserManager userManager = coreManager.getUserManager();
+            User user = userManager.getUser();
+
+            JSONObject postDataObj = objects[0];
+            JSONObject response = userApiManager.deleteAccountRequest(postDataObj, user.getAuthToken());
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject stringObjectMap) {
+            super.onPostExecute(stringObjectMap);
+            if (processDialog != null) {
+                processDialog.dismiss();
+                processDialog = null;
+            }
+            delegate.processFinish(stringObjectMap);
+        }
+    }
+
+    public static class CommonGetRequestTask extends AsyncTask<AsyncTaskDto, JSONObject, JSONObject> {
+
+        // you may separate this or combined to caller class.
+        public interface AsyncResponse {
+            void processFinish(JSONObject response);
+        }
+        public AsyncResponse delegate = null;
+
+        public CommonGetRequestTask(AsyncResponse delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected JSONObject doInBackground(AsyncTaskDto... asyncTaskDtos) {
+
+            AsyncTaskDto asyncTaskDto = asyncTaskDtos[0];
+
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = asyncTaskDto.getApiUrl();
+            if (asyncTaskDto.getQueryStr() != null) {
+                apiUrl = apiUrl +"?"+asyncTaskDto.getQueryStr();
+            }
+            return jsonParsing.httpGetJsonObject(apiUrl,null);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject stringObjectMap) {
+            super.onPostExecute(stringObjectMap);
+            delegate.processFinish(stringObjectMap);
+        }
+    }
+
 }

@@ -40,12 +40,12 @@ import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.CenesFragment;
+import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.util.CenesUtils;
 import com.deploy.util.ImageUtils;
 import com.deploy.util.RoundedDrawable;
@@ -121,9 +121,7 @@ public class ProfileFragment extends CenesFragment {
     public void onResume() {
         super.onResume();
         try {
-            if (getActivity() instanceof ReminderActivity) {
-                ((ReminderActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof GatheringScreenActivity) {
+            if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {
                 ((DiaryActivity) getActivity()).hideFooter();
@@ -159,7 +157,7 @@ public class ProfileFragment extends CenesFragment {
 
         if (loggedInUser != null && !CenesUtils.isEmpty(loggedInUser.getPicture())) {
             RequestOptions requestOptions = new RequestOptions();
-            requestOptions.placeholder(R.drawable.default_profile_icon);
+            requestOptions.placeholder(R.drawable.profile_pic_no_image);
             requestOptions.circleCrop();
 
             Glide.with(getActivity()).load(loggedInUser.getPicture()).apply(requestOptions).into(ivProfile);
@@ -223,16 +221,12 @@ public class ProfileFragment extends CenesFragment {
             switch (v.getId()) {
                 case R.id.ll_change_password:
                     ChangePasswordFragment changePasswordFragment = new ChangePasswordFragment();
-                    if (getActivity() instanceof ReminderActivity) {
-                        ((ReminderActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
-                    } else if (getActivity() instanceof GatheringScreenActivity) {
-                        ((GatheringScreenActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
-                    } else if (getActivity() instanceof DiaryActivity) {
-                        ((DiaryActivity) getActivity()).replaceFragment(changePasswordFragment, ChangePasswordFragment.TAG);
-                    }
+
                 break;
                 case R.id.iv_profile_back:
-                    getActivity().onBackPressed();
+                    ((CenesBaseActivity) getActivity()).clearAllFragmentsInBackstack();
+                    ((CenesBaseActivity) getActivity()).replaceFragment(new HomeFragment(), null);
+
                     break;
                 case R.id.ll_facebook_sync:
                     disconnectFromFacebook();

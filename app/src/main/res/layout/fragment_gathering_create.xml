@@ -8,7 +8,7 @@
     <RelativeLayout
         android:id="@+id/rl_header"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="60dp"
         android:layout_alignParentTop="true">
 
         <ImageView
@@ -25,7 +25,7 @@
             android:layout_height="match_parent"
             android:hint="Event Name"
             android:textStyle="bold"
-            android:textSize="20sp"
+            android:textSize="18dp"
             android:layout_marginLeft="50dp"
             android:layout_marginRight="20dp"
             android:singleLine="true"
@@ -57,27 +57,27 @@
                 android:id="@+id/rl_selected_friends_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
-                android:layout_marginTop="5dp"
-                android:layout_below="@+id/gath_search_friend_sub_header">
+                android:layout_below="@+id/gath_search_friend_sub_header"
+                android:layout_marginTop="5dp">
 
                 <ImageView
                     android:id="@+id/gath_invite_frnds_btn"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
+                    android:layout_marginLeft="15dp"
                     android:src="@drawable/edit_guest_add_member_icon"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="15dp"/>
+                    android:layout_marginTop="20dp"/>
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
+                    android:layout_marginLeft="50dp"
                     android:background="@color/transparent"
+                    android:paddingStart="10dp"
                     android:paddingEnd="5dp"
                     android:paddingRight="5dp"
-                    android:paddingStart="10dp"
-                    android:scrollbars="none"
-                    android:layout_marginLeft="50dp"/>
+                    android:scrollbars="none" />
             </RelativeLayout>
 
             <View
@@ -102,7 +102,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="Start"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -144,7 +144,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="End"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -186,7 +186,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="Date"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -208,6 +208,7 @@
                             android:textSize="17sp" />
 
                         <ImageView
+                            android:id="@+id/iv_date_bar_arrow"
                             android:layout_width="15dp"
                             android:layout_height="15dp"
                             android:src="@drawable/date_panel_right_arrow"
@@ -244,7 +245,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="Location"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -268,7 +269,7 @@
                         <ImageView
                             android:layout_width="15dp"
                             android:layout_height="15dp"
-                            android:src="@drawable/date_panel_right_arrow"
+                            android:src="@drawable/gath_info_right_arrow"
                             android:layout_marginLeft="10dp"
                             android:layout_marginRight="10dp"
                             android:layout_gravity="center_vertical"/>
@@ -286,7 +287,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="Message"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -309,7 +310,7 @@
                         <ImageView
                             android:layout_width="15dp"
                             android:layout_height="15dp"
-                            android:src="@drawable/date_panel_right_arrow"
+                            android:src="@drawable/gath_info_right_arrow"
                             android:layout_marginLeft="10dp"
                             android:layout_marginRight="10dp"
                             android:layout_gravity="center_vertical"/>
@@ -327,7 +328,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:text="Cover Image"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:textColor="@color/black"
                         android:layout_marginLeft="15dp"
                         android:layout_centerVertical="true"/>
@@ -360,7 +361,7 @@
                         <ImageView
                             android:layout_width="15dp"
                             android:layout_height="15dp"
-                            android:src="@drawable/date_panel_right_arrow"
+                            android:src="@drawable/gath_info_right_arrow"
                             android:layout_marginLeft="10dp"
                             android:layout_marginRight="10dp"
                             android:layout_gravity="center_vertical"/>
@@ -382,7 +383,7 @@
                     android:layout_height="25dp"
                     android:text="Guest Availability %"
                     android:textColor="@color/black"
-                    android:textSize="18sp"
+                    android:textSize="18dp"
                     android:gravity="center"
                     android:layout_marginTop="20dp"
                     />
@@ -397,13 +398,13 @@
                     <RelativeLayout
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:background="@drawable/mcv_green_color"
+                        android:background="@drawable/xml_circle_predictive_green"
                         android:layout_gravity="center">
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="21dp"
                             android:text="100%"
-                            android:textSize="15sp"
+                            android:textSize="14dp"
                             android:textColor="@color/white"
                             android:layout_centerInParent="true"
                             android:textAlignment="center"/>
@@ -415,13 +416,13 @@
                         <RelativeLayout
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-                            android:background="@drawable/mcv_lightgrey_color"
+                            android:background="@drawable/xml_circle_predictive_grey"
                             android:layout_alignParentLeft="true">
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="21dp"
                                 android:text="0%"
-                                android:textSize="15sp"
+                                android:textSize="14dp"
                                 android:textColor="@color/white"
                                 android:layout_centerInParent="true"
                                 android:textAlignment="center"/>
@@ -430,18 +431,18 @@
                         <RelativeLayout
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-                            android:background="@drawable/mcv_yellow_color"
+                            android:background="@drawable/xml_circle_predictive_yellow"
                             android:layout_alignParentRight="true">
                             <TextView
-                                android:layout_width="match_parent"
+                                android:layout_width="35dp"
                                 android:layout_height="wrap_content"
                                 android:text="67%-99%"
-                                android:textSize="15sp"
+                                android:textSize="14dp"
                                 android:textColor="@color/white"
                                 android:textAlignment="center"
                                 android:layout_marginLeft="15px"
                                 android:layout_marginRight="15px"
-                                android:layout_centerVertical="true"
+                                android:layout_centerInParent="true"
                                 />
                         </RelativeLayout>
 
@@ -453,38 +454,34 @@
                         <RelativeLayout
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-                            android:background="@drawable/mcv_red_color"
+                            android:background="@drawable/xml_circle_predictive_red"
                             android:layout_alignParentLeft="true"
                             android:layout_marginLeft="30dp">
                             <TextView
-                                android:layout_width="wrap_content"
+                                android:layout_width="35dp"
                                 android:layout_height="wrap_content"
-                                android:text="1%-33%"
-                                android:textSize="15sp"
+                                android:text="1%- 33%"
+                                android:textSize="14dp"
                                 android:textColor="@color/white"
                                 android:textAlignment="center"
-                                android:layout_marginLeft="25px"
-                                android:layout_marginRight="25px"
-                                android:layout_centerVertical="true"
+                                android:layout_centerInParent="true"
                                 />
                         </RelativeLayout>
 
                         <RelativeLayout
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-                            android:background="@drawable/mcv_ping_color"
+                            android:background="@drawable/xml_circle_predictive_pink"
                             android:layout_alignParentRight="true"
                             android:layout_marginRight="30dp">
                             <TextView
-                                android:layout_width="wrap_content"
+                                android:layout_width="35dp"
                                 android:layout_height="wrap_content"
-                                android:text="1%-33%"
-                                android:textSize="15sp"
+                                android:text="34%- 66%"
+                                android:textSize="14dp"
                                 android:textColor="@color/white"
                                 android:textAlignment="center"
-                                android:layout_marginLeft="25px"
-                                android:layout_marginRight="25px"
-                                android:layout_centerVertical="true"
+                                android:layout_centerInParent="true"
                                 />
                         </RelativeLayout>
 
@@ -534,7 +531,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:text="TimeMatch"
-                                android:textSize="22sp"
+                                android:textSize="22dp"
                                 android:textColor="@color/black"
                                 android:gravity="center"
                                 />
@@ -546,7 +543,7 @@
                                 android:layout_gravity="center"
                                 />
                         </LinearLayout>
-                        <com.deploy.materialcalendarview.MaterialCalendarView
+                        <com.cenesbeta.materialcalendarview.MaterialCalendarView
                             android:id="@+id/material_calendar_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -557,7 +554,8 @@
                             app:mcv_weekDayLabels="@array/weekdays"
                             app:mcv_weekDayTextAppearance="@style/TextAppearance.MaterialCalendarWidget.WeekDay.Large.DarkGrey"
                             android:layout_marginLeft="30dp"
-                            android:layout_marginRight="30dp"/>
+                            android:layout_marginRight="30dp"
+                            />
 
 
 
@@ -571,7 +569,8 @@
         android:layout_width="match_parent"
         android:layout_height="90dp"
         android:layout_alignParentBottom="true"
-        android:background="#FF4A8FE3">
+        android:background="#854A90E2"
+        >
 
         <TextView
             android:layout_width="200dp"
@@ -580,8 +579,71 @@
             android:textColor="@color/white"
             android:layout_centerHorizontal="true"
             android:textAlignment="center"
-            android:textSize="18sp"
+            android:textSize="18dp"
             android:textStyle="bold"
             android:layout_marginTop="20dp"/>
     </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_photo_action_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#45000000"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_choose_library"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@color/white"
+                    android:text="Upload Photo"
+                    android:textAlignment="center"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/cenes_selectedText_color"
+                    android:layout_marginTop="0.5dp"
+                    android:layout_marginBottom="0.5dp"
+                    android:textSize="17sp"/>
+
+                <TextView
+                    android:id="@+id/tv_take_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@color/white"
+                    android:text="Take Photo"
+                    android:textAlignment="center"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/facebook_blue"
+                    android:textSize="17sp"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_photo_cancel"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@drawable/xml_curved_corner_white"
+                android:text="Cancel"
+                android:textAlignment="center"
+                android:gravity="center_vertical"
+                android:textColor="@color/black"
+                android:layout_marginTop="20dp"
+                android:textSize="17sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </RelativeLayout>
+
 </RelativeLayout>

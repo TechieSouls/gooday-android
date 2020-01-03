@@ -617,11 +617,11 @@ public class AddDiaryFragment extends CenesFragment implements View.OnFocusChang
             try {
                 final Map<String, String> invFrn = jsonObjectArrayList.get(position);
                 holder.tvName.setText(invFrn.get("name"));
-                holder.ivFriend.setImageResource(R.drawable.default_profile_icon);
+                holder.ivFriend.setImageResource(R.drawable.profile_pic_no_image);
                 if (invFrn.get("picture") != null && invFrn.get("picture") != "null") {
-                    Glide.with(getActivity()).load(invFrn.get("picture")).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(holder.ivFriend);
+                    Glide.with(getActivity()).load(invFrn.get("picture")).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(holder.ivFriend);
                 } else {
-                    holder.ivFriend.setImageResource(R.drawable.default_profile_icon);
+                    holder.ivFriend.setImageResource(R.drawable.profile_pic_no_image);
                 }
                 holder.container.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override

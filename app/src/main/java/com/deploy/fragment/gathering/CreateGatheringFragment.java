@@ -34,10 +34,13 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -69,6 +72,7 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.database.impl.EventManagerImpl;
 import com.deploy.database.manager.UserManager;
 import com.deploy.dto.CreateGatheringDto;
+import com.deploy.dto.PredictiveData;
 import com.deploy.fragment.CenesFragment;
 import com.deploy.fragment.dashboard.HomeFragment;
 import com.deploy.fragment.friend.FriendListFragment;
@@ -93,7 +97,9 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -106,18 +112,16 @@ import java.util.Set;
  * Created by mandeep on 2/11/17.
  */
 
-public class CreateGatheringFragment extends CenesFragment implements View.OnFocusChangeListener {
+public class CreateGatheringFragment extends CenesFragment {
 
     public static String TAG = "CreateGatheringFragment";
-    private int SEACRH_LOCATION_RESULT_CODE = 1001, SEARCH_FRIEND_RESULT_CODE = 1002, GATHERING_SUMMARY_RESULT_CODE = 1003, MESSAGE_FRAGMENT_CODE = 1004;
+    private int SEACRH_LOCATION_RESULT_CODE = 1001, SEARCH_FRIEND_RESULT_CODE = 1002,
+            GATHERING_SUMMARY_RESULT_CODE = 1003, MESSAGE_FRAGMENT_CODE = 1004,
+            CLICK_IMAGE_REQUEST_CODE = 1005, UPLOAD_IMAGE_REQUEST_CODE = 1006;
 
+    private int CAMERA_PERMISSION_CODE = 2001;
     private View fragmentView;
 
-    private GatheringPreviewFragmentBkup gatheringPreviewFragmentBkup;
-    private FragmentTransaction fragmentTransaction;
-    private FragmentManager fragmentManager;
-
-    private boolean isPredictiveOn;
     private Calendar currentMonth;
 
     private EditText gathEventTitleEditView;
@@ -127,34 +131,33 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     private TextView startTimePickerLabel, endTimePickerLabel;
     private ProgressBar progressBar;
 
-    private ImageView ivAbandonEvent, ivPredictiveInfo, gathInviteFrndsBtn;
-    private TextView tvLocationLabel, tvGatheringMessage, tvCoverImageStatus, tvEventDate;
+    private ImageView ivAbandonEvent, ivPredictiveInfo, gathInviteFrndsBtn, ivDateBarArrow;
+    private TextView tvLocationLabel, tvGatheringMessage, tvCoverImageStatus, tvEventDate, tvChooseLibrary, tvTakePhoto, tvPhotoCancel;
     private RelativeLayout rlStartBar, rlEndBar, rlDateBar;
     private RelativeLayout rlHeader, gathSearchLocationButton, rlGatheringMessageBar, rlCoverImageBar, rlSelectedFriendsRecyclerView;
-    private RelativeLayout rlPreviewInvitationButton;
+    private RelativeLayout rlPreviewInvitationButton, rlPhotoActionSheet;
 
     private LinearLayout llGatheringDateBars, llGatheringInfoBars;
     private LinearLayout llPredictiveCalCell, llPredictiveCalInfo;
     public static RecyclerView recyclerView;
     private FriendHorizontalScrollAdapter friendHorizontalScrollAdapter;
+    private Uri cameraFileUri;
 
     List<CalendarDay> enableDates;
 
     private File eventImageFile;
-
+    private String isTakeOrUpload = "Take";
     private CenesApplication cenesApplication;
     private CoreManager coreManager;
     private UserManager userManager;
-    private ApiManager apiManager;
-    private UrlManager urlManager;
-    private Context context;
     private Long eventId;
     private String placeId;
     public User loggedInUser;
     public Event event;
     public List<EventMember> membersSelected;
+    public List<PredictiveData> predictiveDataList;
+    public PredictiveData predictiveDataForDate;
     private CreateGatheringDto createGatheringDto;
-
     private MaterialCalendarView materialCalendarView;
 
     @Nullable
@@ -233,7 +236,6 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         }
 
         materialCalendarView.setCurrentDate(predictedDateStartCal);
-
         currentMonth = predictedDateStartCal;
 
         CalendarDay calDay = new CalendarDay();
@@ -266,14 +268,13 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         cenesApplication = getCenesActivity().getCenesApplication();
         coreManager = cenesApplication.getCoreManager();
         userManager = coreManager.getUserManager();
-        apiManager = coreManager.getApiManager();
-        urlManager = coreManager.getUrlManager();
 
         progressBar = (ProgressBar) fragmentView.findViewById(R.id.progressBar);
 
         gathEventTitleEditView = (EditText) fragmentView.findViewById(R.id.gath_event_title_et);
         gathSelectDatetimeBtn = (TextView) fragmentView.findViewById(R.id.gath_select_datetime_btn);
 
+        ivDateBarArrow = (ImageView) fragmentView.findViewById(R.id.iv_date_bar_arrow);
         gathInviteFrndsBtn = (ImageView) fragmentView.findViewById(R.id.gath_invite_frnds_btn);
         ivAbandonEvent = (ImageView) fragmentView.findViewById(R.id.iv_abandon_event);
         ivPredictiveInfo = (ImageView) fragmentView.findViewById(R.id.iv_predictive_info);
@@ -282,6 +283,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         tvEventDate = (TextView) fragmentView.findViewById(R.id.tv_event_date);
         tvLocationLabel = (TextView) fragmentView.findViewById(R.id.tv_location_label);
         tvCoverImageStatus = (TextView) fragmentView.findViewById(R.id.tv_cover_image_status);
+        tvChooseLibrary = (TextView) fragmentView.findViewById(R.id.tv_choose_library);
+        tvTakePhoto = (TextView) fragmentView.findViewById(R.id.tv_take_photo);
+        tvPhotoCancel = (TextView) fragmentView.findViewById(R.id.tv_photo_cancel);
 
         gathSearchLocationButton = (RelativeLayout) fragmentView.findViewById(R.id.gath_search_location_button);
         rlCoverImageBar = (RelativeLayout) fragmentView.findViewById(R.id.rl_cover_image_bar);
@@ -292,6 +296,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         rlSelectedFriendsRecyclerView = (RelativeLayout) fragmentView.findViewById(R.id.rl_selected_friends_recycler_view);
         rlHeader = (RelativeLayout) fragmentView.findViewById(R.id.rl_header);
         rlPreviewInvitationButton = (RelativeLayout) fragmentView.findViewById(R.id.rl_preview_invitation_button);
+        rlPhotoActionSheet = (RelativeLayout) fragmentView.findViewById(R.id.rl_photo_action_sheet);
 
         llGatheringDateBars = (LinearLayout) fragmentView.findViewById(R.id.ll_gathering_date_bars);
         llGatheringInfoBars = (LinearLayout) fragmentView.findViewById(R.id.ll_gathering_info_bars);
@@ -305,8 +310,10 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         materialCalendarView = (MaterialCalendarView) fragmentView.findViewById(R.id.material_calendar_view);
 
         materialCalendarView.setOnDateChangedListener(onDateSelectedListener);
+        gathEventTitleEditView.setOnFocusChangeListener(focusListener);
+        gathEventTitleEditView.setOnEditorActionListener(oneditorListener);
+        gathEventTitleEditView.setOnClickListener(onClickListener);
 
-        context = this.getContext();
         createGatheringDto = new CreateGatheringDto();
     }
 
@@ -323,39 +330,48 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         rlEndBar.setOnClickListener(onClickListener);
         rlDateBar.setOnClickListener(onClickListener);
         rlPreviewInvitationButton.setOnClickListener(onClickListener);
-
+        rlPhotoActionSheet.setOnClickListener(onClickListener);
+        tvChooseLibrary.setOnClickListener(onClickListener);
+        tvTakePhoto.setOnClickListener(onClickListener);
+        tvPhotoCancel.setOnClickListener(onClickListener);
         predictiveCalSwitch.setOnCheckedChangeListener(onCheckedChangeListener);
     }
 
+    private View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener() {
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (hasFocus){
+                rlPreviewInvitationButton.setVisibility(View.INVISIBLE);
+            } else {
+                rlPreviewInvitationButton.setVisibility(View.VISIBLE);
+            }
+        }
+    };
 
-
-    final int DRAWABLE_LEFT = 0;
-    final int DRAWABLE_TOP = 1;
-    final int DRAWABLE_RIGHT = 2;
-    final int DRAWABLE_BOTTOM = 3;
-
-    public View.OnTouchListener clearTextTouchListener = new View.OnTouchListener() {
+    TextView.OnEditorActionListener oneditorListener = new TextView.OnEditorActionListener() {
         @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            EditText et = (EditText) v;
-            if (event.getAction() == MotionEvent.ACTION_UP && et.getCompoundDrawables()[DRAWABLE_RIGHT] != null) {
-                if (event.getRawX() >= (et.getRight() - et.getCompoundDrawables()[DRAWABLE_RIGHT].getBounds().width()) - 50) {
-                    et.setText("");
-                    return true;
-                }
+        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                // do your stuff here
+                //rlPreviewInvitationButton.setVisibility(View.VISIBLE);
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+                            rlPreviewInvitationButton.setVisibility(View.VISIBLE);
+
+                        } catch (Exception e) {
+                            // TODO: handle exception
+                        }
+                    }
+                }, 200);
+
             }
             return false;
         }
     };
-
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if (hasFocus) {
-            ((EditText) v).setCompoundDrawablesRelativeWithIntrinsicBounds(((EditText) v).getCompoundDrawables()[DRAWABLE_LEFT], null, getResources().getDrawable(R.drawable.close), null);
-        } else {
-            ((EditText) v).setCompoundDrawablesRelativeWithIntrinsicBounds(((EditText) v).getCompoundDrawables()[DRAWABLE_LEFT], null, null, null);
-        }
-    }
 
     @Override
     public void onResume() {
@@ -370,6 +386,10 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         public void onClick(View v) {
             switch (v.getId()) {
 
+                case R.id.gath_event_title_et:
+
+                    rlPreviewInvitationButton.setVisibility(View.INVISIBLE);
+                    break;
                 case R.id.rl_start_bar:
 
                     Calendar predictedDateStartCal = Calendar.getInstance();
@@ -399,16 +419,22 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                     break;
 
                 case R.id.rl_cover_image_bar:
-                    if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
-                    } else {
-                        Intent browseIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                        browseIntent.setType("image/*");
 
-                        startActivityForResult(browseIntent, 100);
-                    }
+                    rlPhotoActionSheet.setVisibility(View.VISIBLE);
+
+                    break;
+                case R.id.tv_choose_library:
+                    isTakeOrUpload = "Upload";
+                    chooseFromGalleryPressed();
                     break;
 
+                case R.id.tv_take_photo:
+                    isTakeOrUpload = "Take";
+                    takePhotoPressed();
+                    break;
+                case R.id.tv_photo_cancel:
+                    rlPhotoActionSheet.setVisibility(View.GONE);
+                    break;
                 case R.id.iv_abandon_event:
 
                     new AlertDialog.Builder(getActivity())
@@ -418,9 +444,18 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                             .setPositiveButton("Leave", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    //((CenesBaseActivity)getActivity()).fragmentManager.popBackStack();
-                                    ((CenesBaseActivity) getActivity()).getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                    ((CenesBaseActivity) getActivity()).replaceFragment(new GatheringsFragment(), null);
+
+                                    if (event.getEventId() != null && event.getEventId() != 0) {
+
+                                        ((CenesBaseActivity)getActivity()).clearAllFragmentsInBackstack();
+                                        ((CenesBaseActivity)getActivity()).replaceFragment(new HomeFragment(), null);
+
+                                    } else {
+
+                                        ((CenesBaseActivity)getActivity()).clearAllFragmentsInBackstack();
+                                        ((CenesBaseActivity)getActivity()).replaceFragment(new GatheringsFragment(), null);
+
+                                    }
 
                                 }
                             }).setNegativeButton("Stay", new DialogInterface.OnClickListener() {
@@ -438,12 +473,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         llPredictiveCalCell.setVisibility(View.VISIBLE);
                         llGatheringInfoBars.setVisibility(View.GONE);
                         rlPreviewInvitationButton.setVisibility(View.GONE);
+                        ivDateBarArrow.setImageResource(R.drawable.date_panel_down_arrow);
 
                     } else {
 
                         llPredictiveCalCell.setVisibility(View.GONE);
                         llGatheringInfoBars.setVisibility(View.VISIBLE);
                         rlPreviewInvitationButton.setVisibility(View.VISIBLE);
+                        ivDateBarArrow.setImageResource(R.drawable.date_panel_right_arrow);
 
                     }
                     break;
@@ -461,13 +498,16 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         for (EventMember eventMember: membersSelected) {
 
                             EventMember eventMemberToAdd = eventMember;
+
+                            //If its first time when the event is abut to create
                             if (eventMember.getFriendId() != null && !eventMember.getFriendId().equals(loggedInUser.getUserId())) {
+
                                 eventMemberToAdd.setUserId(eventMember.getFriendId());
-                            }
-                            if (eventMember.getFriendId() == null && eventMember.getUserContactId() != null && !eventMember.getUserContactId().equals(loggedInUser.getUserId())) {
+
+                            } else if (eventMember.getEventMemberId() == null && eventMember.getUserId() != null && eventMember.getUserId().equals(loggedInUser.getUserId()) && eventMember.getUser() == null) {
+                                //If its the editng time If its the editng time
                                 eventMemberToAdd.setUserId(null);
                             }
-
                             eventMemberList.add(eventMemberToAdd);
                         }
                         event.setEventMembers(eventMemberList);
@@ -490,6 +530,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         ((RelativeLayout)fragmentView.findViewById(R.id.rl_selected_friends_recycler_view)).setVisibility(View.GONE);
                         ((LinearLayout)fragmentView.findViewById(R.id.ll_gathering_date_bars)).setVisibility(View.GONE);
                         llPredictiveCalInfo.setVisibility(View.VISIBLE);
+                        ivPredictiveInfo.setImageResource(R.drawable.time_match_icon_on);
 
                     } else {
 
@@ -498,6 +539,8 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         ((RelativeLayout)fragmentView.findViewById(R.id.rl_header)).setVisibility(View.VISIBLE);
                         ((RelativeLayout)fragmentView.findViewById(R.id.rl_selected_friends_recycler_view)).setVisibility(View.VISIBLE);
                         ((LinearLayout)fragmentView.findViewById(R.id.ll_gathering_date_bars)).setVisibility(View.VISIBLE);
+                        ivPredictiveInfo.setImageResource(R.drawable.time_match_icon_off);
+
                     }
                     break;
 
@@ -564,7 +607,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 Calendar predictedDateEndCal = Calendar.getInstance();
                 predictedDateEndCal.setTimeInMillis(predictedDateStartCal.getTimeInMillis());
                 predictedDateEndCal.add(Calendar.MINUTE, 60);
-                endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()));
+                endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()).toUpperCase());
                 Log.e("End Date : ", predictedDateEndCal.getTime().toString());
                 event.setEndTime(predictedDateEndCal.getTimeInMillis());
 
@@ -573,7 +616,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 Calendar predictedDateEndCal = Calendar.getInstance();
                 predictedDateEndCal.setTimeInMillis(event.getEndTime());
                 predictedDateEndCal.add(Calendar.DAY_OF_MONTH, 1);
-                endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()));
+                endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()).toUpperCase());
                 Log.e("End Date : ", predictedDateEndCal.getTime().toString());
                 event.setEndTime(predictedDateEndCal.getTimeInMillis());
             }
@@ -602,7 +645,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             Calendar predictedDateEndCal = Calendar.getInstance();
             predictedDateEndCal.set(Calendar.HOUR_OF_DAY, hourOfDay);
             predictedDateEndCal.set(Calendar.MINUTE, minute);
-            endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()));
+            endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()).toUpperCase());
             Log.e("End Date : ", predictedDateEndCal.getTime().toString());
 
             if (predictedDateEndCal.getTimeInMillis() <= event.getStartTime()) {
@@ -611,7 +654,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 predictedDateEndCal.add(Calendar.DAY_OF_MONTH, 1);
                 Log.e("End Date After Adding: ",predictedDateEndCal.getTime().toString());
             }
-            endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()));
+            endTimePickerLabel.setText(CenesUtils.hmmaa.format(predictedDateEndCal.getTime()).toUpperCase());
             Log.e("End Date : ", predictedDateEndCal.getTime().toString());
             event.setEndTime(predictedDateEndCal.getTimeInMillis());
 
@@ -630,6 +673,34 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             try {
 
                 System.out.println("Calendar Date Clicked.");
+                //ivDateBarArrow.setImageResource(R.drawable.date_panel_right_arrow);
+                if (event.getPredictiveOn()) {
+                    if (predictiveDataList != null) {
+                        for (PredictiveData predictiveData: predictiveDataList) {
+
+                            Calendar predictiveDateCal = Calendar.getInstance();
+                            predictiveDateCal.setTimeInMillis(predictiveData.getDate());
+                            if (predictiveDateCal.get(Calendar.DAY_OF_MONTH) == date.getDay() &&
+                                    predictiveDateCal.get(Calendar.MONTH) == date.getMonth() &&
+                                    predictiveDateCal.get(Calendar.YEAR) == date.getYear()) {
+
+
+                                predictiveDataForDate = predictiveData;
+                                break;
+                            }
+                        }
+
+                        //Refershing Membres Collection view to show dots
+                        friendHorizontalScrollAdapter = new FriendHorizontalScrollAdapter(CreateGatheringFragment.this, membersSelected);
+                        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity().getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+                        recyclerView.setLayoutManager(mLayoutManager);
+                        recyclerView.setItemAnimator(new DefaultItemAnimator());
+                        recyclerView.setAdapter(friendHorizontalScrollAdapter);
+                    }
+                } else {
+                    predictiveDataForDate = null;
+                }
+
 
 
                 Long selectedTime = date.getCalendar().getTimeInMillis();
@@ -693,14 +764,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         e.printStackTrace();
                     }
 
-                    llPredictiveCalCell.setVisibility(View.GONE);
+                    //llPredictiveCalCell.setVisibility(View.GONE);
                     llPredictiveCalInfo.setVisibility(View.GONE);
 
                     llGatheringDateBars.setVisibility(View.VISIBLE);
-                    llGatheringInfoBars.setVisibility(View.VISIBLE);
+                    //llGatheringInfoBars.setVisibility(View.VISIBLE);
                     rlSelectedFriendsRecyclerView.setVisibility(View.VISIBLE);
                     rlHeader.setVisibility(View.VISIBLE);
-                    rlPreviewInvitationButton.setVisibility(View.VISIBLE);
+                    //rlPreviewInvitationButton.setVisibility(View.VISIBLE);
 
                     createGatheringDto.setDate(true);
                 } else {
@@ -726,6 +797,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 startActivityForResult(browseIntent, 100);
 
             }
+        } else if (requestCode == CAMERA_PERMISSION_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
         }
     }
 
@@ -733,7 +807,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if  (resultCode == Activity.RESULT_OK ) {
-            if (requestCode == 100) {
+            if (requestCode == UPLOAD_IMAGE_REQUEST_CODE) {
                 try {
 
                     String filePath = ImageUtils.getPath(getCenesActivity().getApplicationContext(), data.getData());
@@ -768,10 +842,24 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 ImageUtils.cropImageWithAspect(getImageUri(getContext().getApplicationContext(), rotatedBitmap), this, 1280, 512);*/
                     Uri resultUri = Uri.fromFile(new File(ImageUtils.getDefaultFile()));
                     UCrop.of(imageUri, resultUri)
-                            .withAspectRatio(3, 4)
-                            //.withMaxResultSize(maxWidth, maxHeight)
+                            //.withAspectRatio(3, 4)
+                            .withMaxResultSize(1600, 1000)
                             .start(getContext(), CreateGatheringFragment.this, UCrop.REQUEST_CROP);
 
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (requestCode == CLICK_IMAGE_REQUEST_CODE) {
+                try {
+                    try {
+                        Uri resultUri = Uri.fromFile(new File(ImageUtils.getDefaultFile()));
+                        UCrop.of(cameraFileUri, resultUri)
+                                //.withAspectRatio(3, 4)
+                                .withMaxResultSize(1600, 1000)
+                                .start(getContext(), CreateGatheringFragment.this, UCrop.REQUEST_CROP);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -842,7 +930,13 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         event.setPlaceId(location.getPlaceId());
 
                         event.setLocation(location.getLocation());
-                        tvLocationLabel.setText(location.getLocation());
+
+                        if (location.getLocation().length() > 25) {
+                            tvLocationLabel.setText(location.getLocation().substring(0, 25)+"...");
+                        } else {
+                            tvLocationLabel.setText(location.getLocation());
+
+                        }
 
                         new LocationAsyncTask.FetchLatLngTask(new LocationAsyncTask.FetchLatLngTask.AsyncResponse() {
                             @Override
@@ -866,7 +960,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         String title = locationObj.getLocation();
                         System.out.println("Location Title : "+title);
                         event.setLocation(title);
-                        tvLocationLabel.setText(title);
+
+                        if (title.length() > 25) {
+                            tvLocationLabel.setText(title.substring(0, 25)+"...");
+                        } else {
+                            tvLocationLabel.setText(title);
+
+                        }
+
 
                         new LocationAsyncTask.FetchLatLngTask(new LocationAsyncTask.FetchLatLngTask.AsyncResponse() {
                             @Override
@@ -888,7 +989,13 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         }).execute(locationObj.getPlaceId());
                     } else if (data.getStringExtra("selection").equals("done")) {
                         String title = data.getStringExtra("title");
-                        tvLocationLabel.setText(title);
+
+                        if (title.length() > 25) {
+                            tvLocationLabel.setText(title.substring(0, 25)+"...");
+                        } else {
+                            tvLocationLabel.setText(title);
+
+                        }
                         event.setLocation(title);
 
                     }
@@ -898,6 +1005,9 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 System.out.println("Inside Activity result : ");
                 String selectedFriendsJsonArrayStr = data.getExtras().getString("selectedFriendJsonArray");
                 try {
+
+                    predictiveDataList = null;
+                    predictiveDataForDate = null;
 
                     Gson gson = new GsonBuilder().create();
                     Type listType = new TypeToken<List<EventMember>>(){}.getType();
@@ -949,16 +1059,6 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         }
     }
 
-    String latitude = "";
-    String longitude = "";
-    String locationPhotoUrl = "";
-    String oldImageUrl = "";
-
-    public boolean isUserUploadedImage;
-
-
-    OneDayDecorator mOneDayDecorator;
-
     CompoundButton.OnCheckedChangeListener onCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -977,6 +1077,15 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 Set<CalendarDay> drawableDates = CenesUtils.getDrawableMonthDateList(currentMonth);
                 BackgroundDecorator calBgDecorator = new BackgroundDecorator(getContext(), R.drawable.mcv_white_color, drawableDates, false, false);
                 materialCalendarView.addDecorator(calBgDecorator);
+                //Refershing Membres Collection view to show dots
+
+                predictiveDataList = null;
+                predictiveDataForDate = null;
+                friendHorizontalScrollAdapter = new FriendHorizontalScrollAdapter(CreateGatheringFragment.this, membersSelected);
+                RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity().getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+                recyclerView.setLayoutManager(mLayoutManager);
+                recyclerView.setItemAnimator(new DefaultItemAnimator());
+                recyclerView.setAdapter(friendHorizontalScrollAdapter);
             }
 
         }
@@ -1091,16 +1200,51 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         }
     };
 
-    public void shareEventLink() {
+    public void chooseFromGalleryPressed() {
 
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, CenesConstants.webDomainEventUrl+event.getKey());
-        sendIntent.setType("text/plain");
-        startActivity(sendIntent);
+        rlPhotoActionSheet.setVisibility(View.GONE);
+
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            (CreateGatheringFragment.this).requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+        } else {
+            Intent browseIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            browseIntent.setType("image/*");
+            startActivityForResult(browseIntent, UPLOAD_IMAGE_REQUEST_CODE);
+        }
     }
 
+    public void takePhotoPressed() {
+        rlPhotoActionSheet.setVisibility(View.GONE);
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            (CreateGatheringFragment.this).requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_PERMISSION_CODE);
+        } else {
 
+            openCamera();
+        }
+    }
+
+    public void openCamera() {
+        final String dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Cenes";
+        File newdir = new File(dir);
+        newdir.mkdirs();
+
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File file = new File(dir + File.separator + "IMG_" + timeStamp + ".jpg");
+
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        cameraFileUri = null;
+        cameraFileUri = Uri.fromFile(file);
+
+
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraFileUri);
+        startActivityForResult(takePictureIntent, CLICK_IMAGE_REQUEST_CODE);
+    }
     public void uploadEventPicture(File file) {
 
         new GatheringAsyncTask.UploadOnlyImageTask(new GatheringAsyncTask.UploadOnlyImageTask.AsyncResponse() {
@@ -1116,10 +1260,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                         JSONObject data = response.getJSONObject("data");
                         event.setEventPicture(data.getString("large"));
                         event.setThumbnail(data.getString("thumbnail"));
+                    } else {
+                        //String message = response.getString("message");
+                        Toast.makeText(getContext(), "Error Uploading Image", Toast.LENGTH_LONG).show();
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
+                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         }).execute(file);
@@ -1127,7 +1275,7 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
 
     public void callPredictiveCalendarTask(Long startTime, Long endTime) {
 
-        String queryStr = "userId=" + loggedInUser.getUserId() + "&start_time=" + startTime + "&end_time=" + endTime + "";
+        String queryStr = "userId=" + loggedInUser.getUserId() + "&startTime=" + startTime + "&endTime=" + endTime + "";
         try {
             if (membersSelected.size() > 0) {
                 String friends = "";
@@ -1148,31 +1296,42 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
         System.out.println(queryStr);
         new GatheringAsyncTask.PredictiveCalendarTask(new GatheringAsyncTask.PredictiveCalendarTask.AsyncResponse() {
             @Override
-            public void processFinish(JSONArray response) {
+            public void processFinish(JSONObject response) {
 
-                Map<String, Set<CalendarDay>> calMap = GatheringService.parsePredictiveData(response);
-                for (Map.Entry<String, Set<CalendarDay>> calEntrySet : calMap.entrySet()) {
+                try {
 
-                    if (getActivity() == null) {
-                        return;
+                    JSONArray preditiveArr = response.getJSONArray("data");
+                    Gson gson = new GsonBuilder().create();
+                    Type listType = new TypeToken<List<PredictiveData>>(){}.getType();
+                    predictiveDataList = gson.fromJson(preditiveArr.toString(), listType);
+
+                    Map<String, Set<CalendarDay>> calMap = GatheringService.parsePredictiveData(preditiveArr);
+                    for (Map.Entry<String, Set<CalendarDay>> calEntrySet : calMap.entrySet()) {
+
+                        if (getActivity() == null) {
+                            return;
+                        }
+                        Set<CalendarDay> colorSet = null;
+                        if (calEntrySet.getKey().equals("WHITE")) {
+                            BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_lightgrey_color, calEntrySet.getValue(), true, true);
+                            materialCalendarView.addDecorator(calBgDecorator);
+                        } else if (calEntrySet.getKey().equals("YELLOW")) {
+                            BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_yellow_color, calEntrySet.getValue(), true, false);
+                            materialCalendarView.addDecorator(calBgDecorator);
+                        } else if (calEntrySet.getKey().equals("RED")) {
+                            BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_red_color, calEntrySet.getValue(), true, false);
+                            materialCalendarView.addDecorator(calBgDecorator);
+                        } else if (calEntrySet.getKey().equals("PINK")) {
+                            BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_ping_color, calEntrySet.getValue(), true, false);
+                            materialCalendarView.addDecorator(calBgDecorator);
+                        } else if (calEntrySet.getKey().equals("GREEN")) {
+                            BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_green_color, calEntrySet.getValue(), true, false);
+                            materialCalendarView.addDecorator(calBgDecorator);                }
                     }
-                    Set<CalendarDay> colorSet = null;
-                    if (calEntrySet.getKey().equals("WHITE")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_lightgrey_color, calEntrySet.getValue(), false, true);
-                        materialCalendarView.addDecorator(calBgDecorator);
-                    } else if (calEntrySet.getKey().equals("YELLOW")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_yellow_color, calEntrySet.getValue(), true, false);
-                        materialCalendarView.addDecorator(calBgDecorator);
-                    } else if (calEntrySet.getKey().equals("RED")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_red_color, calEntrySet.getValue(), true, false);
-                        materialCalendarView.addDecorator(calBgDecorator);
-                    } else if (calEntrySet.getKey().equals("PINK")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_ping_color, calEntrySet.getValue(), true, false);
-                        materialCalendarView.addDecorator(calBgDecorator);
-                    } else if (calEntrySet.getKey().equals("GREEN")) {
-                        BackgroundDecorator calBgDecorator = new BackgroundDecorator(getActivity(), R.drawable.mcv_green_color, calEntrySet.getValue(), true, false);
-                        materialCalendarView.addDecorator(calBgDecorator);                }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
 
             }
         }).execute(queryStr);
@@ -1181,6 +1340,22 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
     public void populateFriendCollectionView() {
 
         if (membersSelected != null && membersSelected.size() > 0) {
+
+            //lets reorder the memers selected
+            List<EventMember> orderedMembersSelected = new ArrayList<>();
+            for (EventMember eventMember: membersSelected) {
+                if (eventMember.getUserId() != null && eventMember.getUserId().equals(event.getCreatedById())) {
+                    orderedMembersSelected.add(eventMember);
+                    break;
+                }
+            }
+            for (EventMember eventMember: membersSelected) {
+                if (eventMember.getUserId() != null && eventMember.getUserId().equals(event.getCreatedById())) {
+                    continue;
+                }
+                orderedMembersSelected.add(eventMember);
+            }
+            membersSelected = orderedMembersSelected;
 
             if (event == null) {
                 event = new Event();
@@ -1214,7 +1389,12 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
                 createGatheringDto.setPicture(true);
             }
             if (!CenesUtils.isEmpty(event.getLocation())) {
-                tvLocationLabel.setText(event.getLocation());
+
+                if (event.getLocation().length() > 25) {
+                    tvLocationLabel.setText(event.getLocation().substring(0, 25)+"...");
+                } else {
+                    tvLocationLabel.setText(event.getLocation());
+                }
                 createGatheringDto.setLocation(true);
             }
             if (!CenesUtils.isEmpty(event.getDescription())) {
@@ -1242,32 +1422,14 @@ public class CreateGatheringFragment extends CenesFragment implements View.OnFoc
             }
 
             membersSelected = event.getEventMembers();
+
+            predictiveDataList = null;
+            predictiveDataForDate = null;
             populateFriendCollectionView();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public void replaceFragment(Fragment fragment, String tag) {
-
-        try {
-            fragmentTransaction = fragmentManager.beginTransaction();
-            if (tag != null) {
-                fragmentTransaction.replace(R.id.fragment_container, fragment, tag);
-                fragmentTransaction.addToBackStack(tag);
-            } else {
-                fragmentTransaction.replace(R.id.fragment_container, fragment);
-            }
-            fragmentTransaction.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void clearFragmentsAndOpen(Fragment fragment) {
-        getActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        replaceFragment(fragment, null);
     }
 
     public Event getEvent() {

@@ -18,7 +18,6 @@ import com.deploy.R;
 import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.adapter.NotificationAdapter;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.Notification;
@@ -83,7 +82,7 @@ public class NotificationFragment extends CenesFragment {
 
         if (loggedInUser != null && loggedInUser.getPicture() != null && loggedInUser.getPicture() != "null") {
             // DownloadImageTask(homePageProfilePic).execute(user.getPicture());
-            Glide.with(NotificationFragment.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
+            Glide.with(NotificationFragment.this).load(loggedInUser.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homeProfilePic);
         }
 
         notificationManagerImpl = new NotificationManagerImpl(cenesApplication);
@@ -134,8 +133,6 @@ public class NotificationFragment extends CenesFragment {
         try {
             if (getActivity() instanceof CenesBaseActivity) {
                 ((CenesBaseActivity) getActivity()).hideFooter();
-            } else if (getActivity() instanceof ReminderActivity) {
-                ((ReminderActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof GatheringScreenActivity) {
                 ((GatheringScreenActivity) getActivity()).hideFooter();
             } else if (getActivity() instanceof DiaryActivity) {

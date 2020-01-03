@@ -108,7 +108,7 @@ public class MeTimeFragment extends CenesFragment {
         internetManager = coreManager.getInternetManager();
         meTimeManagerImpl = new MeTimeManagerImpl(cenesApplication);
 
-        Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
+        Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homeProfilePic);
 
         return v;
     }

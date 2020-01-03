@@ -26,7 +26,6 @@ import com.deploy.activity.CenesBaseActivity;
 import com.deploy.activity.DiaryActivity;
 import com.deploy.activity.GatheringScreenActivity;
 import com.deploy.activity.GuestActivity;
-import com.deploy.activity.ReminderActivity;
 import com.deploy.application.CenesApplication;
 import com.deploy.bo.Alarm;
 import com.deploy.bo.User;
@@ -34,8 +33,10 @@ import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.AlarmManager;
 import com.deploy.database.manager.UserManager;
 import com.deploy.fragment.metime.MeTimeFragment;
+import com.deploy.fragment.profile.DeleteAccountFragment;
 import com.deploy.fragment.profile.ProfileFragment;
 import com.deploy.service.AlarmReceiver;
+import com.deploy.util.RoundedImageView;
 import com.facebook.login.LoginManager;
 
 import java.util.List;
@@ -53,9 +54,9 @@ public class NavigationFragment extends CenesFragment {
     private ApiManager apiManager;
     private AlarmManager alarmManager;
 
-    ImageView ivProfile;
+    RoundedImageView ivProfile;
     TextView tvUsername, tvNotifications, tvCalendarSync, tvHolidayCalendar,
-            tvHelpAndFeedback, tvAbout;
+            tvHelpAndFeedback, tvAbout, tvAppSettings;
     LinearLayout llProfileSection;
 
     private User user;
@@ -82,7 +83,7 @@ public class NavigationFragment extends CenesFragment {
 
         setFragmentManager();
 
-        ivProfile = (ImageView) v.findViewById(R.id.ivProfile);
+        ivProfile = (RoundedImageView) v.findViewById(R.id.ivProfile);
         tvUsername = (TextView) v.findViewById(R.id.tvUsername);
         tvNotifications = (TextView) v.findViewById(R.id.tvNotifications);
         llProfileSection = (LinearLayout) v.findViewById(R.id.ll_profile_section);
@@ -90,6 +91,7 @@ public class NavigationFragment extends CenesFragment {
         tvHolidayCalendar = (TextView) v.findViewById(R.id.tvHolidayCalendar);
         tvHelpAndFeedback = (TextView) v.findViewById(R.id.tvHelpAndFeedback);
         tvAbout = (TextView) v.findViewById(R.id.tvAbout);
+        tvAppSettings = (TextView) v.findViewById(R.id.tvAppSettings);
 
         tvNotifications.setOnClickListener(itemClickListener);
         llProfileSection.setOnClickListener(itemClickListener);
@@ -97,14 +99,14 @@ public class NavigationFragment extends CenesFragment {
         tvHolidayCalendar.setOnClickListener(itemClickListener);
         tvHelpAndFeedback.setOnClickListener(itemClickListener);
         tvAbout.setOnClickListener(itemClickListener);
+        tvAppSettings.setOnClickListener(itemClickListener);
+
         refreshUserInfo(user);
 
     }
 
     public void setFragmentManager() {
-        if (getActivity() instanceof ReminderActivity) {
-            fragmentManager = ((ReminderActivity) getActivity()).fragmentManager;
-        } else if (getActivity() instanceof GatheringScreenActivity) {
+        if (getActivity() instanceof GatheringScreenActivity) {
             fragmentManager = ((GatheringScreenActivity) getActivity()).fragmentManager;
         } else if (getActivity() instanceof DiaryActivity) {
             fragmentManager = ((DiaryActivity) getActivity()).fragmentManager;
@@ -112,9 +114,7 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void closeDrawer() {
-        if (getActivity() instanceof ReminderActivity) {
-            ReminderActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else if (getActivity() instanceof GatheringScreenActivity) {
+        if (getActivity() instanceof GatheringScreenActivity) {
             GatheringScreenActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
         } else if (getActivity() instanceof DiaryActivity) {
             DiaryActivity.mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -124,9 +124,7 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void replaceFragment(Fragment fragment, String tag) {
-        if (getActivity() instanceof ReminderActivity) {
-            ((ReminderActivity) getActivity()).replaceFragment(fragment, tag);
-        } else if (getActivity() instanceof GatheringScreenActivity) {
+        if (getActivity() instanceof GatheringScreenActivity) {
             ((GatheringScreenActivity) getActivity()).replaceFragment(fragment, tag);
         } else if (getActivity() instanceof DiaryActivity) {
             ((DiaryActivity) getActivity()).replaceFragment(fragment, tag);
@@ -143,12 +141,12 @@ public class NavigationFragment extends CenesFragment {
     }
 
     public void refreshUserInfo(User user) {
-        if (user != null && user.getPicture() != null && user.getPicture() != "null") {
+        //if (user != null && user.getPicture() != null && user.getPicture() != "null") {
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.circleCrop();
-            requestOptions.placeholder(R.drawable.default_profile_icon);
+            requestOptions.placeholder(R.drawable.profile_pic_no_image);
             Glide.with(getActivity()).load(user.getPicture()).apply(requestOptions).into(ivProfile);
-        }
+        //}
         tvUsername.setText(user.getName());
     }
 
@@ -188,6 +186,11 @@ public class NavigationFragment extends CenesFragment {
                     getFragmentManager().popBackStack();
                     replaceFragment(new AboutUsFragment(), AboutUsFragment.TAG);
                     break;
+                case R.id.tvAppSettings:
+                    getFragmentManager().popBackStack();
+                    replaceFragment(new DeleteAccountFragment(), DeleteAccountFragment.TAG);
+                    break;
+
             }
         }
     };

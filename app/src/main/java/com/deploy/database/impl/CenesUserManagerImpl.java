@@ -35,20 +35,30 @@ public class CenesUserManagerImpl  {
     }
     public void addUser(User user){
 
-        if (CenesUtils.isEmpty(user.getPicture())) {
-            user.setPicture("");
-        }
-        if (CenesUtils.isEmpty(user.getPhone())) {
-            user.setPhone("");
-        }
+        User userExists = fetchCenesUserByUserId(user.getUserId());
+        if (userExists != null) {
 
-        String insertQuery = "insert into cenes_users values("+user.getUserId()+", '"+user.getName()+"', '"+user.getPicture()+"'," +
-                " '"+user.getPhone()+"')";
-        db.execSQL(insertQuery);
+            user.setUserId(userExists.getUserId());
+            updateCenesUser(user);
+
+        } else {
+            this.db = cenesDatabase.getReadableDatabase();
+            if (CenesUtils.isEmpty(user.getPicture())) {
+                user.setPicture("");
+            }
+            if (CenesUtils.isEmpty(user.getPhone())) {
+                user.setPhone("");
+            }
+
+            String insertQuery = "insert into cenes_users values("+user.getUserId()+", '"+user.getName()+"', '"+user.getPicture()+"'," +
+                    " '"+user.getPhone()+"')";
+            db.execSQL(insertQuery);
+            db.close();
+        }
     }
 
     public User fetchCenesUserByUserId(Integer userId) {
-
+        this.db = cenesDatabase.getReadableDatabase();
         User user = null;
         String query = "select * from cenes_users where user_id = "+userId;
         Cursor cursor = db.rawQuery(query, null);
@@ -63,18 +73,23 @@ public class CenesUserManagerImpl  {
 
         }
         cursor.close();
+        db.close();
         return user;
     }
 
     public void updateCenesUser(User user) {
+        this.db = cenesDatabase.getReadableDatabase();
         db.execSQL("update cenes_users set name = '"+user.getName()+"', " +
                 " picture = '"+user.getPicture()+"', phone = '"+user.getPhone()+"' where user_id = "+user.getUserId()+" ");
+        db.close();
     }
 
 
 
     public void deleteAllUsers() {
+        this.db = cenesDatabase.getReadableDatabase();
         String deleteQuery = "delete from cenes_users";
         db.execSQL(deleteQuery);
+        db.close();
     }
 }

@@ -57,7 +57,7 @@ public class NotificationAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
+        final ViewHolder holder;
         if (convertView == null) {
             convertView = inflter.inflate(R.layout.adapter_notifications, null);
             holder = new ViewHolder();
@@ -74,7 +74,11 @@ public class NotificationAdapter extends BaseAdapter {
         final Notification notification = (Notification) notifications.get(position);
 
         System.out.println(notification.toString());
-        holder.notificationMessage.setText(Html.fromHtml( notification.getMessage() + " <b>" + notification.getTitle() + "</b>"));
+        String notificationText = notification.getMessage();
+        if (!(notification.getType() != null && notification.getType().equals("Welcome"))) {
+            notificationText = notificationText +  " <b>" + notification.getTitle() + "</b>";
+        }
+        holder.notificationMessage.setText(Html.fromHtml( notificationText));
         holder.notificationTime.setText(CenesUtils.ddMMM.format(notification.getNotificationTime()).toUpperCase());
 
         //if (notification.getSenderImage() != null && notification.getSenderImage() != "" && notification.getSenderImage() != "null") {
@@ -84,10 +88,19 @@ public class NotificationAdapter extends BaseAdapter {
         //}
 
         try {
-            if (notification.getUser() != null && notification.getUser().getPicture() != null && notification.getUser().getPicture().length() != 0) {
-                Glide.with(notificationFragment.getActivity()).load(notification.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(holder.senderPic);
+
+            if (notification.getType() != null && notification.getType().equals("Welcome")) {
+
+                holder.senderPic.setImageResource(R.drawable.notification_alert_icon);
+
             } else {
-                holder.senderPic.setImageResource(R.drawable.default_profile_icon);
+
+                if (notification.getUser() != null && notification.getUser().getPicture() != null && notification.getUser().getPicture().length() != 0) {
+                    Glide.with(notificationFragment.getActivity()).load(notification.getUser().getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(holder.senderPic);
+                } else {
+                    holder.senderPic.setImageResource(R.drawable.profile_pic_no_image);
+                }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -130,6 +143,18 @@ public class NotificationAdapter extends BaseAdapter {
         holder.llContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                notification.setReadStatus("Read");
+                if (notification.getReadStatus().equals("Read")) {
+                    holder.llContainer.setBackground(notificationFragment.getActivity().getResources().getDrawable(R.drawable.xml_curved_corner_markread_fill));
+                    holder.notificationTime.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_markread_color));
+                    holder.notificationDay.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_markread_color));
+                    holder.notifcationReadStatus.setVisibility(View.VISIBLE);
+                } else {
+                    holder.llContainer.setBackground(notificationFragment.getActivity().getResources().getDrawable(R.drawable.xml_curved_corner_blue_fill));
+                    holder.notificationTime.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_selectedText_color));
+                    holder.notificationDay.setTextColor(notificationFragment.getActivity().getResources().getColor(R.color.cenes_selectedText_color));
+                    holder.notifcationReadStatus.setVisibility(View.GONE);
+                }
 
                 notificationFragment.notificationManagerImpl.updateNotificationReadStatus(notification);
                 if (notificationFragment.internetManager.isInternetConnection(notificationFragment.getCenesActivity())) {

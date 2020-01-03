@@ -15,9 +15,9 @@ import com.deploy.application.CenesApplication;
 import com.deploy.bo.User;
 import com.deploy.coremanager.CoreManager;
 import com.deploy.database.manager.UserManager;
-import com.deploy.fragment.guest.GuestFragment;
+import com.deploy.fragment.guest.PhoneVerificationStep1Fragment;
 import com.deploy.fragment.guest.SignupOptionsFragment;
-import com.deploy.fragment.guest.SignupStep1Fragment;
+import com.deploy.fragment.guest.SignupStepSuccessFragment;
 import com.deploy.util.CenesUtils;
 
 import java.util.List;
@@ -49,7 +49,7 @@ public class GuestActivity extends CenesActivity {
         /*if (user == null) {
             replaceFragment(new GuestFragment(), null);
         } else */if (user == null) {
-            replaceFragment(new SignupStep1Fragment(), null);
+            replaceFragment(new PhoneVerificationStep1Fragment() , null);
         } else {
             replaceFragment(new SignupOptionsFragment(), null);
         }

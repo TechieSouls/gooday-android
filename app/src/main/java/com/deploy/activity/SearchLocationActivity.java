@@ -196,11 +196,16 @@ public class SearchLocationActivity extends CenesActivity implements LocationLis
                 case R.id.ll_loc_title_add:
                     break;
                 case R.id.btn_custom_location:
-                    Intent intent = new Intent();
-                    intent.putExtra("title", customLocation);
-                    intent.putExtra("selection", "done");
-                    setResult(Activity.RESULT_OK, intent);
-                    finish();
+
+                    if (locationSearchEditText.getText().toString().length() > 0) {
+
+                        Intent intent = new Intent();
+                        intent.putExtra("title", locationSearchEditText.getText().toString());
+                        intent.putExtra("selection", "done");
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
+
+                    }
                     break;
             }
         }

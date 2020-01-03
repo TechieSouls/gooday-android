@@ -140,7 +140,6 @@ public class GatheringScreenActivity extends CenesActivity {
             switch (view.getId()) {
 
                 case R.id.footer_reminder_icon:
-                    startActivity(new Intent(GatheringScreenActivity.this, ReminderActivity.class));
                     finish();
                     break;
                 case R.id.footer_diary_icon:

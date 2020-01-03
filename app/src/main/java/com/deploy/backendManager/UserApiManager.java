@@ -76,6 +76,12 @@ public class UserApiManager {
         return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+UserAPI.post_changePasswordAPI, postData,userToken);
     }
 
+    public JSONObject updatePassword(JSONObject postData, String userToken) {
+        JsonParsing jsonParsing = new JsonParsing();
+        return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+UserAPI.post_update_password, postData,userToken);
+    }
+
+
     public JSONObject syncHolidayCalendar(JSONObject postData, String userToken) {
         JsonParsing jsonParsing = new JsonParsing();
         return jsonParsing.httpPost(UrlManagerImpl.prodAPIUrl+UserAPI.post_saveHolidayCalendar, postData,userToken);
@@ -105,7 +111,18 @@ public class UserApiManager {
 
     public JSONObject forgotPassword(String queryStr) {
         try {
-            String apiUrl = UrlManagerImpl.prodAPIUrl+UserAPI.get_forget_password_api+"?"+queryStr;
+            String apiUrl = UrlManagerImpl.prodAPIUrl+UserAPI.get_forget_password_email_api+"?"+queryStr;
+            JsonParsing jsonParsing = new JsonParsing();
+            return jsonParsing.httpGetJsonObject(apiUrl,null);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject sendForgetPasswordEmail(String queryStr) {
+        try {
+            String apiUrl = UrlManagerImpl.prodAPIUrl+UserAPI.get_forget_password_send_email+"?"+queryStr;
             JsonParsing jsonParsing = new JsonParsing();
             return jsonParsing.httpGetJsonObject(apiUrl,null);
         } catch(Exception e) {
@@ -124,5 +141,28 @@ public class UserApiManager {
         }
         return null;
     }
+
+    public JSONObject deleteAccountRequest(JSONObject postData, String userToken) {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = UrlManagerImpl.prodAPIUrl+ UserAPI.post_delete_user_by_phone_password;
+            return jsonParsing.httpPost(apiUrl,postData,userToken);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject countyFromIpRequest() {
+        try {
+            JsonParsing jsonParsing = new JsonParsing();
+            String apiUrl = UserAPI.get_user_ip;
+            return jsonParsing.httpGetJsonObject(apiUrl,null);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 }

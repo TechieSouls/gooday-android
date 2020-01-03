@@ -158,17 +158,17 @@ public class SigninFragment  extends CenesFragment {
 
         boolean isValid = true;
 
-        if (isValid && validationManager.isFieldBlank(email) && validationManager.isFieldBlank(password)) {
-            alertManager.getAlert((SignInActivity)getActivity(), "Please Enter the Email", "Info", null, false, "OK");
+        if (isValid && validationManager.isFieldBlank(email)) {
+            alertManager.getAlert((GuestActivity)getActivity(), "Please Enter the Email", "Info", null, false, "OK");
             isValid = false;
         }
         if (isValid && validationManager.isFieldBlank(email)) {
-            alertManager.getAlert((SignInActivity)getActivity(), "Please Enter the Email", "Info", null, false, "OK");
+            alertManager.getAlert((GuestActivity)getActivity(), "Please Enter the Email", "Info", null, false, "OK");
             isValid = false;
         }
 
         if (isValid && validationManager.isFieldBlank(password)) {
-            alertManager.getAlert((SignInActivity)getActivity(), "Please Enter the Password", "Info", null, false, "OK");
+            alertManager.getAlert((GuestActivity)getActivity(), "Please Enter the Password", "Info", null, false, "OK");
             isValid = false;
         }
         if (isValid) {

@@ -52,7 +52,7 @@ public class GatheringExpiredFragment extends CenesFragment {
         user = userManager.getUser();
 
         if (user != null && user.getPicture() != null && user.getPicture() != "null") {
-            Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.default_profile_icon)).into(homeProfilePic);
+            Glide.with(this).load(user.getPicture()).apply(RequestOptions.placeholderOf(R.drawable.profile_pic_no_image)).into(homeProfilePic);
         }
 
         homeProfilePic.setOnClickListener(onClickListener);
